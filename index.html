@@ -1,0 +1,649 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="color-scheme" content="light dark"/>
+<link rel="icon" href="data:,"/>
+<title>Student Management System — Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+Myanmar:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f4; --surface:#ffffff; --surface2:#eef1ec; --ink:#17201a; --muted:#5b6a5f; --line:#dfe5dd;
+  --accent:#0f6b4a; --accent2:#e8b931; --accent-soft:#e6f2ec; --danger:#c0392b; --code-bg:#111814; --code-ink:#e8f0e9;
+  --radius:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{ --bg:#0f1411; --surface:#171e19; --surface2:#1e2821; --ink:#eef3ef; --muted:#a8b8ab; --line:#2a352c; --accent:#2ebd85; --accent-soft:#183629; --code-bg:#0a0f0b; }
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"IBM Plex Sans","Noto Sans Myanmar",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit;min-height:44px}
+button{cursor:pointer}
+.wrap{max-width:1120px;margin:0 auto;padding:0 18px 48px}
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%, transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:1120px;margin:0 auto;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:-.02em}.brand span{color:var(--accent)}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.nav button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;font-size:14px}
+.nav button.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hero{padding:32px 0 20px;display:grid;grid-template-columns:1.35fr .65fr;gap:20px}
+@media(max-width:760px){.hero{grid-template-columns:1fr}}
+.hero h1{font-size:clamp(32px,6vw,54px);line-height:.95;letter-spacing:-.04em;margin:8px 0 14px}
+.hero h1 em{font-style:normal;color:var(--accent);border-bottom:6px solid var(--accent2)}
+.lead{font-size:17px;color:var(--muted);max-width:640px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.badge{font-family:"JetBrains Mono",monospace;font-size:13px;font-weight:600;background:var(--surface);border:1px solid var(--line);padding:7px 11px;border-radius:999px}
+.badge b{color:var(--accent)}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn{border-radius:999px;padding:11px 18px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.dark{background:var(--ink);color:var(--bg)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.card h3{margin:0 0 8px}
+.mini{font-size:13px;color:var(--muted)}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.kpi div{background:var(--surface2);border-radius:12px;padding:14px}
+.kpi strong{font-size:26px;display:block;line-height:1}
+section.view{display:none} section.view.active{display:block}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:26px 0 14px}
+.section-head h2{margin:0;font-size:26px;letter-spacing:-.02em}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+/* DEMO */
+.demo-shell{border:1px solid var(--line);background:var(--surface);border-radius:18px;overflow:hidden}
+.demo-top{background:var(--ink);color:var(--bg);padding:14px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.demo-top small{opacity:.75}
+.role-row{display:flex;gap:8px;flex-wrap:wrap}
+.role-row button{border-radius:999px;border:1px solid rgba(255,255,255,.25);background:transparent;color:inherit;padding:8px 12px;font-weight:600}
+.role-row button.on{background:var(--accent2);color:#111;border-color:var(--accent2)}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;padding:14px;border-bottom:1px solid var(--line)}
+.toolbar input,.toolbar select{flex:1;min-width:160px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:var(--accent-soft);border-radius:12px;padding:12px}.stat strong{font-size:22px}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{padding:11px 12px;border-top:1px solid var(--line);text-align:left;font-size:14px;vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-top:0;background:var(--surface2)}
+.pill{font-size:12px;font-weight:700;padding:4px 8px;border-radius:999px;background:var(--surface2)}
+.pill.present{background:#dcf2e6;color:#0a5c3a}.pill.absent{background:#fde8e3;color:#8b2318}.pill.late{background:#fff3c4;color:#6b5200}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px;border-top:1px solid var(--line)}
+@media(max-width:760px){.form-grid{grid-template-columns:1fr 1fr}}
+.form-grid input,.form-grid select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg);color:var(--ink)}
+.icon-btn{min-height:36px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+/* CODE */
+.explorer{display:grid;grid-template-columns:280px 1fr;gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+@media(max-width:760px){.explorer{grid-template-columns:1fr}}
+.files{border-right:1px solid var(--line);padding:10px;background:var(--surface2)}
+@media(max-width:760px){.files{border-right:0;border-bottom:1px solid var(--line)}}
+.file-btn{width:100%;text-align:left;background:transparent;border:0;border-radius:9px;padding:10px 11px;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ink)}
+.file-btn.active{background:var(--surface);box-shadow:0 1px 6px rgba(0,0,0,.08);font-weight:700}
+.code-head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.code-head code{font-family:"JetBrains Mono",monospace;font-size:13px}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);padding:18px;overflow:auto;font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.65;min-height:420px;white-space:pre}
+.arch{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:stretch}
+@media(max-width:760px){.arch{grid-template-columns:1fr}}
+.arch div{border:1.5px solid var(--line);border-radius:14px;padding:16px;background:var(--surface);position:relative}
+.arch strong{display:block;margin-bottom:6px}
+ol.steps li{margin:10px 0}
+code.inline{font-family:"JetBrains Mono",monospace;background:var(--surface2);padding:2px 6px;border-radius:6px;font-size:.92em}
+.notice{background:#fff8d6;color:#4a3a00;border:1px solid #e8d98a;border-radius:12px;padding:12px 14px;font-size:14px}
+@media(prefers-color-scheme:dark){.notice{background:#2a2410;color:#f5e6a0;border-color:#5a4d1a}}
+footer{margin-top:36px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:700px){
+  .table-wrap{overflow:visible}
+  table{min-width:0;display:block} thead{display:none} tbody{display:block}
+  tbody tr{display:block;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px}
+  tbody td{display:block;border:0;padding:4px 0}
+}
+.login-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}@media(max-width:760px){.login-grid{grid-template-columns:1fr}}
+.login-grid input,.login-grid select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:var(--bg);color:var(--ink);margin:6px 0 10px}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.quick button{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:8px 12px;font-weight:600;font-size:13px}
+.err{display:none;background:#fde8e3;color:#7a1a0e;border-radius:10px;padding:10px 12px;font-size:14px;margin:8px 0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:999px;font-weight:600;font-size:14px;display:none;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-in"><div class="brand">SMS<span>.</span> Portfolio — Yazar Hein Htike</div><nav class="nav" aria-label="Sections">
+<button class="active" data-view="demo">Live Demo</button><button data-view="code">Java / MySQL Code</button><button data-view="arch">Architecture</button><button data-view="setup">Setup & Git</button>
+</nav></div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="mini" style="font-weight:700;letter-spacing:.08em;text-transform:uppercase">Portfolio Project • Sundai IT Business College • Class 1K</div>
+      <h1>Student<br>Management<br><em>System</em></h1>
+      <p class="lead">ကျောင်းသားစာရင်း၊ Login & Role-based Access၊ Attendance နဲ့ Search ကို တစ်နေရာတည်းမှာ စီမံတဲ့ စနစ်။ အောက်က <strong>Live Demo</strong> ကို ချက်ချင်း စမ်းသုံးနိုင်ပြီး၊ <strong>Java + MySQL Code Project</strong> ကိုလည်း အပြည့်အစုံ ဖတ်နိုင် / ကူးယူနိုင်ပါတယ်။</p>
+      <div class="badges"><span class="badge"><b>●</b> Java 17</span><span class="badge">MySQL 8.0</span><span class="badge">JavaScript</span><span class="badge">HTML / CSS</span><span class="badge">JDBC</span><span class="badge">Git & GitHub</span></div>
+      <div class="cta"><button class="btn primary" onclick="showView('demo')">▶ Live Demo စမ်းသုံးရန်</button><button class="btn" onclick="showView('code')">Code Project ကြည့်ရန်</button><button class="btn dark" onclick="downloadAll()">⬇ Project Files Download</button></div>
+      <p class="mini" style="margin-top:12px">Demo account — Admin: <code class="inline">admin / admin123</code> • Teacher: <code class="inline">teacher / teach123</code> • Student: <code class="inline">student / study123</code> — Live Demo မှာ ဒီအကောင့်တွေနဲ့ တကယ် Login ဝင်ပြီး စမ်းနိုင်ပါတယ်၊ Registration လည်း ဖွင့်နိုင်ပါတယ်</p>
+    </div>
+    <div class="card">
+      <h3>ဒီ Project က ပြချင်တာ</h3>
+      <p class="mini">Language တစ်ခုတည်း မဟုတ်ဘဲ System တစ်ခုလုံး ဘယ်လို အလုပ်လုပ်လဲ ဆိုတာပါ။</p>
+      <div class="kpi">
+        <div><strong>3</strong><span class="mini">User Roles<br>Admin / Teacher / Student</span></div>
+        <div><strong>4</strong><span class="mini">DB Tables<br>users, students,<br>attendance, grades</span></div>
+        <div><strong>6+</strong><span class="mini">Java Classes<br>Model · DAO · Service</span></div>
+        <div><strong>100%</strong><span class="mini">CRUD + Search<br>+ Error Handling</span></div>
+      </div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+      <p style="margin:0"><strong>Frontend → Backend → Database</strong><br><span class="mini">Login ဝင်ရင် JavaScript က စစ် → Java Service က စစ်ဆေး → JDBC နဲ့ MySQL ကို မေး → ရလဒ်ကို ပြန်ပြ။ ဒီ flow ကို ကိုယ်တိုင် ရှင်းပြနိုင်ဖို့ တည်ဆောက်ထားပါတယ်။</span></p>
+    </div>
+  </div>
+
+  <!-- DEMO -->
+  <section id="view-demo" class="view active">
+    <div class="section-head"><div><h2>Live Demo — အခု စမ်းသုံးကြည့်ပါ</h2><p class="mini" style="margin:4px 0 0">ဒီ Demo ထဲက data ဟာ browser tab ထဲမှာပဲ ရှိပြီး tab ပိတ်ရင် ပြန်စပါတယ်။ တကယ့် MySQL version က Code tab ထဲမှာ ရှိပါတယ်။</p></div><span class="pill" id="roleLabel">Role: Admin</span></div>
+    <div class="login-grid" id="authPanel">
+      <div class="card"><h3>🔐 Login — အကောင့်ဝင်ရန်</h3><p class="mini">အောက်က Demo account တစ်ခုခုကို ဖြည့်ပြီး Login နှိပ်ပါ။ Quick fill က form ကိုပဲ ဖြည့်ပေးပါတယ် — Login ခလုတ် နှိပ်မှ ဝင်ပါမယ်။</p>
+      <div class="err" id="loginError"></div>
+      <form id="loginForm"><label>Username<input id="loginUser" autocomplete="username" placeholder="admin"></label><label>Password<input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••"></label><button class="btn primary" type="submit" style="width:100%">Login ဝင်မယ်</button></form>
+      <div class="quick"><span class="mini" style="align-self:center">Quick fill:</span><button type="button" data-fill="admin">Admin</button><button type="button" data-fill="teacher">Teacher</button><button type="button" data-fill="student">Student</button></div>
+      </div>
+      <div class="card"><h3>📝 Registration — အကောင့်အသစ်ဖွင့်ရန်</h3><p class="mini">နာမည်၊ Username၊ Password နဲ့ Role ရွေးပြီး အကောင့်ဖွင့်နိုင်ပါတယ်။ ဖွင့်ပြီးတာနဲ့ အဲဒီ Role နဲ့ တန်းဝင်ပေးပါမယ်။ (ဒီ session ထဲမှာပဲ သိမ်းပါတယ်)</p>
+      <div class="err" id="regError"></div>
+      <form id="regForm"><label>အမည်အပြည့်အစုံ<input id="regName" placeholder="Your full name"></label><label>Username<input id="regUser" placeholder="choose a username"></label><label>Password (အနည်းဆုံး 6 လုံး)<input id="regPass" type="password" placeholder="••••••"></label><label>Role<select id="regRole"><option>Student</option><option>Teacher</option><option>Admin</option></select></label><button class="btn dark" type="submit" style="width:100%">Register & Login</button></form>
+      </div>
+    </div>
+    <div class="demo-shell" id="demoShell" style="display:none">
+      <div class="demo-top"><div><strong>Student Management System</strong><br><small id="loginInfo">Logged in as Admin — အကုန် ပြင်/ဖျက်/ထည့် လုပ်နိုင်ပါတယ်</small></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="mini" style="color:inherit;opacity:.8">အကောင့်ပြောင်းရန် Logout လုပ်ပြီး ပြန်ဝင်ပါ</span><button id="logoutBtn" style="border-radius:999px;border:1px solid rgba(255,255,255,.3);background:transparent;color:inherit;padding:8px 14px;font-weight:700">Logout</button></div></div>
+      <div class="stats">
+        <div class="stat"><span class="mini">ကျောင်းသား စုစုပေါင်း</span><strong id="statTotal">0</strong></div>
+        <div class="stat"><span class="mini">ဒီနေ့ Present</span><strong id="statPresent">0</strong></div>
+        <div class="stat"><span class="mini">ပျမ်းမျှ အမှတ်</span><strong id="statAvg">0</strong></div>
+        <div class="stat"><span class="mini">အတန်း</span><strong>1K · 2K</strong><span class="mini"> · IT Expert</span></div>
+      </div>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="🔍 နာမည် / Student ID / Email နဲ့ ရှာပါ..." aria-label="Search students">
+        <select id="classFilter" aria-label="Filter by class"><option value="">အတန်းအားလုံး</option><option>1K</option><option>2K</option></select>
+        <select id="attFilter" aria-label="Filter attendance"><option value="">Attendance အားလုံး</option><option>Present</option><option>Absent</option><option>Late</option></select>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>ID</th><th>ကျောင်းသား</th><th>အတန်း</th><th>အဓိကဘာသာ</th><th>အမှတ်</th><th>ဒီနေ့</th><th></th></tr></thead><tbody id="tbody"></tbody></table></div>
+      <div id="adminForm">
+        <div style="padding:14px 14px 0"><strong>＋ ကျောင်းသားအသစ် ထည့်ရန်</strong> <span class="mini">— Admin / Teacher သာ ထည့်နိုင်ပါတယ်။ Student role မှာ form ပျောက်သွားပါမယ် (Authorization နမူနာ)။</span></div>
+        <form class="form-grid" id="addForm">
+          <input required id="fName" placeholder="နာမည် ဥပမာ Aung Min Khant">
+          <input required id="fEmail" type="email" placeholder="Email">
+          <select id="fClass"><option>1K</option><option>2K</option></select>
+          <select id="fCourse"><option>Programming</option><option>Network</option><option>Web Design</option><option>Database</option></select>
+          <input id="fScore" type="number" min="0" max="100" value="80" placeholder="Score 0-100">
+          <select id="fAtt"><option>Present</option><option>Absent</option><option>Late</option></select>
+          <button class="btn primary" type="submit" style="grid-column:span 2">Add Student</button>
+        </form>
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>✅ စမ်းကြည့်ရန် Checklist</h3><ol style="margin:8px 0;padding-left:20px"><li>Search box မှာ <code class="inline">thiri</code> လို့ ရိုက်ကြည့်ပါ</li><li>Attendance ကို Present → Absent ပြောင်းကြည့်ပါ — Stats ချက်ချင်း ပြောင်းပါမယ်</li><li>Logout လုပ်ပြီး Student အကောင့်နဲ့ ပြန်ဝင်ပါ — Add / Delete ပျောက်သွားတာ Authorization ပါ</li><li>Score 101 ထည့်ကြည့်ပါ — Validation error ပြပါမယ်</li></ol></div>
+      <div class="card"><h3>Error Handling နမူနာများ</h3><p>• Email ပုံစံ မမှန်ရင် ငြင်းပါတယ်<br>• Score 0–100 အပြင်ဘက်ဆို ငြင်းပါတယ်<br>• နာမည်လွတ်နဲ့ submit လုပ်လို့မရပါ<br>• Delete ကို နှစ်ချက်နှိပ်မှ ပျက်ပါတယ် — မတော်တဆ မပျက်အောင်</p></div>
+    </div>
+  </section>
+
+  <!-- CODE -->
+  <section id="view-code" class="view">
+    <div class="section-head"><div><h2>Java + MySQL Code Project</h2><p class="mini" style="margin:4px 0 0">GitHub ပေါ် တင်ရန် အသင့်ဖြစ်တဲ့ project structure။ ဖိုင်တစ်ခုချင်း ရွေးဖတ်ပါ၊ Copy / Download လုပ်နိုင်ပါတယ်။</p></div><button class="btn primary" onclick="downloadAll()">⬇ Download All Files</button></div>
+    <div class="notice">📌 <strong>မှတ်ချက် —</strong> ဒီ web page ဟာ static demo မို့ Java code ကို ဒီ browser ထဲမှာ တိုက်ရိုက် run လို့ မရပါ။ Code ကို download လုပ်ပြီး IntelliJ / VS Code မှာ MySQL ချိတ်ပြီး run ရတာ တကယ့် project workflow ပါ — Setup tab မှာ အဆင့်လိုက် ရေးထားပါတယ်။</div>
+    <div style="height:14px"></div>
+    <div class="explorer">
+      <div class="files" id="fileList"></div>
+      <div><div class="code-head"><code id="fileName">README.md</code><div style="display:flex;gap:8px"><button class="icon-btn" onclick="copyCode()">⎘ Copy</button><button class="icon-btn" onclick="downloadCurrent()">⬇ Download file</button></div></div><pre id="codeView"></pre></div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>📂 Project Structure</h3><pre style="background:var(--surface2);color:var(--ink);min-height:auto;white-space:pre-wrap;font-size:13px">student-management-system/
+├── README.md
+├── .gitignore
+├── database/
+│   └── schema.sql
+└── src/main/java/com/yazar/sms/
+    ├── Main.java
+    ├── model/Student.java
+    ├── dao/StudentDAO.java
+    ├── service/AuthService.java
+    └── util/DBConnection.java</pre></div>
+      <div class="card"><h3>🗄️ Database Design — ဘာကြောင့် ဒီလိုခွဲထားလဲ</h3><p><strong>users</strong> — Login အတွက်၊ password ကို hash နဲ့သိမ်း၊ role ခွဲထား<br><strong>students</strong> — ကျောင်းသားအချက်အလက်<br><strong>attendance</strong> — ရက်အလိုက် မှတ်တမ်း၊ student_id နဲ့ Foreign Key ချိတ်<br><strong>grades</strong> — ဘာသာအလိုက် အမှတ်</p><p class="mini">Table တွေကို တစ်ခုတည်းမှာ စုမထားဘဲ ခွဲထားတာက data ထပ်တာကို လျှော့ပြီး (normalization) ပြင်ရလွယ်အောင်ပါ။</p></div>
+    </div>
+  </section>
+
+  <!-- ARCH -->
+  <section id="view-arch" class="view">
+    <div class="section-head"><h2>Architecture — System တစ်ခုလုံး ဘယ်လိုအလုပ်လုပ်လဲ</h2></div>
+    <div class="arch">
+      <div><strong>1 · Frontend</strong>HTML / CSS / JavaScript<br><span class="mini">Form စစ်၊ Search, Table ပြင်။ Browser ထဲမှာ run တယ်။</span></div>
+      <div><strong>2 · Java Backend</strong>Service + DAO Layer<br><span class="mini">Login စစ် (Authentication)၊ ခွင့်ပြုချက် စစ် (Authorization)၊ Business logic။</span></div>
+      <div><strong>3 · JDBC</strong>PreparedStatement<br><span class="mini">SQL Injection ကာကွယ်ဖို့ ? placeholder သုံးတယ်။ String ပေါင်းပြီး SQL မရေးဘူး။</span></div>
+      <div><strong>4 · MySQL</strong>Database<br><span class="mini">users / students / attendance / grades tables။</span></div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>Authentication vs Authorization</h3><p><strong>Authentication = သင်ဘယ်သူလဲ?</strong> — Username + Password စစ်ပြီး Login ဝင်စေတာ။<br><strong>Authorization = သင်ဘာလုပ်ခွင့်ရှိလဲ?</strong> — Admin က Delete လုပ်နိုင်တယ်၊ Student က ကိုယ့်အချက်အလက်ပဲ ကြည့်နိုင်တယ်။</p><p class="mini">Demo မှာ Role ပြောင်းကြည့်ရင် ဒီကွာခြားချက်ကို လက်တွေ့ မြင်ရပါမယ်။</p></div>
+      <div class="card"><h3>Login Flow (အင်တာဗျူးမှာ ရှင်းပြရန်)</h3><ol style="margin:6px 0;padding-left:20px"><li>User က form မှာ email/password ဖြည့်</li><li>Frontend က လွတ်နေတာ / ပုံစံမှားတာ အရင်စစ်</li><li>Java AuthService က DB ထဲက hash နဲ့ တိုက်</li><li>မှန်ရင် Session ထုတ်၊ Role အလိုက် screen ပြ</li><li>မှားရင် generic error ပဲပြ — ဘယ်အပိုင်းမှားလဲ မပြော (security)</li></ol></div>
+      <div class="card"><h3>Git Workflow</h3><p style="font-family:monospace;font-size:13px">main — stable, portfolio ပြဖို့<br>└─ feature/add-student<br>└─ feature/attendance<br>└─ fix/login-validation</p><p class="mini">Feature တစ်ခုကို branch ခွဲလုပ်၊ commit message ကို ရှင်းရှင်းရေးပြီး main ထဲ merge တာက အလုပ်ခွင် အလေ့အကျင့်ပါ။</p></div>
+      <div class="card"><h3>ဒီ Project ကနေ သင်ယူခဲ့ရတာ</h3><p>• Layer ခွဲထားတာ (Model / DAO / Service) က code ကို ပြင်ရလွယ်စေတယ်<br>• PreparedStatement မသုံးရင် SQL Injection အန္တရာယ် ရှိတယ်<br>• Password ကို plain text မသိမ်းရဘူး — hash လုပ်ရတယ်<br>• Error ဖြစ်ရင် user ကို နားလည်လွယ်တဲ့ message ပြဖို့ လိုတယ်</p></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="view-setup" class="view">
+    <div class="section-head"><h2>Setup & Git — ကိုယ့် PC မှာ Run နည်း</h2></div>
+    <div class="grid2">
+      <div class="card"><h3>လိုအပ်တာများ</h3><p>JDK 17+ • MySQL 8.0 • IntelliJ IDEA or VS Code • Git • mysql-connector-j (JDBC driver)</p><h3 style="margin-top:16px">အဆင့်လိုက် Run နည်း</h3><ol class="steps"><li>MySQL မှာ schema run ပါ<pre style="min-height:auto;background:var(--code-bg);color:var(--code-ink);padding:12px;border-radius:10px;font-size:12px">mysql -u root -p &lt; database/schema.sql</pre></li><li><code class="inline">DBConnection.java</code> ထဲမှာ ကိုယ့် MySQL username/password ပြင်ပါ (GitHub ပေါ် password အမှန် မတင်ပါနဲ့ — .gitignore သုံးပါ)</li><li>IntelliJ မှာ project ဖွင့်၊ JDBC driver ထည့်ပြီး <code class="inline">Main.java</code> ကို Run ပါ</li><li>Demo account: <code class="inline">admin / admin123</code></li></ol></div>
+      <div class="card"><h3>Git & GitHub တင်နည်း</h3><pre style="min-height:auto;background:var(--code-bg);color:var(--code-ink);padding:14px;border-radius:10px;font-size:12.5px;white-space:pre-wrap">git init
+git add .
+git commit -m "feat: initial student management system"
+git branch -M main
+git remote add origin https://github.com/YOUR_NAME/student-management-system.git
+git push -u origin main</pre><p class="mini">YOUR_NAME နေရာမှာ ကိုယ့် GitHub username ထည့်ပါ။ Repo ကို Public ထားရင် အလုပ်လျှောက်တဲ့အခါ link ပေးလို့ရပါပြီ။</p><h3 style="margin-top:14px">README မှာ ပါသင့်တာများ</h3><p>• Project က ဘာလုပ်ပေးလဲ • သုံးထားတဲ့ နည်းပညာ • Run နည်း • Database ပုံ • ကြုံခဲ့တဲ့ Error နဲ့ ဖြေရှင်းနည်း • နောက်ထပ် ထည့်ချင်တာ (Future work)</p></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>🎤 Interview မှာ ရှင်းပြရန် — 日本語ポイント</h3><p>「このプロジェクトでは、JavaとMySQLを使って学生管理システムを作成しました。ログイン機能、権限管理（Admin / Teacher / Student）、学生の登録・検索・出席管理を実装しました。特に、SQLインジェクション対策としてPreparedStatementを使用し、パスワードはハッシュ化して保存しています。」</p><p class="mini">ဒီစာကြောင်းကို ကိုယ်တိုင် နားလည်ပြီး ကိုယ့်စကားနဲ့ ပြန်ပြောနိုင်အောင် လေ့ကျင့်ထားပါ — code ကို AI အကူနဲ့ ရေးထားရင်တောင် ရှင်းပြနိုင်တာက အရေးအကြီးဆုံးပါ။</p></div>
+  </section>
+
+  <footer><span>Yazar Hein Htike — Student Management System Portfolio • Java / MySQL / JavaScript / Git</span><span>Sundai IT Business College, Class 1K • Tokyo</span></footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const FILES = {
+"README.md": {lang:"Markdown", code:`# Student Management System
+
+Java + MySQL + JDBC で作成した学生管理システムです。
+A Student Management System built with Java, MySQL and JDBC.
+
+## Features / 機能
+- Login & Role-based Access (Admin / Teacher / Student)
+- Student Registration (CRUD)
+- Search & Filter by class
+- Attendance Management
+- Grade Recording
+- Input Validation & Error Handling
+
+## Tech Stack
+- Java 17, JDBC, MySQL 8.0
+- HTML / CSS / JavaScript (Demo UI)
+- Git & GitHub
+
+## How to Run
+1. Run database/schema.sql in MySQL
+2. Set your DB user/password in DBConnection.java
+3. Add mysql-connector-j to classpath
+4. Run Main.java
+Demo: admin / admin123
+
+## What I Learned
+- Layered design: Model / DAO / Service
+- PreparedStatement prevents SQL Injection
+- Never store plain-text passwords — use hashing
+`},
+"database/schema.sql": {lang:"SQL", code:`CREATE DATABASE IF NOT EXISTS student_management
+  CHARACTER SET utf8mb4;
+USE student_management;
+
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('ADMIN','TEACHER','STUDENT') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE students (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  student_code VARCHAR(20) NOT NULL UNIQUE,
+  full_name VARCHAR(100) NOT NULL,
+  email VARCHAR(120) NOT NULL UNIQUE,
+  class_name VARCHAR(20) NOT NULL,
+  course VARCHAR(60) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE attendance (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  student_id INT NOT NULL,
+  attend_date DATE NOT NULL,
+  status ENUM('PRESENT','ABSENT','LATE') NOT NULL,
+  UNIQUE KEY uq_att (student_id, attend_date),
+  FOREIGN KEY (student_id) REFERENCES students(id)
+    ON DELETE CASCADE
+);
+
+CREATE TABLE grades (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  student_id INT NOT NULL,
+  subject VARCHAR(60) NOT NULL,
+  score INT NOT NULL CHECK (score BETWEEN 0 AND 100),
+  FOREIGN KEY (student_id) REFERENCES students(id)
+    ON DELETE CASCADE
+);
+
+-- Demo admin (password is hashed in real app, demo only)
+INSERT INTO users (username, password_hash, role)
+VALUES ('admin', 'HASHED_admin123', 'ADMIN');
+`},
+"src/.../model/Student.java": {lang:"Java", code:`package com.yazar.sms.model;
+
+public class Student {
+    private int id;
+    private String studentCode;
+    private String fullName;
+    private String email;
+    private String className;
+    private String course;
+
+    public Student() {}
+
+    public Student(String studentCode, String fullName,
+                   String email, String className, String course) {
+        this.studentCode = studentCode;
+        this.fullName = fullName;
+        this.email = email;
+        this.className = className;
+        this.course = course;
+    }
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String v) { this.fullName = v; }
+    public String getEmail() { return email; }
+    public void setEmail(String v) { this.email = v; }
+    public String getClassName() { return className; }
+    public String getCourse() { return course; }
+    // other getters/setters omitted for brevity in portfolio view
+}
+`},
+"src/.../util/DBConnection.java": {lang:"Java", code:`package com.yazar.sms.util;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+public class DBConnection {
+    // NOTE: In a real project, read these from
+    // environment variables — never commit passwords.
+    private static final String URL =
+        "jdbc:mysql://localhost:3306/student_management?useSSL=false";
+    private static final String USER = "root";
+    private static final String PASS = System.getenv("DB_PASSWORD");
+
+    private DBConnection() {}
+
+    public static Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(URL, USER, PASS);
+    }
+}
+`},
+"src/.../dao/StudentDAO.java": {lang:"Java", code:`package com.yazar.sms.dao;
+
+import com.yazar.sms.model.Student;
+import com.yazar.sms.util.DBConnection;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class StudentDAO {
+
+    public void insert(Student s) throws SQLException {
+        String sql = "INSERT INTO students "
+          + "(student_code, full_name, email, class_name, course) "
+          + "VALUES (?, ?, ?, ?, ?)";
+        // PreparedStatement = SQL Injection protection
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, s.getStudentCode());
+            ps.setString(2, s.getFullName());
+            ps.setString(3, s.getEmail());
+            ps.setString(4, s.getClassName());
+            ps.setString(5, s.getCourse());
+            ps.executeUpdate();
+        }
+    }
+
+    public List<Student> search(String keyword) throws SQLException {
+        List<Student> list = new ArrayList<>();
+        String sql = "SELECT * FROM students "
+          + "WHERE full_name LIKE ? OR email LIKE ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, "%" + keyword + "%");
+            ps.setString(2, "%" + keyword + "%");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                Student s = new Student();
+                s.setId(rs.getInt("id"));
+                s.setFullName(rs.getString("full_name"));
+                s.setEmail(rs.getString("email"));
+                list.add(s);
+            }
+        }
+        return list;
+    }
+
+    public boolean delete(int id) throws SQLException {
+        String sql = "DELETE FROM students WHERE id = ?";
+        try (Connection c = DBConnection.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            return ps.executeUpdate() == 1;
+        }
+    }
+}
+`},
+"src/.../service/AuthService.java": {lang:"Java", code:`package com.yazar.sms.service;
+
+public class AuthService {
+
+    public enum Role { ADMIN, TEACHER, STUDENT }
+
+    public static class Session {
+        public final String username;
+        public final Role role;
+        Session(String u, Role r){ username=u; role=r; }
+    }
+
+    // In real app: look up user in DB and verify
+    // the password against a BCrypt hash.
+    public Session login(String username, String password) {
+        if (username == null || username.isBlank())
+            throw new IllegalArgumentException("Username is required");
+        if (password == null || password.length() < 6)
+            throw new IllegalArgumentException("Password is too short");
+
+        // DEMO ONLY — replace with DB + BCrypt check
+        if (username.equals("admin") && password.equals("admin123"))
+            return new Session(username, Role.ADMIN);
+        if (username.equals("teacher") && password.equals("teach123"))
+            return new Session(username, Role.TEACHER);
+        if (username.equals("student") && password.equals("study123"))
+            return new Session(username, Role.STUDENT);
+
+        // Generic message: do not reveal which part was wrong
+        throw new IllegalArgumentException("Invalid username or password");
+    }
+
+    public boolean canDelete(Session s) {
+        return s != null && s.role == Role.ADMIN;
+    }
+    public boolean canEdit(Session s) {
+        return s != null && s.role != Role.STUDENT;
+    }
+}
+`},
+"src/.../Main.java": {lang:"Java", code:`package com.yazar.sms;
+
+import com.yazar.sms.dao.StudentDAO;
+import com.yazar.sms.model.Student;
+import com.yazar.sms.service.AuthService;
+import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        AuthService auth = new AuthService();
+        StudentDAO dao = new StudentDAO();
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Username: ");
+        String user = sc.nextLine();
+        System.out.print("Password: ");
+        String pass = sc.nextLine();
+
+        try {
+            var session = auth.login(user, pass);
+            System.out.println("Welcome, " + session.username
+                + " (" + session.role + ")");
+
+            System.out.print("Search student: ");
+            String kw = sc.nextLine();
+            dao.search(kw).forEach(s ->
+                System.out.println(s.getId() + " | "
+                    + s.getFullName() + " | " + s.getEmail()));
+
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+}
+`},
+".gitignore": {lang:"Git", code:`# Java
+*.class
+out/
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Secrets — never commit passwords
+.env
+application-local.properties
+
+# OS
+.DS_Store
+`}
+};
+let currentFile = "README.md";
+let students = [
+ {id:"S001",name:"Aung Min Khant",email:"aung@example.com",cls:"1K",course:"Programming",score:92,att:"Present"},
+ {id:"S002",name:"Thiri Nanda",email:"thiri@example.com",cls:"1K",course:"Web Design",score:88,att:"Present"},
+ {id:"S003",name:"Kaung Htet Oo",email:"kaung@example.com",cls:"1K",course:"Network",score:76,att:"Late"},
+ {id:"S004",name:"May Thazin",email:"may@example.com",cls:"2K",course:"Database",score:95,att:"Present"},
+ {id:"S005",name:"Yazar Hein Htike",email:"yazar@example.com",cls:"1K",course:"Programming",score:90,att:"Present"},
+ {id:"S006",name:"Phyo Thwe Thwe Tun",email:"phyo@example.com",cls:"2K",course:"Web Design",score:84,att:"Absent"},
+ {id:"S007",name:"Min Khant Ko",email:"minkhant@example.com",cls:"1K",course:"Database",score:71,att:"Present"},
+ {id:"S008",name:"Su Myat Noe",email:"su@example.com",cls:"2K",course:"Network",score:81,att:"Present"},
+];
+let role = "Admin";
+let seq = 9;
+
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2600); }
+function showView(v){
+  document.querySelectorAll('.view').forEach(s=>s.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+
+function render(){
+  const q=(document.getElementById('search').value||'').toLowerCase();
+  const cf=document.getElementById('classFilter').value;
+  const af=document.getElementById('attFilter').value;
+  const filtered=students.filter(s=>(!q|| (s.name+' '+s.id+' '+s.email).toLowerCase().includes(q)) && (!cf||s.cls===cf) && (!af||s.att===af));
+  const tbody=document.getElementById('tbody');
+  if(!filtered.length){ tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">ရှာမတွေ့ပါ — Search keyword ပြောင်းကြည့်ပါ</td></tr>'; }
+  else tbody.innerHTML=filtered.map(s=>`<tr><td><code>${s.id}</code></td><td><strong>${escapeHtml(s.name)}</strong><br><span class="mini">${escapeHtml(s.email)}</span></td><td>${s.cls}</td><td>${s.course}</td><td><strong>${s.score}</strong> / 100</td><td><select data-att="${s.id}" ${role==='Student'?'disabled':''} style="min-height:38px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:6px"><option ${s.att==='Present'?'selected':''}>Present</option><option ${s.att==='Absent'?'selected':''}>Absent</option><option ${s.att==='Late'?'selected':''}>Late</option></select></td><td>${role==='Admin'?`<button class="icon-btn" data-del="${s.id}">Delete</button>`: role==='Teacher'?'<span class="mini">Edit only</span>':'<span class="mini">View only</span>'}</td></tr>`).join('');
+  document.getElementById('statTotal').textContent=students.length;
+  document.getElementById('statPresent').textContent=students.filter(s=>s.att==='Present').length+' / '+students.length;
+  document.getElementById('statAvg').textContent= students.length? Math.round(students.reduce((a,s)=>a+s.score,0)/students.length):0;
+  document.querySelectorAll('[data-att]').forEach(sel=>sel.addEventListener('change',e=>{ const st=students.find(x=>x.id===e.target.dataset.att); st.att=e.target.value; render(); toast(st.name+' — '+st.att+' လို့ မှတ်ထားပါပြီ'); }));
+  document.getElementById('adminForm').style.display = role==='Student' ? 'none':'block';
+  document.getElementById('roleLabel').textContent='Role: '+role;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+document.getElementById('search').addEventListener('input',render);
+document.getElementById('classFilter').addEventListener('change',render);
+document.getElementById('attFilter').addEventListener('change',render);
+
+const USERS=[
+ {username:'admin',password:'admin123',role:'Admin',name:'System Admin'},
+ {username:'teacher',password:'teach123',role:'Teacher',name:'Teacher'},
+ {username:'student',password:'study123',role:'Student',name:'Student'}
+];
+let currentUser=null;
+function setLoggedIn(u){
+  currentUser=u; role=u.role;
+  document.getElementById('authPanel').style.display='none';
+  document.getElementById('demoShell').style.display='block';
+  document.getElementById('loginInfo').textContent = 'Logged in as '+u.name+' ('+u.role+' / @'+u.username+') — '+(role==='Admin'?'အကုန် ပြင်/ဖျက်/ထည့် လုပ်နိုင်ပါတယ်':role==='Teacher'?'ထည့်နိုင် / Attendance ပြင်နိုင်တယ်၊ Delete မရပါ':'ကိုယ့်အချက်အလက်ပဲ ကြည့်နိုင်ပါတယ် (View only)');
+  render(); toast(u.role+' အဖြစ် ဝင်လိုက်ပါပြီ — မင်္ဂလာပါ '+u.name);
+}
+document.querySelectorAll('[data-fill]').forEach(b=>b.addEventListener('click',()=>{
+  const u=USERS.find(x=>x.username===b.dataset.fill); if(!u) return;
+  document.getElementById('loginUser').value=u.username; document.getElementById('loginPass').value=u.password;
+  document.getElementById('loginError').style.display='none'; toast('Form ဖြည့်ပြီးပါပြီ — Login နှိပ်ပါ');
+}));
+document.getElementById('loginForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const un=document.getElementById('loginUser').value.trim(), pw=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+  const u=USERS.find(x=>x.username.toLowerCase()===un.toLowerCase() && x.password===pw);
+  if(!u){ err.textContent='Username သို့မဟုတ် Password မှားနေပါတယ်။ Demo account ကို Quick fill နဲ့ စမ်းကြည့်ပါ။'; err.style.display='block'; return; }
+  err.style.display='none'; setLoggedIn(u);
+});
+document.getElementById('regForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=document.getElementById('regName').value.trim(), un=document.getElementById('regUser').value.trim(), pw=document.getElementById('regPass').value, rl=document.getElementById('regRole').value;
+  const err=document.getElementById('regError');
+  if(!name||!un){ err.textContent='နာမည်နဲ့ Username ဖြည့်ပါ။'; err.style.display='block'; return; }
+  if(pw.length<6){ err.textContent='Password အနည်းဆုံး 6 လုံး ရှိရပါမယ်။'; err.style.display='block'; return; }
+  if(USERS.some(x=>x.username.toLowerCase()===un.toLowerCase())){ err.textContent='ဒီ Username ရှိပြီးသားပါ — တခြား Username ရွေးပါ။'; err.style.display='block'; return; }
+  const nu={username:un,password:pw,role:rl,name:name}; USERS.push(nu); err.style.display='none'; setLoggedIn(nu); toast('အကောင့်အသစ် ဖွင့်ပြီးပါပြီ');
+});
+document.getElementById('logoutBtn').addEventListener('click',()=>{
+  currentUser=null; document.getElementById('demoShell').style.display='none'; document.getElementById('authPanel').style.display='grid'; toast('Logout လုပ်ပြီးပါပြီ');
+});
+
+document.getElementById('addForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const name=document.getElementById('fName').value.trim();
+  const email=document.getElementById('fEmail').value.trim();
+  const score=Number(document.getElementById('fScore').value);
+  if(!name){ toast('⚠ နာမည် ဖြည့်ပါ'); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ toast('⚠ Email ပုံစံ မမှန်ပါ'); return; }
+  if(isNaN(score)||score<0||score>100){ toast('⚠ Score ဟာ 0–100 အတွင်း ဖြစ်ရပါမယ်'); return; }
+  if(students.some(s=>s.email.toLowerCase()===email.toLowerCase())){ toast('⚠ ဒီ Email နဲ့ ကျောင်းသား ရှိပြီးသားပါ'); return; }
+  students.unshift({id:'S'+String(seq++).padStart(3,'0'),name,email,cls:document.getElementById('fClass').value,course:document.getElementById('fCourse').value,score,att:document.getElementById('fAtt').value});
+  e.target.reset(); document.getElementById('fScore').value=80; render(); toast('ကျောင်းသားအသစ် ထည့်ပြီးပါပြီ');
+});
+
+// Two-step delete (iframe-safe, in-page UI only)
+function setupDelete(){
+  document.querySelectorAll('[data-del]').forEach(btn=>{
+    btn.onclick=()=>{
+      if(btn.dataset.confirm==='1'){
+        const id=btn.dataset.del; const st=students.find(x=>x.id===id); students=students.filter(x=>x.id!==id); render(); toast('ဖျက်ပြီးပါပြီ — '+(st?st.name:id));
+      } else {
+        btn.dataset.confirm='1'; btn.textContent='Sure? Tap again'; btn.style.background='#fde8e3'; setTimeout(()=>{ if(btn.isConnected){btn.dataset.confirm=''; btn.textContent='Delete'; btn.style.background='';}},3000);
+      }
+    };
+  });
+}
+const origRender=render;
+render=function(){ origRender(); setupDelete(); };
+
+// Code explorer
+const fileList=document.getElementById('fileList');
+Object.keys(FILES).forEach(name=>{
+  const b=document.createElement('button'); b.className='file-btn'+(name===currentFile?' active':''); b.textContent=name; b.onclick=()=>{currentFile=name; document.querySelectorAll('.file-btn').forEach(x=>x.classList.toggle('active',x.textContent===name)); showFile();}; fileList.appendChild(b);
+});
+function showFile(){ document.getElementById('fileName').textContent=currentFile+' — '+FILES[currentFile].lang; document.getElementById('codeView').textContent=FILES[currentFile].code; }
+function copyCode(){ navigator.clipboard && navigator.clipboard.writeText(FILES[currentFile].code).then(()=>toast('Copied — '+currentFile)); }
+function downloadBlob(name, text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'})); a.download=name.split('/').pop(); a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000); }
+function downloadCurrent(){ downloadBlob(currentFile, FILES[currentFile].code); toast('Download — '+currentFile); }
+function downloadAll(){ Object.keys(FILES).forEach((k,i)=>setTimeout(()=>downloadBlob(k, FILES[k].code), i*350)); toast('Project files download စတင်ပါပြီ — '+Object.keys(FILES).length+' files'); }
+showFile(); render();
+</script>
+</body>
+</html>
