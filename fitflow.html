@@ -147,6 +147,15 @@ h3{font-size:15px;margin:0;font-weight:700}
 .ex-art svg{width:52px;height:52px}
 .ex-art .diff{position:absolute;top:10px;right:10px}
 
+/* video tutorial */
+.video-wrap{position:relative;border-radius:12px;overflow:hidden;background:#0B1220;aspect-ratio:16/9;margin-bottom:14px}
+.video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.video-facade{position:absolute;inset:0;width:100%;height:100%;padding:0;display:block;min-height:0}
+.video-facade img{width:100%;height:100%;object-fit:cover;display:block}
+.video-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:62px;height:62px;border-radius:50%;background:#DC2626;color:#fff;display:grid;place-items:center;box-shadow:var(--shadow-lg)}
+.video-play svg{margin-left:3px}
+.video-cap{position:absolute;left:12px;bottom:10px;background:rgba(8,15,30,.75);color:#fff;font-size:12.5px;font-weight:700;padding:4px 11px;border-radius:999px}
+
 /* modal / toast */
 .overlay{position:fixed;inset:0;background:rgba(8,15,30,.55);z-index:60;display:none;align-items:flex-end;justify-content:center;padding:0}
 .overlay.open{display:flex}
@@ -379,6 +388,9 @@ profileNamePh:"ဥပမာ - မောင်မောင်",targetWt:"ပန�
 I18N.en.addName="Set up your profile";I18N.en.addNameSub="Add your name so FitFlow can personalise your dashboard.";I18N.en.noActivityWeek="No workouts logged in the last 7 days yet — each bar is one day, oldest to newest.";
 I18N.ja.addName="プロフィールを設定";I18N.ja.addNameSub="名前を追加すると、ダッシュボードがパーソナライズされます。";I18N.ja.noActivityWeek="過去7日間のワークアウト記録はまだありません。各バーが1日分です（古い順）。";
 I18N.my.addName="ပရိုဖိုင် သတ်မှတ်ရန်";I18N.my.addNameSub="သင့်နာမည် ထည့်လိုက်ရင် ဒက်ရှ်ဘုတ်ကို သင့်အတွက် သီးသန့် ပြပေးပါမယ်။";I18N.my.noActivityWeek="လွန်ခဲ့သော ၇ ရက်အတွင်း လေ့ကျင့်ခန်း မှတ်တမ်း မရှိသေးပါ — ဘားတစ်ခုချင်းစီက တစ်ရက်စီ ဖြစ်ပါတယ် (အဟောင်းမှ အသစ်)။";
+I18N.en.watchVideo="Watch video";I18N.en.videoTutorial="Video tutorial";I18N.en.onYouTube="Watch on YouTube";
+I18N.ja.watchVideo="動画を見る";I18N.ja.videoTutorial="動画チュートリアル";I18N.ja.onYouTube="YouTubeで開く";
+I18N.my.watchVideo="ဗီဒီယို ကြည့်ရန်";I18N.my.videoTutorial="ဗီဒီယို သင်ခန်းစာ";I18N.my.onYouTube="YouTube မှာ ဖွင့်ကြည့်ရန်";
 let LANG="en";
 function t(k){return (I18N[LANG]&&I18N[LANG][k])||I18N.en[k]||k;}
 function L(o){return o[LANG]||o.en;}
@@ -407,6 +419,8 @@ const EX=[
 {id:"burpee",cat:"fullbody",diff:"advanced",eq:"none",sets:3,reps:"10",name:{en:"Burpee",ja:"バーピー",my:"ဘာပီ"},muscle:{en:"Whole body",ja:"全身",my:"တစ်ကိုယ်လုံး"},steps:{en:["From standing, squat down and place your hands on the floor.","Jump your feet back into a plank, then return them forward.","Jump up explosively with arms overhead."],ja:["立った姿勢からしゃがみ、両手を床につきます。","足を後ろへ跳ばしてプランクになり、前に戻します。","腕を上げながら力強く跳び上がります。"],my:["ရပ်နေရာမှ ထိုင်ချပြီး လက်များကို ကြမ်းပြင်မှာ တင်ပါ။","ခြေများကို နောက်သို့ ခုန်ပြီး ပလန့်ခ် ဖြစ်အောင် လုပ်ကာ ရှေ့ ပြန်ခုန်ပါ။","လက်များ ခေါင်းပေါ် မြှောက်ပြီး အားကုန် ခုန်တက်ပါ။"]}},
 {id:"kbswing",cat:"fullbody",diff:"intermediate",eq:"kettlebell",sets:4,reps:"15",name:{en:"Kettlebell Swing",ja:"ケトルベルスイング",my:"ကတ်တယ်ဘဲလ် လွှဲ"},muscle:{en:"Glutes, back, core",ja:"臀部・背中・体幹",my:"တင်ပါး၊ ကျော၊ ဝမ်းဗိုက်"},steps:{en:["Stand over the kettlebell, hinge at the hips and grip the handle.","Snap your hips forward to swing the bell to chest height.","Let it swing back between your legs and repeat."],ja:["ケトルベルの後ろに立ち、股関節を曲げてハンドルを握ります。","腰を素早く前に出して胸の高さまで振ります。","脚の間に戻して繰り返します。"],my:["ကတ်တယ်ဘဲလ် နောက်မှာ ရပ်ပြီး တင်ပါး ကွေးကာ လက်ကိုင် ကိုင်ပါ။","တင်ပါးကို ရှေ့သို့ မြန်မြန် တွန်းပြီး ရင်ဘတ်အမြင့်ထိ လွှဲပါ။","ခြေကြားသို့ ပြန်လွှဲစေပြီး ထပ်လုပ်ပါ။"]}}
 ];
+/* YouTube form-tutorial video for each exercise (verified video IDs) */
+const YT={pushup:"IODxDxX7oi4",benchpress:"vthMCtgVtFw",chestfly:"Nhvz9EzdJ4U",deadlift:"Y1IGeJEXpF4",row:"6gvmcqr226U",pullup:"WuAAWQshbTM",ohp:"rO_iEImwHyo",latraise:"3VcKaXpzqRo",curl:"d_TfENBv38s",dip:"0326dy_-CzM",squat:"cB0cOX7gePg",lunge:"zaqg34xIrUU",calfraise:"Zep-wKHWkNM",plank:"QE99LfGizMk",crunch:"NnVhqMQRvmM",running:"andAaS6Lyc8",jack:"ttVmvj88Zwc",burpee:"qLBImHhCXSw",kbswing:"ZYgRuQoh6Qc"};
 const FOODS=[
 {name:{en:"Steamed rice (1 bowl)",ja:"ご飯（1杯）",my:"ထမင်း (၁ ပန်းကန်)"},kcal:250,p:4,c:55,f:0},
 {name:{en:"Grilled chicken breast",ja:"鶏むね肉グリル",my:"ကြက်ရင်အုံ ကင်"},kcal:165,p:31,c:0,f:4},
@@ -552,7 +566,7 @@ function exCard(e){var cs=CAT_STYLE[e.cat];
  return '<div class="card ex-card" style="padding:14px"><div class="ex-art" style="background:'+cs[0]+';color:'+cs[1]+'">'+ic(cs[2],52)+'<span class="tag diff" style="background:var(--surface);color:var(--ink2)">'+t(e.diff)+'</span></div>'
  +'<b style="font-size:15.5px">'+esc(L(e.name))+'</b><div class="sub">'+esc(L(e.muscle))+'</div>'
  +'<div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap"><span class="tag s">'+t(e.cat)+'</span><span class="tag s">'+t(e.eq)+'</span><span class="tag s">'+e.sets+' '+t("sets")+' × '+esc(e.reps)+'</span></div>'
- +'<button class="btn ghost sm" style="width:100%" onclick="openExercise(\''+e.id+'\')">'+t("instructions")+'</button></div>';}
+ +'<div style="display:flex;gap:8px"><button class="btn ghost sm" style="flex:1" onclick="openExercise(\''+e.id+'\')">'+t("instructions")+'</button>'+(YT[e.id]?'<button class="btn sm" style="flex:1" onclick="openExercise(\''+e.id+'\',true)">'+ic("play",14)+' '+t("watchVideo")+'</button>':"")+'</div></div>';}
 function vExercises(){var list=EX.filter(function(e){return (exFilter==="all"||e.cat===exFilter)&&(!exQuery||(e.name.en+" "+e.name.ja+" "+e.name.my+" "+e.muscle.en).toLowerCase().indexOf(exQuery.toLowerCase())>=0);});
  var h='<div style="margin-bottom:16px"><h1>'+t("exercises")+'</h1><p class="sub" style="margin:0">'+EX.length+' '+t("exercisesCount")+'</p></div>'
  +'<div class="field" style="margin-bottom:12px"><input id="exSearch" type="search" placeholder="'+t("searchPh")+'" value="'+esc(exQuery)+'"></div>'
@@ -674,8 +688,12 @@ function submitWeight(){var v=parseFloat($("#wVal").value),d=$("#wDate").value||
  var kg=S.settings.units==="imperial"?+(v/2.20462).toFixed(1):v;
  S.weights=S.weights.filter(function(x){return x.date!==d;});S.weights.push({date:d,kg:kg});save();closeSheet();toast(t("weightAdded"),"ok");renderNav();if(VIEW==="progress"||VIEW==="dashboard")render();else render();}
 function delWeight(d,kg){confirmDlg(t("confirmDelete"),function(){S.weights=S.weights.filter(function(x){return !(x.date===d&&x.kg===kg);});save();toast(t("deletedOk"),"ok");render();});}
-function openExercise(id){var e=exById(id),cs=CAT_STYLE[e.cat];
- openSheet('<div class="ex-art" style="background:'+cs[0]+';color:'+cs[1]+';height:120px">'+ic(cs[2],54)+'<span class="tag diff" style="background:var(--surface);color:var(--ink2)">'+t(e.diff)+'</span></div>'
+function videoHTML(e,autoplay){var vid=YT[e.id];if(!vid)return "";
+ if(autoplay)return '<div class="video-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+vid+'?autoplay=1&rel=0" title="'+esc(L(e.name))+' — YouTube" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
+ return '<div class="video-wrap"><button class="video-facade" onclick="playVideo(this,\''+vid+'\')" aria-label="'+t("watchVideo")+'"><img src="https://i.ytimg.com/vi/'+vid+'/hqdefault.jpg" alt="'+esc(L(e.name))+'" loading="lazy" onerror="this.style.display=\'none\'"><span class="video-play">'+ic("play",26)+'</span><span class="video-cap">'+t("videoTutorial")+' · YouTube</span></button></div>';}
+function playVideo(btn,vid){var w=btn.parentElement;w.innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+vid+'?autoplay=1&rel=0" title="YouTube" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';}
+function openExercise(id,autoplay){var e=exById(id),cs=CAT_STYLE[e.cat];var vid=videoHTML(e,autoplay);
+ openSheet((vid?vid+'<div style="display:flex;justify-content:flex-end;margin:-4px 0 10px"><a href="https://www.youtube.com/watch?v='+YT[e.id]+'" target="_blank" rel="noopener" style="font-weight:700;font-size:13px">'+t("onYouTube")+' ↗</a></div>':'<div class="ex-art" style="background:'+cs[0]+';color:'+cs[1]+';height:120px">'+ic(cs[2],54)+'<span class="tag diff" style="background:var(--surface);color:var(--ink2)">'+t(e.diff)+'</span></div>')
  +'<h2 style="font-size:20px">'+esc(L(e.name))+'</h2><p class="sub" style="margin:2px 0 12px">'+esc(L(e.muscle))+'</p>'
  +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px"><span class="tag s">'+t("category")+': '+t(e.cat)+'</span><span class="tag s">'+t("equipment")+': '+t(e.eq)+'</span><span class="tag g">'+t("recommended")+': '+e.sets+' '+t("sets")+' × '+esc(e.reps)+'</span></div>'
  +'<h3 style="margin-bottom:8px">'+t("instructions")+'</h3><ol style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:7px">'+L(e.steps).map(function(s){return '<li>'+esc(s)+'</li>';}).join("")+'</ol>'
