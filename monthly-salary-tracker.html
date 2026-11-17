@@ -1,0 +1,1312 @@
+<!doctype html>
+<html lang="my">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Monthly Salary Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Padauk:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+      :root{
+        --paper:#f3ecda;
+        --paper-deep:#e9dfc6;
+        --card:#fffdf4;
+        --card-edge:#d9cdae;
+        --ink:#22304f;
+        --ink-soft:#5d6577;
+        --ink-faint:#8b8fa0;
+        --red:#bc3a24;
+        --red-soft:#f6ddd3;
+        --gold:#a97e22;
+        --green:#3d6b4f;
+        --line:#ddd2b8;
+        --field:#fbf7ea;
+        --tab-bg:#fdfaf0;
+        --shadow:0 10px 30px rgba(34,48,79,.14);
+        --serif:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+        --sans:"Zen Kaku Gothic New","Padauk","Hiragino Kaku Gothic ProN","Noto Sans Myanmar",sans-serif;
+      }
+      [data-theme="dark"]{
+        --paper:#10151f;
+        --paper-deep:#0b0f16;
+        --card:#1c2434;
+        --card-edge:#39445c;
+        --ink:#ece4cf;
+        --ink-soft:#a7adbc;
+        --ink-faint:#7c8496;
+        --red:#e0684c;
+        --red-soft:#3d2a26;
+        --gold:#d3a94e;
+        --green:#7fb08f;
+        --line:#333f57;
+        --field:#232d42;
+        --tab-bg:#171e2c;
+        --shadow:0 10px 30px rgba(0,0,0,.5);
+      }
+      *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+      html,body{margin:0;padding:0}
+      body{
+        font-family:var(--sans);
+        background:var(--paper-deep);
+        color:var(--ink);
+        font-size:15px;
+        line-height:1.55;
+      }
+      /* faint ledger ruling on the backdrop */
+      body::before{
+        content:"";position:fixed;inset:0;pointer-events:none;
+        background:repeating-linear-gradient(to bottom,transparent 0 31px,rgba(120,100,50,.05) 31px 32px);
+      }
+      #app{
+        max-width:470px;margin:0 auto;min-height:100dvh;
+        background:var(--paper);
+        box-shadow:0 0 0 1px var(--card-edge),var(--shadow);
+        display:flex;flex-direction:column;position:relative;
+      }
+      main{flex:1;padding:14px 14px 96px}
+      button,[role="button"],select,input:not([type="checkbox"]){min-height:38px}
+      button{font-family:var(--sans);cursor:pointer}
+      .hidden{display:none!important}
+
+      /* ---------- payslip ---------- */
+      .slip{
+        background:var(--card);
+        border:1.5px solid var(--ink);
+        outline:3px solid var(--card);
+        box-shadow:0 0 0 4.5px var(--ink);
+        margin:6px 2px 16px;
+        padding:16px 16px 14px;
+        position:relative;
+      }
+      .slip::after{ /* perforated bottom edge */
+        content:"";position:absolute;left:0;right:0;bottom:-9px;height:6px;
+        background:radial-gradient(circle at 6px 3px,var(--paper) 2.6px,transparent 3px) repeat-x;
+        background-size:14px 6px;
+      }
+      .slip-head{
+        display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+        border-bottom:2.5px double var(--ink);padding-bottom:10px;
+      }
+      .slip-title{font-family:var(--serif);font-weight:800;font-size:21px;letter-spacing:.14em}
+      .slip-sub{font-size:11.5px;color:var(--ink-soft);letter-spacing:.06em;margin-top:2px}
+      .hanko{
+        flex:none;width:52px;height:52px;border:2.5px solid var(--red);border-radius:6px;
+        color:var(--red);display:flex;align-items:center;justify-content:center;
+        font-family:var(--serif);font-weight:800;font-size:15px;line-height:1.15;text-align:center;
+        transform:rotate(-5deg);opacity:.92;letter-spacing:.05em;
+        box-shadow:inset 0 0 0 1.5px var(--card),inset 0 0 0 3px var(--red);
+        padding:4px;
+      }
+      .period-nav{display:flex;align-items:center;gap:8px;margin-top:12px}
+      .period-nav .p-label{flex:1;text-align:center}
+      .p-range{font-family:var(--serif);font-weight:700;font-size:16.5px}
+      .p-payday{font-size:12.5px;color:var(--red);font-weight:700;margin-top:1px}
+      .nav-btn{
+        width:42px;height:42px;flex:none;border:1.5px solid var(--ink);background:var(--card);
+        color:var(--ink);font-size:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+      }
+      .nav-btn:active{transform:translateY(1px)}
+      .gross{margin:14px 0 4px;text-align:center}
+      .gross .g-label{font-size:12px;letter-spacing:.28em;color:var(--ink-soft)}
+      .gross .g-amount{font-family:var(--serif);font-weight:800;font-size:44px;line-height:1.1;letter-spacing:.01em}
+      .gross .g-amount small{font-size:20px;font-weight:700}
+      .slip-rows{margin-top:10px;border-top:1px solid var(--line)}
+      .srow{
+        display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+        padding:7px 1px;border-bottom:1px dashed var(--line);font-size:14px;
+      }
+      .srow .k{color:var(--ink-soft)}
+      .srow .v{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+      .srow .v.neg{color:var(--red)}
+      .slip-actions{display:flex;gap:8px;margin-top:14px}
+      .btn{
+        border:1.5px solid var(--ink);background:var(--card);color:var(--ink);
+        padding:9px 12px;font-size:13.5px;font-weight:700;border-radius:4px;flex:1;
+        display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;
+      }
+      .btn.primary{background:var(--ink);color:var(--paper)}
+      .btn.red{background:var(--red);border-color:var(--red);color:#fff}
+      .btn:active{transform:translateY(1px)}
+      .btn.small{flex:none;min-height:38px;padding:6px 12px}
+
+      .section-head{
+        display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+        margin:22px 2px 10px;
+      }
+      .section-head h2{font-family:var(--serif);font-size:17px;font-weight:800;letter-spacing:.08em;margin:0}
+      .section-head .hint{font-size:12px;color:var(--ink-faint)}
+
+      /* daily record rows */
+      .dayrow{
+        width:100%;text-align:left;background:var(--card);border:1px solid var(--card-edge);
+        border-left:4px solid var(--ink);border-radius:3px;padding:10px 12px;margin-bottom:8px;
+        display:flex;gap:12px;align-items:center;color:var(--ink);
+      }
+      .dayrow.sun,.dayrow.hol{border-left-color:var(--red)}
+      .dayrow .d-num{font-family:var(--serif);font-weight:800;font-size:20px;width:34px;text-align:center;line-height:1}
+      .dayrow .d-num small{display:block;font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-top:3px;font-family:var(--sans)}
+      .dayrow.sun .d-num,.dayrow.hol .d-num{color:var(--red)}
+      .dayrow .d-main{flex:1;min-width:0}
+      .dayrow .d-shifts{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .dayrow .d-meta{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .dayrow .d-amt{font-family:var(--serif);font-weight:800;font-size:16px;white-space:nowrap}
+      .empty{
+        border:1.5px dashed var(--card-edge);border-radius:4px;padding:22px 16px;text-align:center;
+        color:var(--ink-soft);font-size:13.5px;background:var(--field);
+      }
+
+      /* ---------- calendar ---------- */
+      .cal-head{display:flex;align-items:center;gap:8px;margin:4px 0 10px}
+      .cal-head .c-title{flex:1;text-align:center;font-family:var(--serif);font-weight:800;font-size:19px;letter-spacing:.05em}
+      .cal-card{background:var(--card);border:1px solid var(--card-edge);border-radius:4px;padding:10px 8px 12px}
+      .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+      .cal-dow{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink-soft);padding:4px 0 6px}
+      .cal-dow.sun{color:var(--red)}
+      .cal-cell{
+        border:none;background:transparent;color:var(--ink);border-radius:4px;
+        min-height:56px;padding:4px 2px 3px;display:flex;flex-direction:column;align-items:center;gap:1px;
+        font-family:var(--sans);position:relative;
+      }
+      .cal-cell .n{font-family:var(--serif);font-weight:700;font-size:15.5px;line-height:1.15}
+      .cal-cell.sun .n,.cal-cell.hol .n{color:var(--red)}
+      .cal-cell.out{opacity:.32}
+      .cal-cell.today{box-shadow:inset 0 0 0 1.5px var(--gold)}
+      .cal-cell.inperiod{background:var(--field)}
+      .cal-cell .holname{font-size:8.6px;line-height:1.2;color:var(--red);text-align:center;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+      .cal-cell .amt{font-size:9.5px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;line-height:1.2}
+      .cal-cell .dots{display:flex;gap:3px;height:5px}
+      .cal-cell .dot{width:5px;height:5px;border-radius:50%}
+      .dot.day{background:var(--gold)} .dot.eve{background:var(--ink)}
+      .cal-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:10px;padding:0 2px}
+      .cal-legend span{display:inline-flex;align-items:center;gap:5px}
+      .cal-legend .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+      /* ---------- history ---------- */
+      .histrow{
+        width:100%;text-align:left;background:var(--card);border:1px solid var(--card-edge);border-radius:3px;
+        padding:12px 14px;margin-bottom:9px;display:flex;align-items:center;gap:12px;color:var(--ink);
+      }
+      .histrow .h-main{flex:1;min-width:0}
+      .histrow .h-range{font-family:var(--serif);font-weight:800;font-size:15.5px}
+      .histrow .h-meta{font-size:12px;color:var(--ink-soft);margin-top:2px}
+      .histrow .h-amt{font-family:var(--serif);font-weight:800;font-size:18px;white-space:nowrap}
+      .histrow.current{border-color:var(--ink);box-shadow:inset 3px 0 0 var(--red)}
+
+      /* ---------- settings ---------- */
+      .card{background:var(--card);border:1px solid var(--card-edge);border-radius:4px;padding:14px;margin-bottom:14px}
+      .card h3{font-family:var(--serif);font-size:15.5px;font-weight:800;letter-spacing:.06em;margin:0 0 4px}
+      .card .desc{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px}
+      .field{margin-bottom:10px}
+      .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
+      .field input,.field select{
+        width:100%;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);
+        border-radius:4px;padding:8px 10px;font-size:15px;font-family:var(--sans);min-height:42px;
+      }
+      .field input:focus,.field select:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .seg{display:flex;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden}
+      .seg button{flex:1;border:none;background:var(--card);color:var(--ink);font-weight:700;font-size:13.5px;padding:9px 4px;min-height:42px}
+      .seg button.on{background:var(--ink);color:var(--paper)}
+      .tpl-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+      .tpl-row:last-child{border-bottom:none}
+      .tpl-row .wd{width:40px;flex:none;font-weight:800;font-size:13.5px}
+      .tpl-row .wd.sun{color:var(--red)}
+      .tpl-row select{flex:1;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);border-radius:4px;padding:6px 8px;font-size:13.5px;min-height:40px}
+      .tpl-row input[type="time"]{width:104px;flex:none;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);border-radius:4px;padding:6px;font-size:13.5px;min-height:40px}
+      .tpl-row .dash{color:var(--ink-faint);flex:none}
+      .dayrow.excluded{opacity:.58}
+      .dayrow.excluded .d-amt{text-decoration:line-through;font-size:14px}
+      .cal-cell.excluded .amt{display:none}
+      .cal-cell.excluded{background:var(--red-soft)}
+      .cal-cell.excluded .n{text-decoration:line-through}
+      .cal-cell .offlabel{font-size:8.6px;line-height:1.2;color:var(--red);font-weight:700;text-align:center}
+      .excluded-note{font-size:12px;font-weight:700;color:var(--red);margin-top:6px;background:var(--red-soft);border:1px solid var(--red);border-radius:4px;padding:8px 10px}
+
+      /* ---------- tab bar ---------- */
+      .tabbar{
+        position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+        width:100%;max-width:470px;background:var(--tab-bg);
+        border-top:1.5px solid var(--ink);
+        display:grid;grid-template-columns:repeat(4,1fr);
+        padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:40;
+      }
+      .tabbar button{
+        border:none;background:transparent;color:var(--ink-soft);
+        display:flex;flex-direction:column;align-items:center;gap:2px;
+        font-size:11px;font-weight:700;padding:6px 2px;min-height:52px;border-radius:4px;
+      }
+      .tabbar button svg{width:22px;height:22px}
+      .tabbar button.on{color:var(--red)}
+      .tabbar button.on .tab-jp{color:var(--red)}
+      .tab-jp{font-family:var(--serif);font-size:13px;font-weight:800;color:var(--ink);letter-spacing:.1em}
+
+      /* ---------- sheet (day editor) ---------- */
+      .sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+      .sheet-bg{position:absolute;inset:0;background:rgba(10,14,24,.55)}
+      .sheet{
+        position:relative;width:100%;max-width:470px;max-height:92dvh;overflow-y:auto;
+        background:var(--paper);border-top:2px solid var(--ink);border-radius:10px 10px 0 0;
+        padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+        animation:up .22s ease;
+      }
+      @keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+      @media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+      .sheet h3{font-family:var(--serif);font-size:19px;font-weight:800;margin:0}
+      .sheet .hol-line{font-size:13px;margin:4px 0 0}
+      .sheet .hol-line .rn{color:var(--red);font-weight:700}
+      .shift-card{background:var(--card);border:1px solid var(--card-edge);border-left:4px solid var(--gold);border-radius:3px;padding:12px;margin-top:12px}
+      .shift-card.eve{border-left-color:var(--ink)}
+      .shift-card .sc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+      .shift-card .sc-type{font-weight:900;font-size:14px;letter-spacing:.04em}
+      .icon-btn{border:1px solid var(--card-edge);background:var(--field);color:var(--red);border-radius:4px;width:38px;height:38px;font-size:16px;display:flex;align-items:center;justify-content:center}
+      .sc-result{
+        margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;
+        display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink-soft);
+      }
+      .sc-result b{color:var(--ink);font-variant-numeric:tabular-nums}
+      .sc-result .earn{font-family:var(--serif);font-size:16px;color:var(--ink)}
+      .sheet-actions{display:flex;gap:8px;margin-top:14px}
+      .toast{
+        position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);
+        background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:4px;font-size:13.5px;font-weight:700;
+        opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:88vw;text-align:center;
+      }
+      .toast.show{opacity:1;transform:translateX(-50%)}
+      .view-title{font-family:var(--serif);font-size:20px;font-weight:800;letter-spacing:.1em;margin:2px 0 2px}
+      .view-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px}
+
+      .credit-footer{
+        text-align:center;font-size:12.5px;color:var(--ink-faint);letter-spacing:.03em;
+        margin:24px 2px 4px;padding-top:12px;border-top:1px dashed var(--line);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <main>
+        <!-- DASHBOARD / PAYSLIP -->
+        <section id="view-slip">
+          <div class="slip">
+            <div class="slip-head">
+              <div>
+                <div class="slip-title" id="slipTitle">給与明細</div>
+                <div class="slip-sub" id="slipSub"></div>
+              </div>
+              <div class="hanko" id="hanko">給与<br />済</div>
+            </div>
+            <div class="period-nav">
+              <button class="nav-btn" id="prevPeriod" aria-label="Previous period">‹</button>
+              <div class="p-label">
+                <div class="p-range" id="periodRange"></div>
+                <div class="p-payday" id="periodPayday"></div>
+              </div>
+              <button class="nav-btn" id="nextPeriod" aria-label="Next period">›</button>
+            </div>
+            <div class="gross">
+              <div class="g-label" id="grossLabel"></div>
+              <div class="g-amount"><small>¥</small><span id="grossAmount">0</span></div>
+            </div>
+            <div class="slip-rows" id="slipRows"></div>
+            <div class="slip-actions">
+              <button class="btn" id="exportCsv">CSV</button>
+              <button class="btn" id="exportPdf">PDF</button>
+              <button class="btn primary" id="applyTpl"></button>
+            </div>
+          </div>
+          <div class="section-head">
+            <h2 id="dailyTitle"></h2>
+            <span class="hint" id="dailyHint"></span>
+          </div>
+          <div id="dailyList"></div>
+          <div class="credit-footer" data-credit></div>
+        </section>
+
+        <!-- CALENDAR -->
+        <section id="view-cal" class="hidden">
+          <h1 class="view-title" id="calViewTitle"></h1>
+          <p class="view-sub" id="calViewSub"></p>
+          <div class="cal-head">
+            <button class="nav-btn" id="prevMonth" aria-label="Previous month">‹</button>
+            <div class="c-title" id="calTitle"></div>
+            <button class="nav-btn" id="nextMonth" aria-label="Next month">›</button>
+          </div>
+          <div class="cal-card">
+            <div class="cal-grid" id="calDow"></div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+          <div class="cal-legend">
+            <span><i class="dot day"></i><span id="legDay"></span></span>
+            <span><i class="dot eve"></i><span id="legEve"></span></span>
+            <span style="color:var(--red);font-weight:700" id="legHol"></span>
+          </div>
+          <div class="credit-footer" data-credit></div>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="view-history" class="hidden">
+          <h1 class="view-title" id="histTitle"></h1>
+          <p class="view-sub" id="histSub"></p>
+          <div id="histList"></div>
+          <div class="credit-footer" data-credit></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="view-settings" class="hidden">
+          <h1 class="view-title" id="setTitle"></h1>
+          <p class="view-sub" id="setSub"></p>
+
+          <div class="card">
+            <h3 id="langTitle"></h3>
+            <div class="seg" id="langSeg">
+              <button data-lang="my">မြန်မာ</button>
+              <button data-lang="en">English</button>
+              <button data-lang="ja">日本語</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 id="themeTitle"></h3>
+            <div class="seg" id="themeSeg">
+              <button data-theme="auto"></button>
+              <button data-theme="light"></button>
+              <button data-theme="dark"></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 id="ratesTitle"></h3>
+            <p class="desc" id="ratesDesc"></p>
+            <div class="field"><label id="rateLabel"></label><input type="number" id="rateAll" inputmode="numeric" min="0" step="10" /></div>
+            <button class="btn primary" id="saveRates" style="width:100%"></button>
+          </div>
+
+          <div class="card">
+            <h3 id="redTitle"></h3>
+            <p class="desc" id="redDesc"></p>
+            <div class="seg" id="redSeg">
+              <button data-red="work"></button>
+              <button data-red="off"></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 id="tplTitle"></h3>
+            <p class="desc" id="tplDesc"></p>
+            <div id="tplRows"></div>
+            <button class="btn primary" id="saveTpl" style="width:100%;margin-top:12px"></button>
+          </div>
+
+          <div class="card">
+            <h3 id="dataTitle"></h3>
+            <p class="desc" id="dataDesc"></p>
+            <button class="btn red" id="wipeData" style="width:100%"></button>
+          </div>
+
+          <div class="credit-footer" data-credit></div>
+        </section>
+      </main>
+
+      <nav class="tabbar" id="tabbar">
+        <button data-view="slip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          <span class="tab-jp">明細</span><span data-i18n="tabSlip"></span>
+        </button>
+        <button data-view="cal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          <span class="tab-jp">暦</span><span data-i18n="tabCal"></span>
+        </button>
+        <button data-view="history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span class="tab-jp">履歴</span><span data-i18n="tabHist"></span>
+        </button>
+        <button data-view="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/></svg>
+          <span class="tab-jp">設定</span><span data-i18n="tabSet"></span>
+        </button>
+      </nav>
+    </div>
+
+    <div id="sheetRoot"></div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+    "use strict";
+    /* ================= i18n ================= */
+    var T = {
+      my: {
+        credit:"ရေးသားသူ - ရာဇာဟိန်းထိုက်",
+        tabSlip:"လစာစာရွက်", tabCal:"ပြက္ခဒိန်", tabHist:"မှတ်တမ်း", tabSet:"ဆက်တင်",
+        slipSub:"လစဉ် လစာစာရွက် · လ ၁ ရက်မှ လကုန်အထိ",
+        gross:"စုစုပေါင်း လစာ (အခွန်မနုတ်မီ)",
+        payday:"လစာရက်", paydayEarly:"10 ရက်နေ့က ပိတ်ရက်/စနေ/တနင်္ဂနွေ ဖြစ်လို့ စောပေးသည်", periodWord:"ကာလ",
+        rDayEarn:"နေ့ဆိုင်း ဝင်ငွေ", rEveEarn:"ညနေဆိုင်း ဝင်ငွေ",
+        rDays:"အလုပ်ဆင်းရက်", rHours:"စုစုပေါင်း အလုပ်ချိန်",
+        rLate:"နောက်ကျချိန် စုစုပေါင်း", rEarly:"စောပြန်ချိန် စုစုပေါင်း",
+        rHolHours:"ပိတ်ရက် အလုပ်ချိန်",
+        dailyTitle:"နေ့စဉ် မှတ်တမ်းများ", dailyHint:"ပြင်ရန် ရက်ကို နှိပ်ပါ",
+        emptyDays:"ဒီကာလအတွက် မှတ်တမ်း မရှိသေးပါ။ ပြက္ခဒိန်မှာ ရက်တစ်ရက်ကို နှိပ်ပြီး အလုပ်ချိန် ထည့်ပါ၊ ဒါမှမဟုတ် အပတ်စဉ်ဇယားကို တစ်ချက်တည်း ဖြည့်ပါ။",
+        applyTpl:"ဇယားအတိုင်း ဖြည့်မည်",
+        appliedTpl:"အပတ်စဉ်ဇယားအတိုင်း ဖြည့်ပြီးပါပြီ",
+        calTitle:"ပြက္ခဒိန်", calSub:"ရက်တစ်ရက်ကို နှိပ်ပြီး အလုပ်ချိန် မှတ်တမ်း ထည့်/ပြင်နိုင်ပါတယ်။ တနင်္ဂနွေနဲ့ ဂျပန်ပိတ်ရက်တွေကို အနီရောင်နဲ့ ပြထားပါတယ်။ ရက်တစ်ရက်ကို “ပိတ်ရက် အဖြစ် သတ်မှတ်မည်” ရွေးလိုက်ရင် အဲဒီရက်ကို အလုပ်မဆင်း/နားရက် အဖြစ် သတ်မှတ်ပြီး အဲဒီလရဲ့ လစာတွက်ချက်မှုကနေ လုံးဝ ဖယ်ထုတ်ပါမယ်။",
+        legDay:"နေ့ဆိုင်း", legEve:"ညနေဆိုင်း", legHol:"အနီ = တနင်္ဂနွေ / 祝日",
+        histTitle:"မှတ်တမ်း", histSub:"လစာကာလ အလိုက် မှတ်တမ်းများ။ တစ်ခုကို နှိပ်ရင် အဲဒီကာလကို ဖွင့်ပြပါမယ်။",
+        emptyHist:"မှတ်တမ်း မရှိသေးပါ။",
+        setTitle:"ဆက်တင်", setSub:"နှုန်းထားနဲ့ အပတ်စဉ်ဇယားကို ဒီမှာ ပြင်နိုင်ပါတယ်။",
+        langTitle:"ဘာသာစကား / Language",
+        pickTitle:"မင်္ဂလာပါ!",
+        pickSub:"သင် ဘယ်သူလဲ ရွေးပေးပါ — ရွေးလိုက်တဲ့ ဇာတ်ကောင်အလိုက် app ရဲ့ အရောင် theme ပြောင်းသွားပါမယ်။",
+        boy:"ယောကျာ်းလေး", girl:"မိန်းကလေး",
+        cheerTitle:"သင့်အတွက် ဂုဏ်ယူပါတယ်!",
+        cheerBody:"တစ်လလုံး ပင်ပင်ပန်းပန်း ကြိုးစားခဲ့တဲ့ သင့်အတွက် ဂုဏ်ယူပါတယ်။ အလုပ်ချိန်တိုင်း၊ မိနစ်တိုင်းက သင့်ရဲ့ ကြိုးစားမှုပါပဲ — အခု သင့်လစာကို ကြည့်လိုက်ရအောင်။",
+        enterBtn:"လစာစာရွက် ကြည့်မည်",
+        charTitle:"ဇာတ်ကောင် / Theme",
+        charDesc:"ရွေးထားတဲ့ ဇာတ်ကောင်အလိုက် app ရဲ့ အရောင် theme ပြောင်းပါတယ်။",
+        themeTitle:"အရောင် ပုံစံ", themeAuto:"အလိုအလျောက်", themeLight:"အလင်း", themeDark:"အမှောင်",
+        ratesTitle:"နှုန်းထား",
+        ratesDesc:"နားချိန် မရှိပါ — အလုပ်ဝင်ချိန်ကနေ ထွက်ချိန်အထိ အချိန်အားလုံး လစာရပါတယ်။ နောက်ကျ/စောပြန် အားလုံးကို မိနစ် အတိအကျနဲ့ တွက်ပါတယ်။",
+        rate:"တစ်နာရီ နှုန်း (¥) — နေ့ဆိုင်း နဲ့ ညနေဆိုင်း အတူတူပဲ",
+        save:"သိမ်းမည်", saved:"သိမ်းပြီးပါပြီ",
+        tplTitle:"အပတ်စဉ် အလုပ်ဇယား",
+        tplDesc:"နေ့အလိုက် ပုံမှန် အလုပ်ချိန်ကို သတ်မှတ်ထားပါ။ လစာစာရွက် စာမျက်နှာက “ဇယားအတိုင်း ဖြည့်မည်” ကို နှိပ်ရင် မှတ်တမ်း မရှိသေးတဲ့ ရက်တွေကို ဒီဇယားအတိုင်း ဖြည့်ပေးပါမယ် (ရှိပြီးသား မှတ်တမ်းကို မပြောင်းပါ)။",
+        off:"ပိတ်", dayShift:"နေ့ဆိုင်း", eveShift:"ညနေဆိုင်း",
+        redTitle:"အနီရက် အလုပ် (祝日)",
+        redDesc:"စနေ/တနင်္ဂနွေ မဟုတ်တဲ့ အစိုးရပိတ်ရက် (祝日) တွေမှာ အလုပ်ဆင်းမလား ရွေးပါ။ “ဆင်းမည်” ရွေးရင် ပုံမှန်အတိုင်း တွက်ပါမယ်။ “မဆင်းပါ” ရွေးရင် အဲဒီ ပိတ်ရက်က မှတ်တမ်းတွေကို လစာတွက်ချက်မှုကနေ ဖြုတ်ထားပါမယ် — မှတ်တမ်း မပျက်ပါဘူး၊ ပြန် “ဆင်းမည်” ရွေးရင် ပြန်တွက်ပေးပါမယ်။ ဇယားအတိုင်း ဖြည့်ရင်လည်း အဲဒီ ပိတ်ရက်တွေကို ကျော်ပါမယ်။ စနေနဲ့ တနင်္ဂနွေနေ့တွေကတော့ ဒီရွေးချယ်မှုနဲ့ မဆိုင်ဘဲ အမြဲ ပုံမှန်အတိုင်း တွက်ပါတယ်။ ဒါ့အပြင် ပြက္ခဒိန်/ရက်ပြင်တဲ့ နေရာမှာ ရက်တစ်ရက်ချင်းကို ကိုယ်တိုင် “ပိတ်ရက် အဖြစ် သတ်မှတ်မည်” ရွေးလိုက်ရင်လည်း ဒီ setting နဲ့ လုံးဝ မဆိုင်ဘဲ အဲဒီရက်ကို လစာတွက်ချက်မှု၊ စုစုပေါင်းနာရီ၊ အလုပ်ဆင်းရက် အရေအတွက်နဲ့ CSV/PDF export အားလုံးကနေ အမြဲ ဖယ်ထုတ်ပါမယ် — ပိတ်ရက် သတ်မှတ်လိုက်တာနဲ့ အလုပ်မလုပ်/နားတယ် ဆိုတဲ့ သဘောပါ။ မှတ်တမ်းကိုတော့ မဖျက်ပါဘူး၊ “ပိတ်ရက် မဟုတ်တော့ပါ” ပြန်ရွေးမှ ပြန်တွက်ပေးပါမယ်။",
+        redWork:"ဆင်းမည်", redOff:"မဆင်းပါ", redExcluded:"ပိတ်ရက် (祝日) — မတွက်ထားပါ", customExcluded:"ပိတ်ရက် အဖြစ် သတ်မှတ်ထားသည် — လစာထဲ မတွက်ပါ (နားရက် · အလုပ်မဆင်းပါ)", offShort:"နားရက်",
+        dataTitle:"ဒေတာ", dataDesc:"မှတ်တမ်းအားလုံး ဒီဖုန်းထဲမှာပဲ သိမ်းထားပါတယ်။",
+        wipe:"မှတ်တမ်း အားလုံး ဖျက်မည်", wipeConfirm:"မှတ်တမ်း အားလုံးကို တကယ် ဖျက်မှာလား? ပြန်ပြင်လို့ မရပါဘူး။",
+        cancel:"မလုပ်တော့ပါ", delete:"ဖျက်မည်", add:"ထည့်မည်", close:"ပိတ်မည်",
+        addDay:"＋ နေ့ဆိုင်း ထည့်မည်", addEve:"＋ ညနေဆိုင်း ထည့်မည်",
+        schedStart:"သတ်မှတ် အစ", schedEnd:"သတ်မှတ် အဆုံး", actIn:"တကယ် ဝင်ချိန်", actOut:"တကယ် ထွက်ချိန်",
+        payable:"လစာရချိန်", late:"နောက်ကျ", early:"စောပြန်", minutes:"မိနစ်",
+        holiday:"ပိတ်ရက်", sunday:"တနင်္ဂနွေ", workday:"အလုပ်ရက်",
+        holCustom:"ပိတ်ရက် အဖြစ် သတ်မှတ်မည်", holRemove:"ပိတ်ရက် မဟုတ်တော့ပါ",
+        holNamePh:"ပိတ်ရက် အမည်",
+        daysUnit:"ရက်", hoursUnit:"နာရီ",
+        noShifts:"ဒီနေ့ အလုပ်ဆိုင်း မရှိသေးပါ။",
+        today:"ယနေ့",
+        weekdays:["တနင်္ဂနွေ","တနင်္လာ","အင်္ဂါ","ဗုဒ္ဓဟူး","ကြာသပတေး","သောကြာ","စနေ"],
+        weekdaysShort:["နွေ","လာ","ဂါ","ဟူး","တေး","ကြာ","နေ"],
+        monthNames:["ဇန်နဝါရီ","ဖေဖော်ဝါရီ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","ဩဂုတ်","စက်တင်ဘာ","အောက်တိုဘာ","နိုဝင်ဘာ","ဒီဇင်ဘာ"]
+      },
+      en: {
+        credit:"Developed by - Yazar Hein Htike",
+        tabSlip:"Payslip", tabCal:"Calendar", tabHist:"History", tabSet:"Settings",
+        slipSub:"Monthly payslip · 1st – last day of the month",
+        gross:"TOTAL GROSS PAY",
+        payday:"Payday", paydayEarly:"Paid early — the 10th is a weekend / public holiday", periodWord:"Period",
+        rDayEarn:"Day shift earnings", rEveEarn:"Evening shift earnings",
+        rDays:"Working days", rHours:"Total working hours",
+        rLate:"Total late", rEarly:"Total early departure",
+        rHolHours:"Holiday working hours",
+        dailyTitle:"Daily records", dailyHint:"Tap a day to edit",
+        emptyDays:"No records in this period yet. Tap a date on the calendar to add hours, or fill the whole period from your weekly template.",
+        applyTpl:"Fill from template",
+        appliedTpl:"Period filled from your weekly template",
+        calTitle:"Calendar", calSub:"Tap any date to add or edit working hours. Sundays and Japanese public holidays are shown in red. If you mark a date as a holiday, that date is treated as a day off (no work) and is completely excluded from that month's salary calculation.",
+        legDay:"Day shift", legEve:"Evening shift", legHol:"Red = Sunday / holiday",
+        histTitle:"History", histSub:"Saved salary periods. Tap one to open it.",
+        emptyHist:"No records yet.",
+        setTitle:"Settings", setSub:"Hourly rate and your weekly template.",
+        langTitle:"Language / ဘာသာစကား",
+        pickTitle:"Welcome!",
+        pickSub:"Who are you? Pick your character — the app's colour theme will match your choice.",
+        boy:"Boy", girl:"Girl",
+        cheerTitle:"We're proud of you!",
+        cheerBody:"You worked hard all month long — every shift, every single minute. We're proud of you. Now let's see what you earned.",
+        enterBtn:"See my payslip",
+        charTitle:"Character / Theme",
+        charDesc:"The app's colour theme follows the character you picked.",
+        themeTitle:"Appearance", themeAuto:"Auto", themeLight:"Light", themeDark:"Dark",
+        ratesTitle:"Hourly rate",
+        ratesDesc:"There are no breaks — every minute from clock-in to clock-out is paid. Late arrivals and early departures are counted in exact minutes.",
+        rate:"Hourly rate (¥) — the same for day and evening shifts",
+        save:"Save", saved:"Saved",
+        tplTitle:"Weekly template",
+        tplDesc:"Set your usual shift for each weekday. “Fill from template” on the payslip fills only days that have no record yet — existing records are never changed.",
+        off:"Off", dayShift:"Day shift", eveShift:"Evening shift",
+        redTitle:"Work on public holidays",
+        redDesc:"Choose whether you work on public holidays (祝日) that are NOT Saturday or Sunday. “Work” calculates as usual. “Don't work” leaves those holiday records out of the salary calculation — records are kept, not deleted, and switching back to “Work” counts them again. Template fill also skips those holidays. Saturdays and Sundays are always calculated as usual, whichever you choose here. Separately, any single date you manually mark as a holiday in the calendar / day editor is ALWAYS excluded from salary, total hours, working-day count and CSV/PDF exports — regardless of this toggle — because marking it means you took that day off (no work). The record is kept; unmark it (“Not a holiday”) to count it again.",
+        redWork:"Work", redOff:"Don't work", redExcluded:"Public holiday — not counted", customExcluded:"Marked as holiday — excluded from salary (day off, no work)", offShort:"Day off",
+        dataTitle:"Data", dataDesc:"All records are stored on this phone only.",
+        wipe:"Delete all records", wipeConfirm:"Delete ALL records? This cannot be undone.",
+        cancel:"Cancel", delete:"Delete", add:"Add", close:"Close",
+        addDay:"＋ Add day shift", addEve:"＋ Add evening shift",
+        schedStart:"Scheduled start", schedEnd:"Scheduled end", actIn:"Clock in", actOut:"Clock out",
+        payable:"Payable", late:"Late", early:"Early", minutes:"min",
+        holiday:"Public holiday", sunday:"Sunday", workday:"Working day",
+        holCustom:"Mark as holiday", holRemove:"Not a holiday",
+        holNamePh:"Holiday name",
+        daysUnit:"days", hoursUnit:"h",
+        noShifts:"No shifts on this day yet.",
+        today:"Today",
+        weekdays:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        weekdaysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+        monthNames:["January","February","March","April","May","June","July","August","September","October","November","December"]
+      },
+      ja: {
+        credit:"開発者 - ヤザーヘインティケ",
+        tabSlip:"明細", tabCal:"カレンダー", tabHist:"履歴", tabSet:"設定",
+        slipSub:"月次 給与明細 · 1日 – 月末",
+        gross:"支給総額",
+        payday:"支給日", paydayEarly:"10日が土日・祝日のため前倒し", periodWord:"対象期間",
+        rDayEarn:"昼シフト 支給額", rEveEve:"", rEveEarn:"夜シフト 支給額",
+        rDays:"勤務日数", rHours:"総勤務時間",
+        rLate:"遅刻 合計", rEarly:"早退 合計",
+        rHolHours:"休日勤務時間",
+        dailyTitle:"日別 記録", dailyHint:"タップで編集",
+        emptyDays:"この期間の記録はまだありません。カレンダーの日付をタップして勤務を追加するか、週間テンプレートから一括入力してください。",
+        applyTpl:"テンプレートで入力",
+        appliedTpl:"週間テンプレートから入力しました",
+        calTitle:"カレンダー", calSub:"日付をタップすると勤務記録を追加・編集できます。日曜と祝日は赤色で表示します。日付を「祝日にする」と選ぶと、その日は休み（勤務なし）として、その月の給与計算から完全に除外されます。",
+        legDay:"昼シフト", legEve:"夜シフト", legHol:"赤 = 日曜 / 祝日",
+        histTitle:"履歴", histSub:"保存された給与期間です。タップで開きます。",
+        emptyHist:"記録はまだありません。",
+        setTitle:"設定", setSub:"時給と週間テンプレートを設定します。",
+        langTitle:"言語 / Language",
+        pickTitle:"ようこそ！",
+        pickSub:"キャラクターを選んでください。選んだキャラクターに合わせて、アプリの色テーマが変わります。",
+        boy:"男の子", girl:"女の子",
+        cheerTitle:"あなたのことを誇りに思います！",
+        cheerBody:"一ヶ月間、本当によく頑張りました。どのシフトも、どの一分も、あなたの努力です。さあ、今月のお給料を見てみましょう。",
+        enterBtn:"給与明細を見る",
+        charTitle:"キャラクター / テーマ",
+        charDesc:"選んだキャラクターに合わせて、アプリの色テーマが変わります。",
+        themeTitle:"表示モード", themeAuto:"自動", themeLight:"ライト", themeDark:"ダーク",
+        ratesTitle:"時給",
+        ratesDesc:"休憩はありません。出勤から退勤までの時間はすべて支給対象です。遅刻・早退は分単位で正確に計算します。",
+        rate:"時給 (¥) — 昼シフト・夜シフト共通",
+        save:"保存", saved:"保存しました",
+        tplTitle:"週間テンプレート",
+        tplDesc:"曜日ごとの通常シフトを設定します。「テンプレートで入力」は記録のない日だけを埋め、既存の記録は変更しません。",
+        off:"休み", dayShift:"昼シフト", eveShift:"夜シフト",
+        redTitle:"祝日の勤務（土日を除く）",
+        redDesc:"土曜・日曜ではない祝日に勤務するか選んでください。「勤務する」は通常どおり計算します。「勤務しない」を選ぶと、その祝日の記録は給与計算から外れます（記録は削除されません。「勤務する」に戻すと再び計算されます）。テンプレート入力でもその祝日はスキップします。土曜と日曜は、この設定に関係なく常に通常どおり計算します。さらに、カレンダー／日別編集で個別の日付を「祝日にする」と設定した場合は、この設定に関係なく、その日は常に給与・総時間・勤務日数・CSV/PDF出力のすべてから除外されます（休み＝勤務なしという意味です）。記録は削除されません。「祝日を解除」すると再び計算されます。",
+        redWork:"勤務する", redOff:"勤務しない", redExcluded:"祝日 — 計算対象外", customExcluded:"祝日に設定済み — 給与計算から除外（休み・勤務なし）", offShort:"休み",
+        dataTitle:"データ", dataDesc:"記録はこの端末内にのみ保存されます。",
+        wipe:"全記録を削除", wipeConfirm:"全ての記録を削除しますか？元に戻せません。",
+        cancel:"キャンセル", delete:"削除", add:"追加", close:"閉じる",
+        addDay:"＋ 昼シフト追加", addEve:"＋ 夜シフト追加",
+        schedStart:"予定 開始", schedEnd:"予定 終了", actIn:"出勤", actOut:"退勤",
+        payable:"支給対象", late:"遅刻", early:"早退", minutes:"分",
+        holiday:"祝日", sunday:"日曜日", workday:"平日",
+        holCustom:"祝日にする", holRemove:"祝日を解除",
+        holNamePh:"祝日の名前",
+        daysUnit:"日", hoursUnit:"時間",
+        noShifts:"この日のシフトはまだありません。",
+        today:"今日",
+        weekdays:["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"],
+        weekdaysShort:["日","月","火","水","木","金","土"],
+        monthNames:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]
+      }
+    };
+    function t(k){ return (T[state.lang] && T[state.lang][k]) || T.en[k] || k; }
+
+    /* ================= Japanese public holidays (rule-based) ================= */
+    function nthMonday(y, m, n){ var d = new Date(y, m-1, 1); var add = ((8 - d.getDay()) % 7) + (n-1)*7; return new Date(y, m-1, 1+add); }
+    function equinoxDay(y, kind){
+      var base = kind === "spring" ? 20.8431 : 23.2488;
+      var c = kind === "spring" ? 0.242194 : 0.242194;
+      return Math.floor(base + c * (y - 1980)) - Math.floor((y - 1980) / 4);
+    }
+    function dkey(y, m, d){ return y + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0"); }
+    function parseKey(k){ var p = k.split("-"); return { y:+p[0], m:+p[1], d:+p[2] }; }
+    function dateOf(k){ var p = parseKey(k); return new Date(p.y, p.m-1, p.d); }
+    var holCache = {};
+    function baseHolidays(y){
+      if (holCache[y]) return holCache[y];
+      var h = {};
+      function add(dt, name){ h[dkey(dt.getFullYear(), dt.getMonth()+1, dt.getDate())] = name; }
+      add(new Date(y,0,1), "元日");
+      add(nthMonday(y,1,2), "成人の日");
+      add(new Date(y,1,11), "建国記念の日");
+      add(new Date(y,1,23), "天皇誕生日");
+      add(new Date(y,2,equinoxDay(y,"spring")), "春分の日");
+      add(new Date(y,3,29), "昭和の日");
+      add(new Date(y,4,3), "憲法記念日");
+      add(new Date(y,4,4), "みどりの日");
+      add(new Date(y,4,5), "こどもの日");
+      add(nthMonday(y,7,3), "海の日");
+      add(new Date(y,7,11), "山の日");
+      add(nthMonday(y,9,3), "敬老の日");
+      add(new Date(y,8,equinoxDay(y,"autumn")), "秋分の日");
+      add(nthMonday(y,10,2), "スポーツの日");
+      add(new Date(y,10,3), "文化の日");
+      add(new Date(y,10,23), "勤労感謝の日");
+      /* 振替休日: holiday on Sunday -> next non-holiday weekday */
+      Object.keys(h).slice().forEach(function(k){
+        var dt = dateOf(k);
+        if (dt.getDay() === 0){
+          var nx = new Date(dt); 
+          do { nx.setDate(nx.getDate()+1); } while (h[dkey(nx.getFullYear(), nx.getMonth()+1, nx.getDate())]);
+          h[dkey(nx.getFullYear(), nx.getMonth()+1, nx.getDate())] = "振替休日";
+        }
+      });
+      /* 国民の休日: a weekday sandwiched between two holidays */
+      Object.keys(h).slice().forEach(function(k){
+        var dt = dateOf(k); var mid = new Date(dt); mid.setDate(mid.getDate()+1);
+        var mk = dkey(mid.getFullYear(), mid.getMonth()+1, mid.getDate());
+        var aft = new Date(dt); aft.setDate(aft.getDate()+2);
+        var ak = dkey(aft.getFullYear(), aft.getMonth()+1, aft.getDate());
+        if (!h[mk] && h[ak] && mid.getDay() !== 0) h[mk] = "国民の休日";
+      });
+      holCache[y] = h; return h;
+    }
+    function holidayName(key){
+      var ov = state.holidayOverrides[key];
+      if (ov === "off") return null;
+      if (typeof ov === "string" && ov) return ov;
+      var p = parseKey(key);
+      var h = baseHolidays(p.y);
+      return h[key] || null;
+    }
+    function isHoliday(key){ return !!holidayName(key); }
+    function isRedDay(key){ return isHoliday(key) || dateOf(key).getDay() === 0; }
+    /* The Settings toggle applies ONLY to public holidays that are NOT
+       Saturday or Sunday. Sundays (and Saturdays) always count as usual. */
+    function isWeekdayHoliday(key){
+      var dow = dateOf(key).getDay();
+      return isHoliday(key) && dow !== 0 && dow !== 6;
+    }
+    /* A date the user MANUALLY marked as a holiday (via “Mark as holiday”
+       in the day editor) — stored as a string name in holidayOverrides.
+       “off” means the user explicitly un-marked a built-in holiday, so it
+       is NOT a custom holiday. Built-in holidays with no override are
+       not custom either; they are governed by the workOnRed toggle. */
+    function isCustomHoliday(key){
+      if (!state || !state.holidayOverrides) return false;
+      var ov = state.holidayOverrides[key];
+      return typeof ov === "string" && ov !== "off" && ov.length > 0;
+    }
+    /* Excluded from ALL salary maths (totals, hours, day count, holiday
+       hours, CSV/PDF exports and template fill):
+         1. ANY manually-marked holiday — always, on any weekday incl.
+            Sat/Sun, regardless of the workOnRed setting. Marking a day
+            as a holiday means “did not work / day off”.
+         2. Weekday public holidays when the user chose “Don't work”
+            for red days in Settings.
+       Records themselves are never deleted; un-marking a custom holiday
+       (or switching the toggle back to “Work”) counts them again. */
+    function isExcluded(key){
+      if (!state) return false;
+      if (isCustomHoliday(key)) return true;
+      return state.workOnRed === false && isWeekdayHoliday(key);
+    }
+
+    /* ================= state ================= */
+    var LS_KEY = "monthly-salary-tracker-v1";
+    var defaultState = {
+      lang: "my", theme: "auto", workOnRed: true, ver: 2,
+      rates: { day: 1400, evening: 1400 },
+      template: {
+        "0": { type:"day", s:"10:00", e:"15:00" },
+        "1": { type:"evening", s:"14:00", e:"20:00" },
+        "2": { type:"evening", s:"14:00", e:"20:00" },
+        "3": { type:"evening", s:"14:00", e:"20:00" },
+        "4": { type:"evening", s:"14:00", e:"20:00" },
+        "5": { type:"evening", s:"14:00", e:"20:00" },
+        "6": null
+      },
+      records: {},
+      holidayOverrides: {}
+    };
+    var state;
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      state = raw ? Object.assign(JSON.parse(JSON.stringify(defaultState)), JSON.parse(raw)) : JSON.parse(JSON.stringify(defaultState));
+    } catch(e){ state = JSON.parse(JSON.stringify(defaultState)); }
+    function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){} }
+    /* one-time migration: installs saved with the old defaults (¥1,350,
+       day 07:00–16:00, evening 18:00–22:45) move to the new shift
+       definitions (¥1,400, day 10:00–15:00, evening 14:00–20:00).
+       Customised values and all records are left untouched. */
+    if (!state.ver || state.ver < 2){
+      if (state.rates.day === 1350) state.rates.day = 1400;
+      if (state.rates.evening === 1350) state.rates.evening = 1400;
+      Object.keys(state.template || {}).forEach(function(k){
+        var tp = state.template[k]; if (!tp) return;
+        if (tp.type === "day" && tp.s === "07:00" && tp.e === "16:00"){ tp.s = "10:00"; tp.e = "15:00"; }
+        if (tp.type === "evening" && tp.s === "18:00" && tp.e === "22:45"){ tp.s = "14:00"; tp.e = "20:00"; }
+      });
+      state.ver = 2; save();
+    }
+
+    /* ================= calc engine (exact minutes) ================= */
+    function toMin(hhmm){ if(!hhmm) return null; var p = hhmm.split(":"); return (+p[0])*60 + (+p[1]); }
+    function overlap(a1,a2,b1,b2){ var s = Math.max(a1,b1), e = Math.min(a2,b2); return e > s ? e - s : 0; }
+    function calcShift(sh){
+      var aIn = toMin(sh.actIn), aOut = toMin(sh.actOut);
+      var sIn = toMin(sh.schedS), sOut = toMin(sh.schedE);
+      var zero = { payable:0, breakMin:0, late:0, early:0, earn:0, gross:0 };
+      if (aIn === null || aOut === null || aOut <= aIn) return zero;
+      var gross = aOut - aIn;
+      /* no breaks: every minute from clock-in to clock-out is payable */
+      var breakMin = 0;
+      var payable = gross;
+      var rate = sh.type === "day" ? state.rates.day : state.rates.evening;
+      return {
+        gross: gross, breakMin: breakMin, payable: payable,
+        late: (sIn !== null) ? Math.max(0, aIn - sIn) : 0,
+        early: (sOut !== null) ? Math.max(0, sOut - aOut) : 0,
+        earn: Math.round(payable * rate / 60)
+      };
+    }
+    function dayShifts(key){ return state.records[key] || []; }
+    function dayTotal(key){
+      var tot = { payable:0, breakMin:0, late:0, early:0, earn:0, dayEarn:0, eveEarn:0 };
+      dayShifts(key).forEach(function(sh){
+        var c = calcShift(sh);
+        tot.payable += c.payable; tot.breakMin += c.breakMin;
+        tot.late += c.late; tot.early += c.early; tot.earn += c.earn;
+        if (sh.type === "day") tot.dayEarn += c.earn; else tot.eveEarn += c.earn;
+      });
+      return tot;
+    }
+
+    /* ================= salary periods (calendar month: 1st - last day, payday 10th next month) ================= */
+    function periodOf(date){
+      return periodByEnd(date.getFullYear(), date.getMonth()+1);
+    }
+    /* Payday is the 10th of the next month — but if the 10th falls on a
+       Saturday, Sunday or a public holiday (祝日, red day), payday moves
+       BACK to the nearest earlier day that is not Sat/Sun/holiday. */
+    function adjustedPayday(payY, payM){
+      var d = new Date(payY, payM - 1, 10);
+      while (true){
+        var dow = d.getDay();
+        var k = dkey(d.getFullYear(), d.getMonth() + 1, d.getDate());
+        if (dow !== 0 && dow !== 6 && !isHoliday(k)) break;
+        d.setDate(d.getDate() - 1);
+      }
+      return dkey(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    }
+    function periodByEnd(endY, endM){
+      var lastDay = new Date(endY, endM, 0).getDate();
+      var payY = endY, payM = endM + 1; if (payM > 12){ payM = 1; payY++; }
+      return {
+        start: dkey(endY, endM, 1), end: dkey(endY, endM, lastDay),
+        payday: adjustedPayday(payY, payM), endY: endY, endM: endM
+      };
+    }
+    function shiftPeriod(p, dir){
+      var m = p.endM + dir, y = p.endY;
+      if (m > 12){ m = 1; y++; } if (m < 1){ m = 12; y--; }
+      return periodByEnd(y, m);
+    }
+    function periodTotals(p){
+      var tot = { gross:0, dayEarn:0, eveEarn:0, days:0, payable:0, breakMin:0, late:0, early:0, holPayable:0 };
+      var d = dateOf(p.start), end = dateOf(p.end);
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        if (dayShifts(k).length && !isExcluded(k)){
+          var dt = dayTotal(k);
+          if (dt.payable > 0 || dt.earn > 0) tot.days++;
+          tot.gross += dt.earn; tot.dayEarn += dt.dayEarn; tot.eveEarn += dt.eveEarn;
+          tot.payable += dt.payable; tot.breakMin += dt.breakMin;
+          tot.late += dt.late; tot.early += dt.early;
+          if (isHoliday(k) || d.getDay() === 0) tot.holPayable += dt.payable;
+        }
+        d.setDate(d.getDate()+1);
+      }
+      return tot;
+    }
+    function fmtYen(n){ return n.toLocaleString("en-US"); }
+    function fmtHM(min){
+      var h = Math.floor(min/60), m = min % 60;
+      if (state.lang === "en") return h + "h " + String(m).padStart(2,"0") + "m";
+      if (state.lang === "ja") return h + "時間" + String(m).padStart(2,"0") + "分";
+      return h + " နာရီ " + m + " မိနစ်";
+    }
+    function fmtDate(key){
+      var p = parseKey(key), dt = dateOf(key);
+      var wd = t("weekdays")[dt.getDay()];
+      if (state.lang === "ja") return p.y + "年" + p.m + "月" + p.d + "日（" + t("weekdaysShort")[dt.getDay()] + "）";
+      if (state.lang === "en") return t("monthNames")[p.m-1] + " " + p.d + ", " + p.y + " (" + wd + ")";
+      return p.y + " " + t("monthNames")[p.m-1] + " " + p.d + " (" + wd + ")";
+    }
+    function fmtDateShort(key){
+      var p = parseKey(key);
+      if (state.lang === "ja") return p.m + "月" + p.d + "日";
+      if (state.lang === "my") return t("monthNames")[p.m-1] + " " + p.d;
+      return t("monthNames")[p.m-1].slice(0,3) + " " + p.d;
+    }
+
+    /* ================= UI state ================= */
+    var curPeriod = periodOf(new Date());
+    var calCursor = { y: new Date().getFullYear(), m: new Date().getMonth()+1 };
+    var curView = "slip";
+    var todayKey = dkey(new Date().getFullYear(), new Date().getMonth()+1, new Date().getDate());
+    var $ = function(id){ return document.getElementById(id); };
+    var toastTimer = null;
+    function toast(msg){
+      var el = $("toast"); el.textContent = msg; el.classList.add("show");
+      clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2200);
+    }
+    function applyTheme(){
+      var dark = state.theme === "dark" || (state.theme === "auto" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    }
+    function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+    /* ================= dashboard ================= */
+    function renderSlip(){
+      $("slipSub").textContent = t("slipSub");
+      $("grossLabel").textContent = t("gross");
+      $("applyTpl").textContent = t("applyTpl");
+      $("periodRange").textContent = fmtDateShort(curPeriod.start) + " – " + fmtDateShort(curPeriod.end);
+      $("periodPayday").textContent = t("payday") + ": " + fmtDate(curPeriod.payday) + (parseKey(curPeriod.payday).d !== 10 ? " (" + t("paydayEarly") + ")" : "");
+      var tot = periodTotals(curPeriod);
+      $("grossAmount").textContent = fmtYen(tot.gross);
+      var rows = [
+        ["rDayEarn", "¥" + fmtYen(tot.dayEarn), ""],
+        ["rEveEarn", "¥" + fmtYen(tot.eveEarn), ""],
+        ["rDays", tot.days + " " + t("daysUnit"), ""],
+        ["rHours", fmtHM(tot.payable), ""],
+        ["rLate", tot.late + " " + t("minutes"), tot.late ? "neg" : ""],
+        ["rEarly", tot.early + " " + t("minutes"), tot.early ? "neg" : ""],
+        ["rHolHours", fmtHM(tot.holPayable), ""]
+      ];
+      $("slipRows").innerHTML = rows.map(function(r){
+        return '<div class="srow"><span class="k">' + esc(t(r[0])) + '</span><span class="v ' + r[2] + '">' + esc(r[1]) + "</span></div>";
+      }).join("");
+      /* daily list */
+      $("dailyTitle").textContent = t("dailyTitle");
+      $("dailyHint").textContent = t("dailyHint");
+      var html = "", any = false;
+      var d = dateOf(curPeriod.start), end = dateOf(curPeriod.end);
+      var items = [];
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        if (dayShifts(k).length) items.push(k);
+        d.setDate(d.getDate()+1);
+      }
+      items.sort().reverse().forEach(function(k){
+        any = true;
+        var dt = dateOf(k), tot2 = dayTotal(k), hn = holidayName(k);
+        var isSun = dt.getDay() === 0;
+        var excluded = isExcluded(k);
+        var shiftTxt = dayShifts(k).map(function(sh){
+          return (sh.type === "day" ? t("dayShift") : t("eveShift")) + " " + sh.actIn + "–" + sh.actOut;
+        }).join(" · ");
+        var meta = [];
+        if (hn) meta.push(hn); else if (isSun) meta.push(t("sunday"));
+        if (excluded) meta.push(isCustomHoliday(k) ? t("customExcluded") : t("redExcluded"));
+        else {
+          meta.push(fmtHM(tot2.payable));
+          if (tot2.late) meta.push(t("late") + " " + tot2.late + t("minutes"));
+          if (tot2.early) meta.push(t("early") + " " + tot2.early + t("minutes"));
+        }
+        html += '<button class="dayrow' + (isSun || hn ? " sun" : "") + (excluded ? " excluded" : "") + '" data-date="' + k + '">' +
+          '<span class="d-num">' + dt.getDate() + "<small>" + esc(t("weekdaysShort")[dt.getDay()]) + "</small></span>" +
+          '<span class="d-main"><span class="d-shifts">' + esc(shiftTxt) + '</span><br /><span class="d-meta">' + esc(meta.join(" · ")) + "</span></span>" +
+          '<span class="d-amt">¥' + fmtYen(excluded ? 0 : tot2.earn) + "</span></button>";
+      });
+      $("dailyList").innerHTML = any ? html : '<div class="empty">' + esc(t("emptyDays")) + "</div>";
+      Array.prototype.forEach.call($("dailyList").querySelectorAll("[data-date]"), function(b){
+        b.addEventListener("click", function(){ openDay(b.getAttribute("data-date")); });
+      });
+    }
+
+    /* ================= calendar ================= */
+    function renderCal(){
+      $("calViewTitle").textContent = t("calTitle");
+      $("calViewSub").textContent = t("calSub");
+      $("legDay").textContent = t("legDay");
+      $("legEve").textContent = t("legEve");
+      $("legHol").textContent = t("legHol");
+      var title = state.lang === "ja" ? calCursor.y + "年 " + calCursor.m + "月"
+        : t("monthNames")[calCursor.m-1] + " " + calCursor.y;
+      $("calTitle").textContent = title;
+      $("calDow").innerHTML = t("weekdaysShort").map(function(w, i){
+        return '<div class="cal-dow' + (i === 0 ? " sun" : "") + '">' + esc(w) + "</div>";
+      }).join("");
+      var first = new Date(calCursor.y, calCursor.m-1, 1);
+      var startCell = new Date(first); startCell.setDate(1 - first.getDay());
+      var html = "";
+      for (var i = 0; i < 42; i++){
+        var d = new Date(startCell); d.setDate(startCell.getDate() + i);
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        var inMonth = d.getMonth() === calCursor.m-1;
+        var hn = holidayName(k), isSun = d.getDay() === 0;
+        var excluded = isExcluded(k);
+        var shifts = dayShifts(k), tot = shifts.length && !excluded ? dayTotal(k) : null;
+        var inPeriod = k >= curPeriod.start && k <= curPeriod.end;
+        var cls = "cal-cell" + (inMonth ? "" : " out") + (isSun ? " sun" : "") + (hn ? " hol" : "") + (excluded ? " excluded" : "") + (k === todayKey ? " today" : "") + (inPeriod ? " inperiod" : "");
+        html += '<button class="' + cls + '" data-date="' + k + '">' +
+          '<span class="n">' + d.getDate() + "</span>" +
+          (hn ? '<span class="holname">' + esc(hn) + "</span>" : "") +
+          (excluded ? '<span class="offlabel">' + esc(t("offShort")) + "</span>" : "") +
+          (tot && tot.earn ? '<span class="amt">¥' + fmtYen(tot.earn) + "</span>" : "") +
+          '<span class="dots">' + shifts.map(function(sh){ return '<span class="dot ' + (sh.type === "day" ? "day" : "eve") + '"></span>'; }).join("") + "</span>" +
+          "</button>";
+        if (i >= 35 && d.getMonth() !== calCursor.m-1 && d.getDay() === 6) break;
+      }
+      $("calGrid").innerHTML = html;
+      Array.prototype.forEach.call($("calGrid").querySelectorAll("[data-date]"), function(b){
+        b.addEventListener("click", function(){ openDay(b.getAttribute("data-date")); });
+      });
+    }
+
+    /* ================= history ================= */
+    function renderHistory(){
+      $("histTitle").textContent = t("histTitle");
+      $("histSub").textContent = t("histSub");
+      var byPeriod = {};
+      Object.keys(state.records).forEach(function(k){
+        if (!state.records[k].length) return;
+        var p = periodOf(dateOf(k));
+        var pk = p.endY + "-" + p.endM;
+        if (!byPeriod[pk]) byPeriod[pk] = p;
+      });
+      var list = Object.keys(byPeriod).sort().reverse();
+      if (!list.length){ $("histList").innerHTML = '<div class="empty">' + esc(t("emptyHist")) + "</div>"; return; }
+      $("histList").innerHTML = list.map(function(pk){
+        var p = byPeriod[pk], tot = periodTotals(p);
+        var cur = p.start === curPeriod.start;
+        return '<button class="histrow' + (cur ? " current" : "") + '" data-start="' + p.start + '">' +
+          '<span class="h-main"><span class="h-range">' + fmtDateShort(p.start) + " – " + fmtDateShort(p.end) + '</span>' +
+          '<span class="h-meta" style="display:block">' + t("payday") + ": " + fmtDateShort(p.payday) + (parseKey(p.payday).d !== 10 ? " (" + t("paydayEarly") + ")" : "") + " · " + tot.days + " " + t("daysUnit") + " · " + fmtHM(tot.payable) + "</span></span>" +
+          '<span class="h-amt">¥' + fmtYen(tot.gross) + "</span></button>";
+      }).join("");
+      Array.prototype.forEach.call($("histList").querySelectorAll("[data-start]"), function(b){
+        b.addEventListener("click", function(){
+          var s = b.getAttribute("data-start");
+          var d = dateOf(s); d.setDate(d.getDate() + 15);
+          curPeriod = periodOf(d);
+          switchView("slip"); renderAll();
+        });
+      });
+    }
+
+    /* ================= settings ================= */
+    function renderSettings(){
+      $("setTitle").textContent = t("setTitle");
+      $("setSub").textContent = t("setSub");
+      $("langTitle").textContent = t("langTitle");
+      $("themeTitle").textContent = t("themeTitle");
+      var thBtns = $("themeSeg").querySelectorAll("button");
+      thBtns[0].textContent = t("themeAuto"); thBtns[1].textContent = t("themeLight"); thBtns[2].textContent = t("themeDark");
+      Array.prototype.forEach.call($("langSeg").querySelectorAll("button"), function(b){
+        b.classList.toggle("on", b.getAttribute("data-lang") === state.lang);
+      });
+      Array.prototype.forEach.call(thBtns, function(b){
+        b.classList.toggle("on", b.getAttribute("data-theme") === state.theme);
+      });
+      $("ratesTitle").textContent = t("ratesTitle");
+      $("ratesDesc").textContent = t("ratesDesc");
+      $("rateLabel").textContent = t("rate");
+      $("saveRates").textContent = t("save");
+      $("rateAll").value = state.rates.day;
+      $("redTitle").textContent = t("redTitle");
+      $("redDesc").textContent = t("redDesc");
+      var redBtns = $("redSeg").querySelectorAll("button");
+      redBtns[0].textContent = t("redWork"); redBtns[1].textContent = t("redOff");
+      Array.prototype.forEach.call(redBtns, function(b){
+        var isWork = b.getAttribute("data-red") === "work";
+        b.classList.toggle("on", isWork ? state.workOnRed !== false : state.workOnRed === false);
+      });
+      $("tplTitle").textContent = t("tplTitle");
+      $("tplDesc").textContent = t("tplDesc");
+      $("saveTpl").textContent = t("save");
+      $("dataTitle").textContent = t("dataTitle");
+      $("dataDesc").textContent = t("dataDesc");
+      $("wipeData").textContent = t("wipe");
+      var rows = "";
+      for (var wd = 0; wd < 7; wd++){
+        var tp = state.template[String(wd)];
+        rows += '<div class="tpl-row"><span class="wd' + (wd === 0 ? " sun" : "") + '">' + esc(t("weekdaysShort")[wd]) + "</span>" +
+          '<select data-wd="' + wd + '" class="tpl-type">' +
+          '<option value="off"' + (!tp ? " selected" : "") + ">" + esc(t("off")) + "</option>" +
+          '<option value="day"' + (tp && tp.type === "day" ? " selected" : "") + ">" + esc(t("dayShift")) + "</option>" +
+          '<option value="evening"' + (tp && tp.type === "evening" ? " selected" : "") + ">" + esc(t("eveShift")) + "</option></select>" +
+          '<input type="time" class="tpl-s" data-wd="' + wd + '" value="' + (tp ? tp.s : "10:00") + '"' + (!tp ? " disabled" : "") + ' />' +
+          '<span class="dash">–</span>' +
+          '<input type="time" class="tpl-e" data-wd="' + wd + '" value="' + (tp ? tp.e : "15:00") + '"' + (!tp ? " disabled" : "") + " />" +
+          "</div>";
+      }
+      $("tplRows").innerHTML = rows;
+      Array.prototype.forEach.call($("tplRows").querySelectorAll(".tpl-type"), function(sel){
+        sel.addEventListener("change", function(){
+          var wd2 = sel.getAttribute("data-wd");
+          var off = sel.value === "off";
+          $("tplRows").querySelector('.tpl-s[data-wd="' + wd2 + '"]').disabled = off;
+          $("tplRows").querySelector('.tpl-e[data-wd="' + wd2 + '"]').disabled = off;
+          if (!off){
+            var isDay = sel.value === "day";
+            $("tplRows").querySelector('.tpl-s[data-wd="' + wd2 + '"]').value = isDay ? "10:00" : "14:00";
+            $("tplRows").querySelector('.tpl-e[data-wd="' + wd2 + '"]').value = isDay ? "15:00" : "20:00";
+          }
+        });
+      });
+    }
+
+    /* ================= day editor sheet ================= */
+    var sheetDate = null;
+    function openDay(key){
+      sheetDate = key;
+      renderSheet();
+    }
+    function closeSheet(){ $("sheetRoot").innerHTML = ""; sheetDate = null; }
+    function renderSheet(){
+      if (!sheetDate) return;
+      var key = sheetDate, dt = dateOf(key);
+      var hn = holidayName(key), isSun = dt.getDay() === 0;
+      var shifts = dayShifts(key);
+      var holLine = hn ? '<span class="rn">' + esc(hn) + " · " + esc(t("holiday")) + "</span>"
+        : isSun ? '<span class="rn">' + esc(t("sunday")) + "</span>" : esc(t("workday"));
+      var html = '<div class="sheet-wrap"><div class="sheet-bg" id="sheetBg"></div><div class="sheet">' +
+        "<h3>" + esc(fmtDate(key)) + (key === todayKey ? ' <span style="font-size:12px;color:var(--red)">' + esc(t("today")) + "</span>" : "") + "</h3>" +
+        '<p class="hol-line">' + holLine + "</p>" +
+        (isExcluded(key) ? '<p class="excluded-note">' + esc(isCustomHoliday(key) ? t("customExcluded") : t("redExcluded")) + "</p>" : "") +
+        '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+        (hn
+          ? '<button class="btn small" id="holOff">' + esc(t("holRemove")) + "</button>"
+          : '<button class="btn small" id="holOn">' + esc(t("holCustom")) + "</button>") +
+        "</div>" +
+        '<div id="holNameRow"></div>' +
+        '<div id="shiftList">' +
+        (shifts.length ? "" : '<div class="empty" style="margin-top:14px">' + esc(t("noShifts")) + "</div>") +
+        shifts.map(function(sh, i){ return shiftCardHTML(sh, i); }).join("") +
+        "</div>" +
+        '<div class="sheet-actions">' +
+        '<button class="btn" id="addDayBtn">' + esc(t("addDay")) + "</button>" +
+        '<button class="btn" id="addEveBtn">' + esc(t("addEve")) + "</button>" +
+        "</div>" +
+        '<div class="sheet-actions"><button class="btn primary" id="sheetClose">' + esc(t("close")) + "</button></div>" +
+        "</div></div>";
+      $("sheetRoot").innerHTML = html;
+      $("sheetBg").addEventListener("click", closeSheet);
+      $("sheetClose").addEventListener("click", closeSheet);
+      var holOn = $("holOn");
+      if (holOn) holOn.addEventListener("click", function(){
+        $("holNameRow").innerHTML = '<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="holNameInput" placeholder="' + esc(t("holNamePh")) + '" style="flex:1;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);border-radius:4px;padding:8px 10px;min-height:42px" />' +
+          '<button class="btn small primary" id="holNameSave">' + esc(t("add")) + "</button></div>";
+        $("holNameSave").addEventListener("click", function(){
+          var v = $("holNameInput").value.trim();
+          state.holidayOverrides[key] = v || "祝日";
+          save(); renderSheet(); renderAll();
+        });
+      });
+      var holOff = $("holOff");
+      if (holOff) holOff.addEventListener("click", function(){
+        /* Un-marking: a purely custom holiday is removed entirely so the
+           day counts again; a built-in holiday is suppressed with "off"
+           so it stays a normal working day until re-enabled. */
+        var base = baseHolidays(parseKey(key).y)[key];
+        if (isCustomHoliday(key) && !base) delete state.holidayOverrides[key];
+        else state.holidayOverrides[key] = "off";
+        save(); renderSheet(); renderAll();
+      });
+      $("addDayBtn").addEventListener("click", function(){ addShift("day"); });
+      $("addEveBtn").addEventListener("click", function(){ addShift("evening"); });
+      bindShiftCards();
+    }
+    function shiftCardHTML(sh, i){
+      var c = calcShift(sh);
+      return '<div class="shift-card ' + (sh.type === "evening" ? "eve" : "") + '" data-idx="' + i + '">' +
+        '<div class="sc-head"><span class="sc-type">' + esc(sh.type === "day" ? t("dayShift") : t("eveShift")) + " · ¥" + fmtYen(sh.type === "day" ? state.rates.day : state.rates.evening) + "/h</span>" +
+        '<button class="icon-btn sc-del" data-idx="' + i + '" aria-label="Delete">✕</button></div>' +
+        '<div class="grid2">' +
+        '<div class="field"><label>' + esc(t("schedStart")) + '</label><input type="time" class="f-ss" value="' + sh.schedS + '" /></div>' +
+        '<div class="field"><label>' + esc(t("schedEnd")) + '</label><input type="time" class="f-se" value="' + sh.schedE + '" /></div>' +
+        '<div class="field"><label>' + esc(t("actIn")) + '</label><input type="time" class="f-ai" value="' + sh.actIn + '" /></div>' +
+        '<div class="field"><label>' + esc(t("actOut")) + '</label><input type="time" class="f-ao" value="' + sh.actOut + '" /></div>' +
+        "</div>" +
+        '<div class="sc-result">' +
+        "<span>" + esc(t("payable")) + " <b>" + fmtHM(c.payable) + "</b></span>" +
+        (c.late ? "<span>" + esc(t("late")) + " <b>" + c.late + esc(t("minutes")) + "</b></span>" : "") +
+        (c.early ? "<span>" + esc(t("early")) + " <b>" + c.early + esc(t("minutes")) + "</b></span>" : "") +
+        '<span class="earn">¥' + fmtYen(c.earn) + "</span>" +
+        "</div></div>";
+    }
+    function bindShiftCards(){
+      Array.prototype.forEach.call(document.querySelectorAll("#shiftList .shift-card"), function(card){
+        var idx = +card.getAttribute("data-idx");
+        function upd(field, val){
+          var arr = state.records[sheetDate]; if (!arr || !arr[idx]) return;
+          arr[idx][field] = val; save();
+          var c = calcShift(arr[idx]);
+          var res = card.querySelector(".sc-result");
+          res.innerHTML =
+            "<span>" + esc(t("payable")) + " <b>" + fmtHM(c.payable) + "</b></span>" +
+            (c.late ? "<span>" + esc(t("late")) + " <b>" + c.late + esc(t("minutes")) + "</b></span>" : "") +
+            (c.early ? "<span>" + esc(t("early")) + " <b>" + c.early + esc(t("minutes")) + "</b></span>" : "") +
+            '<span class="earn">¥' + fmtYen(c.earn) + "</span>";
+          renderAll();
+        }
+        card.querySelector(".f-ss").addEventListener("change", function(e){ upd("schedS", e.target.value); });
+        card.querySelector(".f-se").addEventListener("change", function(e){ upd("schedE", e.target.value); });
+        card.querySelector(".f-ai").addEventListener("change", function(e){ upd("actIn", e.target.value); });
+        card.querySelector(".f-ao").addEventListener("change", function(e){ upd("actOut", e.target.value); });
+      });
+      Array.prototype.forEach.call(document.querySelectorAll("#shiftList .sc-del"), function(btn){
+        btn.addEventListener("click", function(){
+          var idx = +btn.getAttribute("data-idx");
+          state.records[sheetDate].splice(idx, 1);
+          if (!state.records[sheetDate].length) delete state.records[sheetDate];
+          save(); renderSheet(); renderAll();
+        });
+      });
+    }
+    function addShift(type){
+      var sh = type === "day"
+        ? { type:"day", schedS:"10:00", schedE:"15:00", actIn:"10:00", actOut:"15:00" }
+        : { type:"evening", schedS:"14:00", schedE:"20:00", actIn:"14:00", actOut:"20:00" };
+      if (!state.records[sheetDate]) state.records[sheetDate] = [];
+      state.records[sheetDate].push(sh);
+      save(); renderSheet(); renderAll();
+    }
+
+    /* ================= exports ================= */
+    function periodRows(){
+      var rows = [];
+      var d = dateOf(curPeriod.start), end = dateOf(curPeriod.end);
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        var hn = holidayName(k) || (d.getDay() === 0 ? "Sunday" : "");
+        if (isExcluded(k)){ d.setDate(d.getDate()+1); continue; }
+        dayShifts(k).forEach(function(sh){
+          var c = calcShift(sh);
+          rows.push([k, hn, sh.type, sh.schedS, sh.schedE, sh.actIn, sh.actOut, c.payable, c.late, c.early, c.earn]);
+        });
+        d.setDate(d.getDate()+1);
+      }
+      return rows;
+    }
+    function download(name, blob){
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 400);
+    }
+    function exportCSV(){
+      var head = "Date,Holiday,Shift,Scheduled Start,Scheduled End,Clock In,Clock Out,Payable Minutes,Late Minutes,Early Minutes,Earnings (JPY)";
+      var lines = periodRows().map(function(r){ return r.join(","); });
+      var tot = periodTotals(curPeriod);
+      lines.push("TOTAL,,,,,,," + tot.payable + "," + tot.late + "," + tot.early + "," + tot.gross);
+      var csv = "﻿" + head + "\n" + lines.join("\n");
+      download("salary-" + curPeriod.start + "_to_" + curPeriod.end + ".csv", new Blob([csv], { type:"text/csv;charset=utf-8" }));
+    }
+    function exportPDF(){
+      var rows = periodRows(), tot = periodTotals(curPeriod);
+      if (window.jspdf && window.jspdf.jsPDF){
+        var doc = new window.jspdf.jsPDF();
+        doc.setFontSize(15);
+        doc.text("Salary Report  " + curPeriod.start + " - " + curPeriod.end, 14, 16);
+        doc.setFontSize(11);
+        doc.text("Payday: " + curPeriod.payday + "    Total gross: JPY " + fmtYen(tot.gross), 14, 24);
+        doc.text("Working days: " + tot.days + "    Payable: " + Math.floor(tot.payable/60) + "h " + (tot.payable%60) + "m    Late: " + tot.late + "m    Early: " + tot.early + "m", 14, 31);
+        var y = 42;
+        doc.setFontSize(9.5);
+        doc.text("Date        Shift     Sched        Actual       Payable  Late  Early  Earnings", 14, y); y += 3;
+        doc.line(14, y, 196, y); y += 6;
+        rows.forEach(function(r){
+          if (y > 282){ doc.addPage(); y = 16; }
+          var line = r[0] + "  " + (r[2] === "day" ? "Day    " : "Evening") + "  " + r[3] + "-" + r[4] + "  " + r[5] + "-" + r[6] + "   " +
+            String(r[7]).padStart(4) + "m   " + String(r[8]).padStart(3) + "m  " + String(r[9]).padStart(3) + "m   JPY " + fmtYen(r[10]);
+          doc.text(line, 14, y); y += 5.5;
+        });
+        doc.save("salary-" + curPeriod.start + "_to_" + curPeriod.end + ".pdf");
+      } else {
+        exportCSV();
+        toast("PDF unavailable offline — CSV saved");
+      }
+    }
+
+    /* ================= template fill ================= */
+    function applyTemplate(){
+      var d = dateOf(curPeriod.start), end = dateOf(curPeriod.end), added = 0;
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        if (!dayShifts(k).length && !isExcluded(k)){
+          var tp = state.template[String(d.getDay())];
+          if (tp){
+            state.records[k] = [{ type: tp.type, schedS: tp.s, schedE: tp.e, actIn: tp.s, actOut: tp.e }];
+            added++;
+          }
+        }
+        d.setDate(d.getDate()+1);
+      }
+      save(); renderAll();
+      if (added) toast(t("appliedTpl"));
+    }
+
+    /* ================= navigation & wiring ================= */
+    function switchView(v){
+      curView = v;
+      ["slip","cal","history","settings"].forEach(function(name){
+        $("view-" + name).classList.toggle("hidden", name !== v);
+      });
+      Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
+        b.classList.toggle("on", b.getAttribute("data-view") === v);
+      });
+      window.scrollTo(0, 0);
+    }
+    function renderStatic(){
+      document.querySelectorAll("[data-i18n]").forEach(function(el){ el.textContent = t(el.getAttribute("data-i18n")); });
+      document.querySelectorAll("[data-credit]").forEach(function(el){ el.textContent = t("credit"); });
+      document.documentElement.lang = state.lang === "my" ? "my" : state.lang;
+    }
+    function renderAll(){
+      renderStatic(); renderSlip(); renderCal(); renderHistory(); renderSettings();
+    }
+    Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ switchView(b.getAttribute("data-view")); });
+    });
+    $("prevPeriod").addEventListener("click", function(){ curPeriod = shiftPeriod(curPeriod, -1); renderAll(); });
+    $("nextPeriod").addEventListener("click", function(){ curPeriod = shiftPeriod(curPeriod, 1); renderAll(); });
+    $("prevMonth").addEventListener("click", function(){
+      calCursor.m--; if (calCursor.m < 1){ calCursor.m = 12; calCursor.y--; } renderCal();
+    });
+    $("nextMonth").addEventListener("click", function(){
+      calCursor.m++; if (calCursor.m > 12){ calCursor.m = 1; calCursor.y++; } renderCal();
+    });
+    $("exportCsv").addEventListener("click", exportCSV);
+    $("exportPdf").addEventListener("click", exportPDF);
+    $("applyTpl").addEventListener("click", applyTemplate);
+    Array.prototype.forEach.call($("langSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ state.lang = b.getAttribute("data-lang"); save(); renderAll(); if (sheetDate) renderSheet(); });
+    });
+    Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ state.theme = b.getAttribute("data-theme"); save(); applyTheme(); renderSettings(); });
+    });
+    Array.prototype.forEach.call($("redSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ state.workOnRed = b.getAttribute("data-red") === "work"; save(); renderAll(); toast(t("saved")); });
+    });
+    $("saveRates").addEventListener("click", function(){
+      var r = Math.max(0, +$("rateAll").value || 0);
+      state.rates.day = r; state.rates.evening = r;
+      save(); renderAll(); toast(t("saved"));
+    });
+    $("saveTpl").addEventListener("click", function(){
+      for (var wd = 0; wd < 7; wd++){
+        var type = $("tplRows").querySelector('.tpl-type[data-wd="' + wd + '"]').value;
+        if (type === "off") state.template[String(wd)] = null;
+        else state.template[String(wd)] = {
+          type: type,
+          s: $("tplRows").querySelector('.tpl-s[data-wd="' + wd + '"]').value || "10:00",
+          e: $("tplRows").querySelector('.tpl-e[data-wd="' + wd + '"]').value || "15:00"
+        };
+      }
+      save(); toast(t("saved"));
+    });
+    var wipeArmed = false;
+    $("wipeData").addEventListener("click", function(){
+      if (!wipeArmed){
+        wipeArmed = true; $("wipeData").textContent = t("wipeConfirm");
+        setTimeout(function(){ wipeArmed = false; $("wipeData").textContent = t("wipe"); }, 3500);
+        return;
+      }
+      state.records = {}; state.holidayOverrides = {};
+      save(); wipeArmed = false; renderAll(); toast(t("saved"));
+    });
+
+    applyTheme();
+    switchView("slip");
+    renderAll();
+    </script>
+  </body>
+</html>
