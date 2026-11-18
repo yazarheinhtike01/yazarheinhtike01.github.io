@@ -1,0 +1,1958 @@
+<!doctype html>
+<html lang="my">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Monthly Salary Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&family=Padauk:wght@400;700&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+      :root{
+        --paper:#f3ecda;
+        --paper-deep:#e9dfc6;
+        --card:#fffdf4;
+        --card-edge:#d9cdae;
+        --ink:#22304f;
+        --ink-soft:#5d6577;
+        --ink-faint:#8b8fa0;
+        --red:#bc3a24;
+        --red-soft:#f6ddd3;
+        --gold:#a97e22;
+        --green:#3d6b4f;
+        --line:#ddd2b8;
+        --field:#fbf7ea;
+        --tab-bg:#fdfaf0;
+        --shadow:0 10px 30px rgba(34,48,79,.14);
+        --serif:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+        --sans:"Zen Kaku Gothic New","Padauk","Hiragino Kaku Gothic ProN","Noto Sans Myanmar",sans-serif;
+      }
+      [data-theme="dark"]{
+        --paper:#10151f;
+        --paper-deep:#0b0f16;
+        --card:#1c2434;
+        --card-edge:#39445c;
+        --ink:#ece4cf;
+        --ink-soft:#a7adbc;
+        --ink-faint:#7c8496;
+        --red:#e0684c;
+        --red-soft:#3d2a26;
+        --gold:#d3a94e;
+        --green:#7fb08f;
+        --line:#333f57;
+        --field:#232d42;
+        --tab-bg:#171e2c;
+        --shadow:0 10px 30px rgba(0,0,0,.5);
+      }
+      *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+      html,body{margin:0;padding:0;overflow-x:clip}
+      html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+      body{
+        font-family:var(--sans);
+        background:var(--paper-deep);
+        color:var(--ink);
+        font-size:15px;
+        line-height:1.55;
+        touch-action:manipulation;
+        overscroll-behavior-x:none;
+      }
+      /* faint ledger ruling on the backdrop */
+      body::before{
+        content:"";position:fixed;inset:0;pointer-events:none;
+        background:repeating-linear-gradient(to bottom,transparent 0 31px,rgba(120,100,50,.05) 31px 32px);
+      }
+      #app{
+        width:100%;max-width:470px;margin:0 auto;min-height:100dvh;
+        background:var(--paper);
+        box-shadow:0 0 0 1px var(--card-edge),var(--shadow);
+        display:flex;flex-direction:column;position:relative;
+      }
+      main{flex:1;padding:14px 14px 96px}
+      button,[role="button"],select,input:not([type="checkbox"]){min-height:38px}
+      button{font-family:var(--sans);cursor:pointer}
+      .hidden{display:none!important}
+
+      /* ---------- payslip ---------- */
+      .slip{
+        background:var(--card);
+        border:1.5px solid var(--ink);
+        outline:3px solid var(--card);
+        box-shadow:0 0 0 4.5px var(--ink);
+        margin:6px 6px 16px;
+        padding:16px 16px 14px;
+        position:relative;
+      }
+      .slip::after{ /* perforated bottom edge */
+        content:"";position:absolute;left:0;right:0;bottom:-9px;height:6px;
+        background:radial-gradient(circle at 6px 3px,var(--paper) 2.6px,transparent 3px) repeat-x;
+        background-size:14px 6px;
+      }
+      .slip-head{
+        display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+        border-bottom:2.5px double var(--ink);padding-bottom:10px;
+      }
+      .slip-title{font-family:var(--serif);font-weight:800;font-size:21px;letter-spacing:.14em}
+      .slip-sub{font-size:11.5px;color:var(--ink-soft);letter-spacing:.06em;margin-top:2px}
+      .hanko{
+        flex:none;width:52px;height:52px;border:2.5px solid var(--red);border-radius:6px;
+        color:var(--red);display:flex;align-items:center;justify-content:center;
+        font-family:var(--serif);font-weight:800;font-size:15px;line-height:1.15;text-align:center;
+        transform:rotate(-5deg);opacity:.92;letter-spacing:.05em;
+        box-shadow:inset 0 0 0 1.5px var(--card),inset 0 0 0 3px var(--red);
+        padding:4px;
+      }
+      .period-nav{display:flex;align-items:center;gap:8px;margin-top:12px}
+      .period-nav .p-label{flex:1;text-align:center}
+      .p-range{font-family:var(--serif);font-weight:700;font-size:16.5px}
+      .p-payday{font-size:12.5px;color:var(--red);font-weight:700;margin-top:1px}
+      .nav-btn{
+        width:42px;height:42px;flex:none;border:1.5px solid var(--ink);background:var(--card);
+        color:var(--ink);font-size:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+      }
+      .nav-btn:active{transform:translateY(1px)}
+      .gross{margin:14px 0 4px;text-align:center}
+      .gross .g-label{font-size:12px;letter-spacing:.28em;color:var(--ink-soft)}
+      .gross .g-amount{font-family:var(--serif);font-weight:800;font-size:44px;line-height:1.1;letter-spacing:.01em}
+      .gross .g-amount small{font-size:20px;font-weight:700}
+      .slip-rows{margin-top:10px;border-top:1px solid var(--line)}
+      .srow{
+        display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+        padding:7px 1px;border-bottom:1px dashed var(--line);font-size:14px;
+      }
+      .srow .k{color:var(--ink-soft)}
+      .srow .v{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+      .srow .v.neg{color:var(--red)}
+      .slip-actions{display:flex;gap:8px;margin-top:14px}
+      .btn{
+        border:1.5px solid var(--ink);background:var(--card);color:var(--ink);
+        padding:9px 12px;font-size:13.5px;font-weight:700;border-radius:4px;flex:1;
+        display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;
+      }
+      .btn.primary{background:var(--ink);color:var(--paper)}
+      .btn.red{background:var(--red);border-color:var(--red);color:#fff}
+      .btn:active{transform:translateY(1px)}
+      .btn.small{flex:none;min-height:38px;padding:6px 12px}
+
+      .section-head{
+        display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+        margin:22px 2px 10px;
+      }
+      .section-head h2{font-family:var(--serif);font-size:17px;font-weight:800;letter-spacing:.08em;margin:0}
+      .section-head .hint{font-size:12px;color:var(--ink-faint)}
+
+      /* daily record rows */
+      .dayrow{
+        width:100%;text-align:left;background:var(--card);border:1px solid var(--card-edge);
+        border-left:4px solid var(--ink);border-radius:3px;padding:10px 12px;margin-bottom:8px;
+        display:flex;gap:12px;align-items:center;color:var(--ink);
+      }
+      .dayrow.sun,.dayrow.hol{border-left-color:var(--red)}
+      .dayrow .d-num{font-family:var(--serif);font-weight:800;font-size:20px;width:34px;text-align:center;line-height:1}
+      .dayrow .d-num small{display:block;font-size:10.5px;font-weight:700;color:var(--ink-soft);margin-top:3px;font-family:var(--sans)}
+      .dayrow.sun .d-num,.dayrow.hol .d-num{color:var(--red)}
+      .dayrow .d-main{flex:1;min-width:0}
+      .dayrow .d-shifts{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .dayrow .d-meta{font-size:12px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .dayrow .d-amt{font-family:var(--serif);font-weight:800;font-size:16px;white-space:nowrap}
+      .empty{
+        border:1.5px dashed var(--card-edge);border-radius:4px;padding:22px 16px;text-align:center;
+        color:var(--ink-soft);font-size:13.5px;background:var(--field);
+      }
+
+      /* ---------- calendar ---------- */
+      .cal-head{display:flex;align-items:center;gap:8px;margin:4px 0 10px}
+      .cal-head .c-title{flex:1;text-align:center;font-family:var(--serif);font-weight:800;font-size:19px;letter-spacing:.05em}
+      .cal-card{background:var(--card);border:1px solid var(--card-edge);border-radius:4px;padding:10px 8px 12px}
+      .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+      .cal-dow{text-align:center;font-size:11.5px;font-weight:700;color:var(--ink-soft);padding:4px 0 6px}
+      .cal-dow.sun{color:var(--red)}
+      .cal-cell{
+        border:none;background:transparent;color:var(--ink);border-radius:4px;
+        min-height:56px;padding:4px 2px 3px;display:flex;flex-direction:column;align-items:center;gap:1px;
+        font-family:var(--sans);position:relative;
+      }
+      .cal-cell .n{font-family:var(--serif);font-weight:700;font-size:15.5px;line-height:1.15}
+      .cal-cell.sun .n,.cal-cell.hol .n{color:var(--red)}
+      .cal-cell.out{opacity:.32}
+      .cal-cell.today{box-shadow:inset 0 0 0 1.5px var(--gold)}
+      .cal-cell.inperiod{background:var(--field)}
+      .cal-cell .holname{font-size:8.6px;line-height:1.2;color:var(--red);text-align:center;max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+      .cal-cell .amt{font-size:9.5px;font-weight:700;color:var(--green);font-variant-numeric:tabular-nums;line-height:1.2}
+      .cal-cell .dots{display:flex;gap:3px;height:5px}
+      .cal-cell .dot{width:5px;height:5px;border-radius:50%}
+      .dot.day{background:var(--gold)} .dot.eve{background:var(--ink)}
+      .cal-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink-soft);margin-top:10px;padding:0 2px}
+      .cal-legend span{display:inline-flex;align-items:center;gap:5px}
+      .cal-legend .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+      /* ---------- history ---------- */
+      .histrow{
+        width:100%;text-align:left;background:var(--card);border:1px solid var(--card-edge);border-radius:3px;
+        padding:12px 14px;margin-bottom:9px;display:flex;align-items:center;gap:12px;color:var(--ink);
+      }
+      .histrow .h-main{flex:1;min-width:0}
+      .histrow .h-range{font-family:var(--serif);font-weight:800;font-size:15.5px}
+      .histrow .h-meta{font-size:12px;color:var(--ink-soft);margin-top:2px}
+      .histrow .h-amt{font-family:var(--serif);font-weight:800;font-size:18px;white-space:nowrap}
+      .histrow.current{border-color:var(--ink);box-shadow:inset 3px 0 0 var(--red)}
+
+      /* ---------- swipe-to-reveal row actions (Edit / Delete) ---------- */
+      .swipe{position:relative;overflow:hidden;border-radius:3px;margin-bottom:8px;background:var(--card)}
+      .swipe .dayrow,.swipe .histrow{
+        margin-bottom:0;position:relative;z-index:1;width:100%;
+        touch-action:pan-y;-webkit-user-select:none;user-select:none;
+      }
+      .swipe-actions{position:absolute;top:0;right:0;bottom:0;width:148px;display:flex;z-index:0}
+      .sw-act{
+        flex:1;border:none;color:#fff;font-family:var(--sans);font-weight:700;font-size:13.5px;
+        display:flex;align-items:center;justify-content:center;padding:0 4px;min-height:0;
+      }
+      .sw-edit{background:var(--ink);color:var(--paper)}
+      .sw-del{background:var(--red);color:#fff}
+      .sw-act:active{filter:brightness(1.15)}
+
+      /* ---------- settings ---------- */
+      .card{background:var(--card);border:1px solid var(--card-edge);border-radius:4px;padding:14px;margin-bottom:14px}
+      .card h3{font-family:var(--serif);font-size:15.5px;font-weight:800;letter-spacing:.06em;margin:0 0 4px}
+      .card .desc{font-size:12.5px;color:var(--ink-soft);margin:0 0 10px}
+      .field{margin-bottom:10px}
+      .field label{display:block;font-size:12.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
+      .field input,.field select{
+        width:100%;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);
+        border-radius:4px;padding:8px 10px;font-size:16px;font-family:var(--sans);min-height:42px;
+      }
+      .field input:focus,.field select:focus{outline:2px solid var(--gold);outline-offset:0;border-color:var(--gold)}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .grid2>*{min-width:0}
+      .seg{display:flex;border:1.5px solid var(--ink);border-radius:4px;overflow:hidden}
+      .seg button{flex:1;border:none;background:var(--card);color:var(--ink);font-weight:700;font-size:13.5px;padding:9px 4px;min-height:42px}
+      .seg button.on{background:var(--ink);color:var(--paper)}
+      .tpl-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+      .tpl-row:last-child{border-bottom:none}
+      .tpl-row .wd{width:40px;flex:none;font-weight:800;font-size:13.5px}
+      .tpl-row .wd.sun{color:var(--red)}
+      .tpl-row select{flex:1 1 90px;min-width:0;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);border-radius:4px;padding:6px 8px;font-size:16px;min-height:40px}
+      .tpl-row input[type="time"]{width:102px;flex:none;min-width:0;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);border-radius:4px;padding:6px;font-size:16px;min-height:40px}
+      .tpl-row .dash{color:var(--ink-faint);flex:none}
+      .dayrow.excluded{opacity:.58}
+      .dayrow.excluded .d-amt{text-decoration:line-through;font-size:14px}
+      .cal-cell.excluded .amt{display:none}
+      .cal-cell.excluded{background:var(--red-soft)}
+      .cal-cell.excluded .n{text-decoration:line-through}
+      .cal-cell .offlabel{font-size:8.6px;line-height:1.2;color:var(--red);font-weight:700;text-align:center}
+      .excluded-note{font-size:12px;font-weight:700;color:var(--red);margin-top:6px;background:var(--red-soft);border:1px solid var(--red);border-radius:4px;padding:8px 10px}
+
+      /* ---------- tab bar ---------- */
+      .tabbar{
+        position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+        width:100%;max-width:470px;background:var(--tab-bg);
+        border-top:1.5px solid var(--ink);
+        display:grid;grid-template-columns:repeat(4,1fr);
+        padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:40;
+      }
+      .tabbar button{
+        border:none;background:transparent;color:var(--ink-soft);
+        display:flex;flex-direction:column;align-items:center;gap:2px;
+        font-size:11px;font-weight:700;padding:6px 2px;min-height:52px;border-radius:4px;
+      }
+      .tabbar button svg{width:22px;height:22px}
+      .tabbar button.on{color:var(--red)}
+      .tabbar button.on .tab-jp{color:var(--red)}
+      .tab-jp{font-family:var(--serif);font-size:13px;font-weight:800;color:var(--ink);letter-spacing:.1em}
+
+      /* ---------- sheet (day editor) ---------- */
+      .sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+      .sheet-bg{position:absolute;inset:0;background:rgba(10,14,24,.55)}
+      .sheet{
+        position:relative;width:100%;max-width:470px;max-height:92dvh;overflow-y:auto;
+        background:var(--paper);border-top:2px solid var(--ink);border-radius:10px 10px 0 0;
+        padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+        animation:up .22s ease;
+      }
+      @keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+      @media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+      .sheet h3{font-family:var(--serif);font-size:19px;font-weight:800;margin:0}
+      .sheet .hol-line{font-size:13px;margin:4px 0 0}
+      .sheet .hol-line .rn{color:var(--red);font-weight:700}
+      .shift-card{background:var(--card);border:1px solid var(--card-edge);border-left:4px solid var(--gold);border-radius:3px;padding:12px;margin-top:12px}
+      .shift-card.eve{border-left-color:var(--ink)}
+      .shift-card .sc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+      .shift-card .sc-type{font-weight:900;font-size:14px;letter-spacing:.04em}
+      .icon-btn{border:1px solid var(--card-edge);background:var(--field);color:var(--red);border-radius:4px;width:38px;height:38px;font-size:16px;display:flex;align-items:center;justify-content:center}
+      .sc-result{
+        margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;
+        display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--ink-soft);
+      }
+      .sc-result b{color:var(--ink);font-variant-numeric:tabular-nums}
+      .sc-result .earn{font-family:var(--serif);font-size:16px;color:var(--ink)}
+      .sheet-actions{display:flex;gap:8px;margin-top:14px}
+      .toast{
+        position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);
+        background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:4px;font-size:13.5px;font-weight:700;
+        opacity:0;pointer-events:none;transition:.25s;z-index:80;max-width:88vw;text-align:center;
+      }
+      .toast.show{opacity:1;transform:translateX(-50%)}
+      .toast.has-undo{display:flex;align-items:center;gap:14px}
+      .toast-undo{
+        background:transparent;border:none;color:var(--gold);font-family:var(--sans);
+        font-weight:800;font-size:13.5px;text-decoration:underline;padding:4px 2px;min-height:32px;flex:none;
+      }
+      .view-title{font-family:var(--serif);font-size:20px;font-weight:800;letter-spacing:.1em;margin:2px 0 2px}
+      .view-sub{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px}
+
+      .srow.total{border-top:1.5px solid var(--ink);border-bottom:2.5px double var(--ink);margin-top:2px;padding-top:9px;padding-bottom:9px}
+      .srow.total .k{color:var(--ink);font-weight:800}
+      .srow.total .v{font-family:var(--serif);font-size:16px}
+      .srow.subtle .k{font-size:13px}
+      .trans-preview{margin-top:10px;border:1px dashed var(--card-edge);background:var(--field);border-radius:4px;padding:9px 10px;font-size:13px;line-height:1.6}
+      .trans-preview b{font-variant-numeric:tabular-nums}
+      .credit-footer{
+        text-align:center;font-size:12.5px;color:var(--ink-faint);letter-spacing:.03em;
+        margin:24px 2px 4px;padding-top:12px;border-top:1px dashed var(--line);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <main>
+        <!-- DASHBOARD / PAYSLIP -->
+        <section id="view-slip">
+          <div class="slip">
+            <div class="slip-head">
+              <div>
+                <div class="slip-title" id="slipTitle">給与明細</div>
+                <div class="slip-sub" id="slipSub"></div>
+              </div>
+              <div class="hanko" id="hanko">給与<br />済</div>
+            </div>
+            <div class="period-nav">
+              <button class="nav-btn" id="prevPeriod" aria-label="Previous period">‹</button>
+              <div class="p-label">
+                <div class="p-range" id="periodRange"></div>
+                <div class="p-payday" id="periodPayday"></div>
+              </div>
+              <button class="nav-btn" id="nextPeriod" aria-label="Next period">›</button>
+            </div>
+            <div class="gross">
+              <div class="g-label" id="grossLabel"></div>
+              <div class="g-amount"><small>¥</small><span id="grossAmount">0</span></div>
+            </div>
+            <div class="slip-rows" id="slipRows"></div>
+            <div class="slip-actions">
+              <button class="btn" id="exportCsv">CSV</button>
+              <button class="btn" id="exportPdf">PDF</button>
+              <button class="btn primary" id="applyTpl"></button>
+            </div>
+          </div>
+          <div class="section-head">
+            <h2 id="dailyTitle"></h2>
+            <span class="hint" id="dailyHint"></span>
+          </div>
+          <div id="dailyList"></div>
+          <div class="credit-footer" data-credit></div>
+        </section>
+
+        <!-- CALENDAR -->
+        <section id="view-cal" class="hidden">
+          <h1 class="view-title" id="calViewTitle"></h1>
+          <p class="view-sub" id="calViewSub"></p>
+          <div class="cal-head">
+            <button class="nav-btn" id="prevMonth" aria-label="Previous month">‹</button>
+            <div class="c-title" id="calTitle"></div>
+            <button class="nav-btn" id="nextMonth" aria-label="Next month">›</button>
+          </div>
+          <div class="cal-card">
+            <div class="cal-grid" id="calDow"></div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+          <div class="cal-legend">
+            <span><i class="dot day"></i><span id="legDay"></span></span>
+            <span><i class="dot eve"></i><span id="legEve"></span></span>
+            <span style="color:var(--red);font-weight:700" id="legHol"></span>
+          </div>
+          <div class="credit-footer" data-credit></div>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="view-history" class="hidden">
+          <h1 class="view-title" id="histTitle"></h1>
+          <p class="view-sub" id="histSub"></p>
+          <div id="histList"></div>
+          <div class="credit-footer" data-credit></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="view-settings" class="hidden">
+          <h1 class="view-title" id="setTitle"></h1>
+          <p class="view-sub" id="setSub"></p>
+
+          <div class="card">
+            <h3 id="langTitle"></h3>
+            <div class="seg" id="langSeg">
+              <button data-lang="my">မြန်မာ</button>
+              <button data-lang="en">English</button>
+              <button data-lang="ja">日本語</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 id="themeTitle"></h3>
+            <div class="seg" id="themeSeg">
+              <button data-theme="auto"></button>
+              <button data-theme="light"></button>
+              <button data-theme="dark"></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 id="ratesTitle"></h3>
+            <p class="desc" id="ratesDesc"></p>
+            <div class="field"><label id="rateLabel"></label><input type="number" id="rateAll" inputmode="numeric" min="0" step="10" /></div>
+            <button class="btn primary" id="saveRates" style="width:100%"></button>
+          </div>
+
+          <div class="card" id="transCard">
+            <h3 id="transTitle"></h3>
+            <p class="desc" id="transDesc"></p>
+            <div class="seg" id="transEnableSeg">
+              <button data-tenable="off"></button>
+              <button data-tenable="on"></button>
+            </div>
+            <div id="transBody">
+              <div class="seg" id="transModeSeg" style="margin-top:10px">
+                <button data-tmode="normal"></button>
+                <button data-tmode="pass"></button>
+              </div>
+              <div id="routePicker" style="margin-top:12px">
+                <div class="field"><label id="rpLine1Label"></label><select id="rpLine1"></select></div>
+                <div class="grid2">
+                  <div class="field"><label id="rpFrom1Label"></label><select id="rpFrom1"></select></div>
+                  <div class="field"><label id="rpTo1Label"></label><select id="rpTo1"></select></div>
+                </div>
+                <div class="seg" id="rpTwoSeg">
+                  <button data-rp2="one"></button>
+                  <button data-rp2="two"></button>
+                </div>
+                <div id="rpSeg2" style="margin-top:10px">
+                  <div class="field"><label id="rpLine2Label"></label><select id="rpLine2"></select></div>
+                  <div class="grid2">
+                    <div class="field"><label id="rpFrom2Label"></label><input type="text" id="rpFrom2" disabled /></div>
+                    <div class="field"><label id="rpTo2Label"></label><select id="rpTo2"></select></div>
+                  </div>
+                </div>
+                <div class="trans-preview" id="rpPreview"></div>
+              </div>
+              <div id="transNormalFields">
+                <div class="field"><label id="transOneWayLabel"></label><input type="number" id="transOneWay" inputmode="numeric" min="0" step="10" placeholder="390" /></div>
+              </div>
+              <div id="transPassFields">
+                <div class="field"><label id="transLinesLabel"></label><input type="text" id="transLines" autocomplete="off" /></div>
+                <div class="grid2">
+                  <div class="field"><label id="transPassPriceLabel"></label><input type="number" id="transPassPrice" inputmode="numeric" min="0" step="100" placeholder="13630" /></div>
+                  <div class="field"><label id="transPassTermLabel"></label>
+                    <div class="seg" id="transMonthsSeg">
+                      <button data-tmonths="1">1</button>
+                      <button data-tmonths="3">3</button>
+                      <button data-tmonths="6">6</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="trans-preview" id="transPreview"></div>
+            </div>
+            <button class="btn primary" id="saveTrans" style="width:100%;margin-top:12px"></button>
+          </div>
+
+          <div class="card">
+            <h3 id="redTitle"></h3>
+            <p class="desc" id="redDesc"></p>
+            <div class="seg" id="redSeg">
+              <button data-red="work"></button>
+              <button data-red="off"></button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 id="tplTitle"></h3>
+            <p class="desc" id="tplDesc"></p>
+            <div id="tplRows"></div>
+            <button class="btn primary" id="saveTpl" style="width:100%;margin-top:12px"></button>
+          </div>
+
+          <div class="card">
+            <h3 id="dataTitle"></h3>
+            <p class="desc" id="dataDesc"></p>
+            <button class="btn red" id="wipeData" style="width:100%"></button>
+          </div>
+
+          <div class="credit-footer" data-credit></div>
+        </section>
+      </main>
+
+      <nav class="tabbar" id="tabbar">
+        <button data-view="slip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="1.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          <span class="tab-jp">明細</span><span data-i18n="tabSlip"></span>
+        </button>
+        <button data-view="cal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          <span class="tab-jp">暦</span><span data-i18n="tabCal"></span>
+        </button>
+        <button data-view="history">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <span class="tab-jp">履歴</span><span data-i18n="tabHist"></span>
+        </button>
+        <button data-view="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"/></svg>
+          <span class="tab-jp">設定</span><span data-i18n="tabSet"></span>
+        </button>
+      </nav>
+    </div>
+
+    <div id="sheetRoot"></div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+    "use strict";
+    /* ===== Tokyo train lines, stations, km & fare/pass tables — offline lookup data ===== */
+    var TRAIN_DATA = {"operators":[{"name":"JR東日本","fare":[[3,155,160],[6,199,200],[10,209,210],[15,253,260],[20,341,350],[25,440,440],[30,528,530],[35,616,620],[40,715,720],[45,803,810],[50,902,910],[60,1034,1040],[70,1221,1230],[80,1408,1410],[90,1595,1600],[100,1782,1790]],"pass":[[3,4910],[6,5890],[10,6240],[15,7840],[20,10480],[25,13120],[26,15330],[30,15600],[31,17970],[32,18450],[35,18720],[36,20450],[37,20900],[38,21290],[40,21580],[41,22590],[42,22920],[43,23260],[44,23750],[45,24100],[46,24240],[47,24510],[48,24880],[49,25200],[50,25500],[51,26040],[52,26540],[53,26960],[54,27510],[55,27950],[56,28440],[57,28870],[58,29420],[59,29880],[60,30360],[61,30780],[62,31230],[63,31740],[64,32180],[65,32780],[66,33200],[67,33640],[68,34170],[69,34680],[70,35190],[71,35510],[72,36120],[73,36540],[74,37050],[75,37460],[76,38070],[77,38500],[78,38970],[79,39470],[80,40000],[81,40690],[82,41190],[83,41670],[84,42160],[85,42740],[86,43210],[87,43670],[88,44160],[89,44650],[90,45130],[91,45810],[92,46350],[93,46740],[94,47310],[95,47740],[96,48280],[97,48830],[98,49260],[99,49770],[100,50320]],"lines":[{"name":"山手線","st":[["東京",0.0],["神田",1.3],["秋葉原",2.0],["御徒町",3.0],["上野",3.6],["鶯谷",4.7],["日暮里",5.8],["西日暮里",6.3],["田端",7.1],["駒込",8.7],["巣鴨",9.4],["大塚",10.5],["池袋",12.3],["目白",13.5],["高田馬場",14.4],["新大久保",15.8],["新宿",17.1],["代々木",17.8],["原宿",19.3],["渋谷",20.5],["恵比寿",22.1],["目黒",23.6],["五反田",24.8],["大崎",25.7],["品川",27.7],["高輪ゲートウェイ",28.6],["田町",29.9],["浜松町",31.4],["新橋",32.6],["有楽町",33.7]]},{"name":"京浜東北線・根岸線","st":[["大宮",0.0],["さいたま新都心",1.6],["与野",2.7],["北浦和",4.3],["浦和",6.1],["南浦和",7.8],["蕨",10.6],["西川口",12.5],["川口",14.5],["赤羽",17.1],["東十条",18.9],["王子",20.4],["上中里",21.5],["田端",23.2],["西日暮里",24.0],["日暮里",24.5],["鶯谷",25.6],["上野",26.7],["御徒町",27.3],["秋葉原",28.3],["神田",29.0],["東京",30.3],["有楽町",31.1],["新橋",32.2],["浜松町",33.4],["田町",34.9],["高輪ゲートウェイ",36.2],["品川",37.1],["大井町",39.5],["大森",41.7],["蒲田",44.7],["川崎",48.5],["鶴見",52.0],["新子安",55.1],["東神奈川",57.3],["横浜",59.1],["桜木町",61.1],["関内",62.1],["石川町",62.9],["山手",64.1],["根岸",66.2],["磯子",68.6],["新杉田",70.2],["洋光台",73.2],["港南台",75.1],["本郷台",77.6],["大船",81.2]]},{"name":"中央線快速","st":[["東京",0.0],["神田",1.3],["御茶ノ水",2.6],["四ツ谷",6.6],["新宿",10.3],["中野",14.7],["高円寺",16.1],["阿佐ケ谷",17.3],["荻窪",18.7],["西荻窪",20.6],["吉祥寺",22.5],["三鷹",24.1],["武蔵境",25.7],["東小金井",27.4],["武蔵小金井",29.1],["国分寺",31.4],["西国分寺",32.8],["国立",34.5],["立川",37.5],["日野",40.8],["豊田",43.1],["八王子",47.4],["西八王子",49.8],["高尾",53.1]]},{"name":"中央・総武緩行線","st":[["千葉",0.0],["西千葉",1.4],["稲毛",3.3],["新検見川",6.0],["幕張",7.6],["幕張本郷",9.6],["津田沼",12.5],["東船橋",14.2],["船橋",16.0],["西船橋",18.6],["下総中山",20.2],["本八幡",21.8],["市川",23.8],["小岩",26.4],["新小岩",29.2],["平井",31.0],["亀戸",32.9],["錦糸町",34.4],["両国",35.9],["浅草橋",36.7],["秋葉原",37.8],["御茶ノ水",38.7],["水道橋",39.5],["飯田橋",40.6],["市ケ谷",41.9],["四ツ谷",42.7],["信濃町",44.0],["千駄ケ谷",44.7],["代々木",45.7],["新宿",46.4],["大久保",47.8],["東中野",48.9],["中野",50.8],["高円寺",52.2],["阿佐ケ谷",53.4],["荻窪",54.8],["西荻窪",56.7],["吉祥寺",58.6],["三鷹",60.2]]},{"name":"総武快速線","st":[["東京",0.0],["新日本橋",1.2],["馬喰町",2.3],["錦糸町",4.8],["新小岩",10.0],["市川",15.4],["船橋",23.2],["津田沼",26.7],["稲毛",35.9],["千葉",39.2]]},{"name":"埼京線","st":[["大崎",0.0],["恵比寿",3.6],["渋谷",5.2],["新宿",8.6],["池袋",13.4],["板橋",15.2],["十条",16.9],["赤羽",18.9],["北赤羽",20.4],["浮間舟渡",22.0],["戸田公園",24.4],["戸田",25.7],["北戸田",27.1],["武蔵浦和",29.5],["中浦和",30.7],["南与野",32.4],["与野本町",34.0],["北与野",35.1],["大宮",36.9]]},{"name":"湘南新宿ライン","st":[["大宮",0.0],["浦和",6.1],["赤羽",17.1],["池袋",22.6],["新宿",27.4],["渋谷",30.8],["恵比寿",32.4],["大崎",36.0],["西大井",41.6],["武蔵小杉",48.0],["新川崎",50.7],["横浜",62.9],["保土ケ谷",65.9],["東戸塚",70.8],["戸塚",75.0],["大船",80.6]]},{"name":"横浜線","st":[["東神奈川",0.0],["大口",2.2],["菊名",4.8],["新横浜",6.1],["小机",7.8],["鴨居",10.9],["中山",13.5],["十日市場",15.9],["長津田",17.9],["成瀬",20.2],["町田",22.9],["古淵",25.7],["淵野辺",28.4],["矢部",29.2],["相模原",31.0],["橋本",33.8],["相原",35.7],["八王子みなみ野",38.6],["片倉",40.0],["八王子",42.6]]},{"name":"南武線","st":[["川崎",0.0],["尻手",1.7],["矢向",2.6],["鹿島田",4.1],["平間",5.3],["向河原",6.6],["武蔵小杉",7.5],["武蔵中原",9.2],["武蔵新城",10.5],["武蔵溝ノ口",12.7],["津田山",13.9],["久地",14.9],["宿河原",16.2],["登戸",17.3],["中野島",19.5],["稲田堤",20.8],["矢野口",22.4],["稲城長沼",24.1],["南多摩",25.5],["府中本町",27.9],["分倍河原",28.8],["西府",30.0],["谷保",31.6],["矢川",33.0],["西国立",34.3],["立川",35.5]]},{"name":"京葉線","st":[["東京",0.0],["八丁堀",1.2],["越中島",2.8],["潮見",5.4],["新木場",7.4],["葛西臨海公園",10.6],["舞浜",12.7],["新浦安",16.1],["市川塩浜",18.2],["二俣新町",22.6],["南船橋",26.0],["新習志野",28.3],["幕張豊砂",30.0],["海浜幕張",31.7],["検見川浜",33.7],["稲毛海岸",35.3],["千葉みなと",39.0],["蘇我",43.0]]},{"name":"武蔵野線","st":[["府中本町",0.0],["北府中",1.7],["西国分寺",3.9],["新小平",7.4],["新秋津",13.0],["東所沢",15.7],["新座",19.7],["北朝霞",22.8],["西浦和",27.8],["武蔵浦和",29.8],["南浦和",31.7],["東浦和",35.4],["東川口",39.2],["南越谷",43.5],["越谷レイクタウン",46.3],["吉川",48.2],["吉川美南",49.9],["新三郷",51.3],["三郷",53.4],["南流山",55.4],["新松戸",57.5],["新八柱",61.6],["東松戸",64.0],["市川大野",65.9],["船橋法典",68.9],["西船橋",71.8]]},{"name":"常磐線快速・常磐緩行線","st":[["上野",0.0],["日暮里",2.2],["三河島",3.4],["南千住",5.6],["北千住",7.4],["綾瀬",9.9],["亀有",12.1],["金町",14.0],["松戸",17.9],["北松戸",20.0],["馬橋",21.3],["新松戸",22.9],["北小金",24.2],["南柏",26.7],["柏",29.1],["北柏",31.4],["我孫子",33.5],["天王台",36.2],["取手",39.6]]},{"name":"横須賀線","st":[["東京",0.0],["新橋",1.9],["品川",6.8],["西大井",10.4],["武蔵小杉",16.8],["新川崎",19.5],["横浜",31.7],["保土ケ谷",34.7],["東戸塚",39.6],["戸塚",43.8],["大船",49.4],["北鎌倉",51.7],["鎌倉",53.9],["逗子",57.8],["東逗子",59.8],["田浦",63.2],["横須賀",65.3],["衣笠",68.7],["久里浜",73.3]]},{"name":"宇都宮線・高崎線","st":[["東京",0.0],["上野",3.6],["尾久",8.4],["赤羽",13.4],["浦和",24.4],["さいたま新都心",28.9],["大宮",30.5]]},{"name":"青梅線","st":[["立川",0.0],["西立川",1.9],["東中神",2.7],["中神",3.6],["昭島",5.0],["拝島",6.9],["牛浜",8.6],["福生",9.6],["羽村",11.7],["小作",14.1],["河辺",15.9],["東青梅",17.2],["青梅",18.5],["宮ノ平",20.6],["日向和田",21.4],["石神前",22.4],["二俣尾",23.6],["軍畑",24.5],["沢井",25.9],["御嶽",27.2],["川井",30.0],["古里",31.6],["鳩ノ巣",33.8],["白丸",35.2],["奥多摩",37.2]]},{"name":"五日市線","st":[["拝島",0.0],["熊川",1.1],["東秋留",3.5],["秋川",5.7],["武蔵引田",7.2],["武蔵増戸",8.5],["武蔵五日市",11.1]]},{"name":"八高線","st":[["八王子",0.0],["北八王子",3.1],["小宮",5.1],["拝島",9.9],["東福生",12.7],["箱根ヶ崎",15.7],["金子",20.5],["東飯能",25.6],["高麗川",31.1]]},{"name":"鶴見線","st":[["鶴見",0.0],["国道",0.9],["鶴見小野",1.5],["弁天橋",2.4],["浅野",3.0],["安善",3.5],["武蔵白石",4.1],["浜川崎",5.7],["昭和",6.4],["扇町",7.0],["新芝浦",3.9],["海芝浦",4.7],["大川",5.1]]}]},{"name":"東京メトロ","fare":[[6,178,180],[11,209,210],[19,252,260],[27,293,300],[40,324,330]],"pass":[[1,6630],[2,6800],[3,6980],[4,7140],[5,7320],[6,7490],[7,7660],[8,7830],[9,7990],[10,8170],[11,8330],[12,8510],[13,8680],[14,8840],[15,8970],[16,9100],[17,9150],[18,9190],[19,9230],[20,9270],[21,9290],[22,9310],[23,9320],[24,9340],[25,9360],[26,9380],[27,9400],[28,9420],[29,9450],[30,9470],[31,9500],[32,9520],[33,9540],[34,9560],[35,9580],[36,9600],[37,9620],[38,9650],[39,9670],[40,9690]],"lines":[{"name":"銀座線","st":[["渋谷",0.0],["表参道",1.2],["外苑前",1.9],["青山一丁目",2.6],["赤坂見附",3.9],["溜池山王",4.6],["虎ノ門",5.4],["新橋",6.2],["銀座",7.1],["京橋",7.8],["日本橋",8.5],["三越前",9.1],["神田",9.8],["末広町",10.9],["上野広小路",11.5],["上野",12.0],["稲荷町",12.7],["田原町",13.4],["浅草",14.2]]},{"name":"丸ノ内線","st":[["池袋",0.0],["新大塚",1.8],["茗荷谷",3.0],["後楽園",4.8],["本郷三丁目",5.6],["御茶ノ水",6.4],["淡路町",7.2],["大手町",8.1],["東京",8.7],["銀座",9.8],["霞ケ関",10.8],["国会議事堂前",11.5],["赤坂見附",12.4],["四ツ谷",13.7],["四谷三丁目",14.7],["新宿御苑前",15.6],["新宿三丁目",16.3],["新宿",16.6],["西新宿",17.4],["中野坂上",18.5],["新中野",19.6],["東高円寺",20.6],["新高円寺",21.5],["南阿佐ケ谷",22.7],["荻窪",24.2],["中野新橋",19.8],["中野富士見町",20.4],["方南町",21.7]]},{"name":"日比谷線","st":[["中目黒",0.0],["恵比寿",1.0],["広尾",2.5],["六本木",4.2],["神谷町",5.7],["虎ノ門ヒルズ",6.2],["霞ケ関",7.0],["日比谷",8.2],["銀座",8.6],["東銀座",9.0],["築地",9.6],["八丁堀",10.6],["茅場町",11.1],["人形町",12.0],["小伝馬町",12.6],["秋葉原",13.5],["仲御徒町",14.5],["上野",15.0],["入谷",16.2],["三ノ輪",17.4],["南千住",18.2],["北千住",20.3]]},{"name":"東西線","st":[["中野",0.0],["落合",2.0],["高田馬場",3.9],["早稲田",5.6],["神楽坂",6.8],["飯田橋",8.0],["九段下",8.7],["竹橋",9.7],["大手町",10.7],["日本橋",11.5],["茅場町",12.0],["門前仲町",13.8],["木場",14.9],["東陽町",15.8],["南砂町",17.0],["西葛西",19.7],["葛西",20.9],["浦安",22.8],["南行徳",24.0],["行徳",25.5],["妙典",26.8],["原木中山",28.9],["西船橋",30.8]]},{"name":"千代田線","st":[["代々木上原",0.0],["代々木公園",1.0],["明治神宮前",2.2],["表参道",3.1],["乃木坂",4.5],["赤坂",5.6],["国会議事堂前",6.4],["霞ケ関",7.2],["日比谷",8.0],["二重橋前",8.7],["大手町",9.4],["新御茶ノ水",10.7],["湯島",11.9],["根津",13.1],["千駄木",14.1],["西日暮里",15.0],["町屋",16.7],["北千住",19.3],["綾瀬",21.9],["北綾瀬",24.0]]},{"name":"有楽町線","st":[["和光市",0.0],["地下鉄成増",2.2],["地下鉄赤塚",3.6],["平和台",5.4],["氷川台",6.8],["小竹向原",8.3],["千川",9.3],["要町",10.3],["池袋",11.5],["東池袋",12.4],["護国寺",13.5],["江戸川橋",14.8],["飯田橋",16.4],["市ケ谷",17.5],["麹町",18.4],["永田町",19.3],["桜田門",20.2],["有楽町",21.2],["銀座一丁目",21.7],["新富町",22.4],["月島",23.7],["豊洲",25.1],["辰巳",26.8],["新木場",28.3]]},{"name":"半蔵門線","st":[["渋谷",0.0],["表参道",1.3],["青山一丁目",2.7],["永田町",4.1],["半蔵門",5.1],["九段下",6.7],["神保町",7.1],["大手町",8.8],["三越前",9.5],["水天宮前",10.8],["清澄白河",12.5],["住吉",14.4],["錦糸町",15.4],["押上",16.8]]},{"name":"南北線","st":[["目黒",0.0],["白金台",1.3],["白金高輪",2.3],["麻布十番",3.6],["六本木一丁目",4.8],["溜池山王",5.7],["永田町",6.6],["四ツ谷",7.9],["市ケ谷",8.9],["飯田橋",10.0],["後楽園",11.4],["東大前",12.7],["本駒込",13.6],["駒込",15.0],["西ケ原",16.4],["王子",17.4],["王子神谷",18.6],["志茂",20.2],["赤羽岩淵",21.3]]},{"name":"副都心線","st":[["和光市",0.0],["地下鉄成増",2.2],["地下鉄赤塚",3.6],["平和台",5.4],["氷川台",6.8],["小竹向原",8.3],["千川",9.4],["要町",10.4],["池袋",11.3],["雑司が谷",13.1],["西早稲田",14.6],["東新宿",15.5],["新宿三丁目",16.6],["北参道",18.0],["明治神宮前",19.2],["渋谷",20.2]]}]},{"name":"都営地下鉄","fare":[[4,178,180],[9,220,220],[15,272,280],[21,325,330],[27,377,380],[46,430,430]],"pass":[[1,6460],[2,6830],[3,7210],[4,7580],[5,7940],[6,8330],[7,8700],[8,9010],[9,9340],[10,9670],[11,9990],[12,10250],[13,10520],[14,10790],[15,11060],[16,11260],[17,11480],[18,11690],[19,11910],[20,12060],[21,12230],[22,12390],[23,12550],[24,12660],[25,12760],[26,12870],[27,12980],[28,13030],[29,13080],[30,13130],[31,13180],[32,13230],[33,13260],[34,13290],[35,13320],[36,13350],[37,13380],[38,13410],[39,13440],[40,13480],[41,13510],[42,13540],[43,13580],[44,13610],[45,13640],[46,13670]],"lines":[{"name":"浅草線","st":[["西馬込",0.0],["馬込",1.2],["中延",2.1],["戸越",3.2],["五反田",4.8],["高輪台",5.5],["泉岳寺",6.9],["三田",8.0],["大門",9.5],["新橋",10.5],["東銀座",11.4],["宝町",12.2],["日本橋",13.0],["人形町",13.8],["東日本橋",14.5],["浅草橋",15.2],["蔵前",15.9],["浅草",16.8],["本所吾妻橋",17.5],["押上",18.3]]},{"name":"三田線","st":[["目黒",0.0],["白金台",1.3],["白金高輪",2.3],["三田",4.0],["芝公園",4.6],["御成門",5.3],["内幸町",6.4],["日比谷",7.3],["大手町",8.2],["神保町",9.6],["水道橋",10.6],["春日",11.3],["白山",12.7],["千石",13.7],["巣鴨",14.6],["西巣鴨",16.0],["新板橋",17.0],["板橋区役所前",17.9],["板橋本町",19.1],["本蓮沼",20.0],["志村坂上",21.1],["志村三丁目",22.0],["蓮根",23.2],["西台",24.0],["高島平",25.0],["新高島平",25.7],["西高島平",26.5]]},{"name":"新宿線","st":[["新宿",0.0],["新宿三丁目",0.8],["曙橋",2.3],["市ヶ谷",3.7],["九段下",5.0],["神保町",5.6],["小川町",6.5],["岩本町",7.3],["馬喰横山",8.1],["浜町",8.7],["森下",9.5],["菊川",10.3],["住吉",11.2],["西大島",12.2],["大島",12.9],["東大島",14.1],["船堀",15.8],["一之江",17.5],["瑞江",19.2],["篠崎",20.7],["本八幡",23.5]]},{"name":"大江戸線","st":[["都庁前",0.0],["新宿西口",0.8],["東新宿",2.2],["若松河田",3.2],["牛込柳町",3.8],["牛込神楽坂",4.8],["飯田橋",5.8],["春日",6.8],["本郷三丁目",7.6],["上野御徒町",8.7],["新御徒町",9.5],["蔵前",10.5],["両国",11.7],["森下",12.7],["清澄白河",13.3],["門前仲町",14.5],["月島",15.9],["勝どき",16.7],["築地市場",18.2],["汐留",19.1],["大門",20.0],["赤羽橋",21.3],["麻布十番",22.1],["六本木",23.2],["青山一丁目",24.5],["国立競技場",25.7],["代々木",27.2],["新宿",27.8],["西新宿五丁目",29.4],["中野坂上",30.6],["東中野",31.6],["中井",32.4],["落合南長崎",33.7],["新江古田",35.3],["練馬",36.9],["豊島園",37.8],["練馬春日町",39.3],["光が丘",40.7]]}]},{"name":"東武鉄道","fare":[[4,157,160],[7,178,180],[10,209,210],[15,261,270],[20,324,330],[25,377,380],[30,429,430],[35,481,490],[40,534,540],[45,607,610],[50,670,670],[60,743,750],[70,827,830],[80,912,920],[90,995,1000],[100,1089,1090],[120,1225,1230],[140,1393,1400],[178,1581,1590]],"pass":[[1,4890],[2,5420],[3,5900],[4,6310],[5,6970],[6,7390],[7,7530],[8,8340],[9,8760],[10,8860],[11,9850],[12,10280],[13,10610],[14,10870],[15,10950],[16,11730],[17,12260],[18,12700],[19,13000],[20,13220],[21,13650],[22,14020],[23,14350],[24,14560],[25,14710],[26,15090],[27,15410],[28,15690],[29,15890],[30,16060],[31,16150],[32,16250],[33,16360],[34,16460],[35,16570],[36,16680],[37,16780],[38,16880],[39,16980],[40,17100],[41,17190],[42,17280],[43,17370],[44,17470],[45,17560],[46,17660],[47,17750],[48,17850],[49,17940],[50,18030],[51,18110],[52,18210],[53,18290],[54,18370],[55,18450],[56,18540],[57,18620],[58,18700],[59,18790],[60,18870],[61,18950],[62,19030],[63,19110],[64,19190],[65,19280],[66,19370],[67,19450],[68,19530],[69,19620],[70,19700],[71,19780],[72,19870],[73,19960],[74,20040],[75,20120],[76,20200],[77,20280],[78,20370],[79,20460],[80,20540],[81,20620],[82,20710],[83,20790],[84,20870],[85,20960],[86,21040],[87,21130],[88,21210],[89,21290],[90,21370],[91,21460],[92,21550],[93,21630],[94,21710],[95,21800],[96,21880],[97,21960],[98,22050],[99,22130],[100,22220]],"lines":[{"name":"東上線","st":[["池袋",0.0],["北池袋",1.2],["下板橋",2.0],["大山",3.0],["中板橋",4.0],["ときわ台",4.7],["上板橋",6.0],["東武練馬",7.4],["下赤塚",8.9],["成増",10.4],["和光市",12.5],["朝霞",14.0],["朝霞台",16.4],["志木",17.8],["柳瀬川",19.3],["みずほ台",20.6],["鶴瀬",22.0],["ふじみ野",24.2],["上福岡",25.9],["新河岸",28.3],["川越",30.5],["川越市",31.4],["霞ヶ関",34.8],["鶴ヶ島",37.0],["若葉",38.9],["坂戸",40.6],["北坂戸",42.7],["高坂",46.2],["東松山",49.9],["森林公園",52.6],["つきのわ",55.4],["武蔵嵐山",57.1],["小川町",64.1],["東武竹沢",67.1],["みなみ寄居",68.9],["男衾",70.8],["鉢形",73.5],["玉淀",74.4],["寄居",75.0]]},{"name":"スカイツリーライン・伊勢崎線","st":[["浅草",0.0],["とうきょうスカイツリー",1.1],["曳舟",2.4],["東向島",3.2],["鐘ヶ淵",4.2],["堀切",5.3],["牛田",6.0],["北千住",7.1],["小菅",8.2],["五反野",9.3],["梅島",10.5],["西新井",11.3],["竹ノ塚",13.4],["谷塚",15.9],["草加",17.5],["獨協大学前",19.2],["新田",20.5],["蒲生",21.9],["新越谷",22.9],["越谷",24.4],["北越谷",26.0],["大袋",28.5],["せんげん台",29.8],["武里",31.1],["一ノ割",33.0],["春日部",35.3],["北春日部",36.8],["姫宮",38.4],["東武動物公園",41.0],["和戸",43.9],["久喜",47.7]]},{"name":"日光線","st":[["東武動物公園",0.0],["杉戸高野台",3.2],["幸手",5.8],["南栗橋",10.4],["栗橋",13.9],["新古河",20.6],["柳生",23.6],["板倉東洋大前",25.6],["藤岡",29.5],["静和",37.3],["新大平下",40.1],["栃木",44.9],["新栃木",47.9],["合戦場",50.0],["家中",52.4],["東武金崎",56.6],["楡木",61.2],["樅山",64.2],["新鹿沼",66.8],["北鹿沼",69.8],["板荷",74.9],["下小代",78.5],["明神",81.3],["下今市",87.4],["上今市",88.4],["東武日光",94.5]]}]},{"name":"西武鉄道","fare":[[4,169,170],[8,207,210],[12,245,250],[16,284,290],[20,323,330],[24,362,370],[28,402,410],[32,442,450],[36,483,490],[40,521,530],[44,557,560],[48,592,600],[52,627,630],[56,657,660],[60,683,690],[64,709,710],[68,735,740],[72,758,760],[76,781,790],[81,800,800]],"pass":[[4,6540],[8,7920],[12,9320],[16,10720],[20,12130],[24,13550],[28,14980],[32,16420],[36,17850],[40,19270],[44,20370],[48,21270],[52,21970],[56,22470],[60,22870],[64,23170],[68,23420],[72,23620],[76,23820],[81,24000]],"lines":[{"name":"池袋線","st":[["池袋",0.0],["椎名町",1.9],["東長崎",3.1],["江古田",4.3],["桜台",5.2],["練馬",6.0],["中村橋",7.5],["富士見台",8.3],["練馬高野台",9.5],["石神井公園",10.6],["大泉学園",12.5],["保谷",14.1],["ひばりヶ丘",16.4],["東久留米",17.8],["清瀬",19.6],["秋津",21.8],["所沢",24.8],["西所沢",27.2],["小手指",29.4],["狭山ヶ丘",31.6],["武蔵藤沢",32.9],["稲荷山公園",35.9],["入間市",36.8],["仏子",39.7],["元加治",41.0],["飯能",43.7],["東飯能",44.5],["高麗",48.5],["武蔵横手",51.3],["東吾野",53.8],["吾野",57.8]]},{"name":"新宿線","st":[["西武新宿",0.0],["高田馬場",2.0],["下落合",3.2],["中井",3.9],["新井薬師前",5.2],["沼袋",6.1],["野方",7.1],["都立家政",8.0],["鷺ノ宮",8.5],["下井草",9.8],["井荻",10.7],["上井草",11.7],["上石神井",12.8],["武蔵関",14.1],["東伏見",15.3],["西武柳沢",16.3],["田無",17.6],["花小金井",19.9],["小平",22.6],["久米川",24.6],["東村山",26.0],["所沢",28.9],["航空公園",30.5],["新所沢",31.7],["入曽",35.6],["狭山市",38.6],["新狭山",41.3],["南大塚",43.9],["本川越",47.5]]},{"name":"国分寺線","st":[["国分寺",0.0],["恋ヶ窪",2.1],["鷹の台",3.6],["小川",5.1],["東村山",7.8]]},{"name":"拝島線","st":[["小平",0.0],["萩山",1.1],["小川",2.7],["東大和市",5.7],["玉川上水",7.2],["武蔵砂川",9.6],["西武立川",11.6],["拝島",14.3]]},{"name":"多摩湖線","st":[["国分寺",0.0],["一橋学園",2.4],["青梅街道",3.4],["萩山",4.6],["八坂",5.6],["武蔵大和",8.1],["多摩湖",9.2]]},{"name":"豊島線","st":[["練馬",0.0],["豊島園",1.0]]},{"name":"狭山線","st":[["西所沢",0.0],["下山口",1.8],["西武球場前",4.2]]},{"name":"西武有楽町線","st":[["練馬",0.0],["新桜台",1.4],["小竹向原",2.6]]},{"name":"多摩川線","st":[["武蔵境",0.0],["新小金井",1.9],["多磨",4.1],["白糸台",5.5],["競艇場前",7.0],["是政",8.0]]},{"name":"西武園線","st":[["東村山",0.0],["西武園",2.4]]},{"name":"秩父線","st":[["吾野",0.0],["西吾野",3.6],["正丸",6.3],["芦ヶ久保",12.4],["横瀬",16.4],["西武秩父",19.0]]}]},{"name":"京王電鉄","fare":[[4,140,140],[6,160,160],[9,188,190],[12,209,210],[15,230,230],[19,273,280],[24,314,320],[30,356,360],[37,388,390],[44,409,410],[52,430,430]],"pass":[[4,5240],[6,5990],[9,7040],[12,7820],[15,8610],[19,10220],[24,11760],[30,13330],[37,14530],[44,15310],[52,16100]],"lines":[{"name":"京王線","st":[["新宿",0.0],["笹塚",3.6],["代田橋",4.4],["明大前",5.2],["下高井戸",6.1],["桜上水",7.0],["上北沢",7.8],["八幡山",8.4],["芦花公園",9.1],["千歳烏山",9.9],["仙川",11.5],["つつじヶ丘",12.5],["柴崎",13.3],["国領",14.2],["布田",14.9],["調布",15.5],["西調布",17.0],["飛田給",17.7],["武蔵野台",18.8],["多磨霊園",19.6],["東府中",20.4],["府中",21.9],["分倍河原",23.1],["中河原",24.7],["聖蹟桜ヶ丘",26.3],["百草園",28.0],["高幡不動",29.7],["南平",32.1],["平山城址公園",33.4],["長沼",34.9],["北野",36.1],["京王八王子",37.9]]},{"name":"京王新線","st":[["新線新宿",0.0],["初台",1.7],["幡ヶ谷",2.7],["笹塚",3.6]]},{"name":"相模原線","st":[["調布",0.0],["京王多摩川",1.2],["京王稲田堤",2.5],["京王よみうりランド",3.9],["稲城",5.5],["若葉台",8.8],["京王永山",11.4],["京王多摩センター",13.7],["京王堀之内",16.0],["南大沢",18.2],["多摩境",20.1],["橋本",22.6]]},{"name":"高尾線","st":[["北野",0.0],["京王片倉",1.7],["山田",3.2],["めじろ台",4.3],["狭間",5.8],["高尾",6.9],["高尾山口",8.6]]},{"name":"井の頭線","st":[["渋谷",0.0],["神泉",0.5],["駒場東大前",1.4],["池ノ上",2.4],["下北沢",3.0],["新代田",3.5],["東松原",4.0],["明大前",4.9],["永福町",6.0],["西永福",6.7],["浜田山",7.5],["高井戸",8.7],["富士見ヶ丘",9.4],["久我山",10.2],["三鷹台",11.2],["井の頭公園",12.1],["吉祥寺",12.7]]},{"name":"競馬場線","st":[["東府中",0.0],["府中競馬正門前",0.9]]},{"name":"動物園線","st":[["高幡不動",0.0],["多摩動物公園",2.0]]}]},{"name":"小田急電鉄","fare":[[3,136,140],[6,167,170],[9,199,200],[13,230,230],[17,261,270],[21,293,300],[25,324,330],[29,356,360],[33,387,390],[37,429,430],[41,472,480],[46,513,520],[51,555,560],[56,607,610],[61,649,650],[66,692,700],[71,743,750],[76,796,800],[81,848,850],[83,901,910]],"pass":[[1,4400],[2,4800],[3,5200],[4,5580],[5,5980],[6,6360],[7,6730],[8,7110],[9,7490],[10,7840],[11,8200],[12,8550],[13,8900],[14,9230],[15,9560],[16,9870],[17,10200],[18,10480],[19,10780],[20,11080],[21,11360],[22,11630],[23,11890],[24,12160],[25,12410],[26,12640],[27,12880],[28,13100],[29,13330],[30,13550],[31,13790],[32,14020],[33,14250],[34,14250],[35,14480],[36,14480],[37,14710],[38,14710],[39,14940],[40,14940],[41,15170],[42,15170],[43,15400],[44,15400],[45,15620],[46,15620],[47,15850],[48,15850],[49,16080],[50,16080],[51,16080],[52,16310],[53,16310],[54,16310],[55,16550],[56,16550],[57,16550],[58,16770],[59,16770],[60,16770],[61,16970],[62,16970],[63,16970],[64,17170],[65,17170],[66,17170],[67,17370],[68,17370],[69,17370],[70,17570],[71,17570],[72,17570],[73,17770],[74,17770],[75,17770],[76,17920],[77,17920],[78,17920],[79,18100],[80,18100],[81,18100],[82,18260],[83,18260]],"lines":[{"name":"小田原線","st":[["新宿",0.0],["南新宿",0.8],["参宮橋",1.5],["代々木八幡",2.7],["代々木上原",3.5],["東北沢",4.2],["下北沢",4.9],["世田谷代田",5.6],["梅ヶ丘",6.3],["豪徳寺",7.0],["経堂",8.0],["千歳船橋",9.2],["祖師ヶ谷大蔵",10.6],["成城学園前",11.6],["喜多見",12.7],["狛江",13.8],["和泉多摩川",14.4],["登戸",15.2],["向ヶ丘遊園",15.8],["生田",17.9],["読売ランド前",19.2],["百合ヶ丘",20.5],["新百合ヶ丘",21.5],["柿生",23.4],["鶴川",25.1],["玉川学園前",27.9],["町田",30.8],["相模大野",32.3],["小田急相模原",34.7],["相武台前",36.9],["座間",39.2],["海老名",42.5],["厚木",44.1],["本厚木",45.4],["愛甲石田",48.5],["伊勢原",52.2],["鶴巻温泉",55.9],["東海大学前",57.0],["秦野",61.7],["渋沢",65.6],["新松田",71.8],["開成",74.3],["栢山",76.2],["富水",77.8],["螢田",79.2],["足柄",80.8],["小田原",82.5]]},{"name":"江ノ島線","st":[["相模大野",0.0],["東林間",1.5],["中央林間",3.0],["南林間",4.5],["鶴間",5.1],["大和",7.6],["桜ヶ丘",9.8],["高座渋谷",11.8],["長後",14.0],["湘南台",15.8],["六会日大前",17.3],["善行",19.7],["藤沢本町",21.3],["藤沢",23.1],["本鵠沼",24.6],["鵠沼海岸",25.9],["片瀬江ノ島",27.6]]},{"name":"多摩線","st":[["新百合ヶ丘",0.0],["五月台",1.5],["栗平",2.8],["黒川",4.1],["はるひ野",4.9],["小田急永山",6.8],["小田急多摩センター",9.1],["唐木田",10.6]]}]},{"name":"東急電鉄","fare":[[3,140,140],[7,180,180],[11,227,230],[15,250,250],[20,288,290],[25,309,310],[30,347,350],[35,381,390],[40,430,430],[45,469,470],[50,500,500],[56,531,540]],"pass":[[3,4990],[7,6780],[11,8570],[15,9430],[20,10740],[25,11510],[30,12830],[35,14170],[40,15940],[45,17260],[50,18580],[56,19900]],"lines":[{"name":"東横線","st":[["渋谷",0.0],["代官山",1.5],["中目黒",2.2],["祐天寺",3.2],["学芸大学",4.2],["都立大学",5.6],["自由が丘",7.0],["田園調布",8.2],["多摩川",9.0],["新丸子",10.3],["武蔵小杉",10.8],["元住吉",12.1],["日吉",13.6],["綱島",15.6],["大倉山",17.5],["菊名",18.8],["妙蓮寺",20.2],["白楽",21.4],["東白楽",22.1],["反町",23.3],["横浜",24.2]]},{"name":"目黒線","st":[["目黒",0.0],["不動前",1.0],["武蔵小山",1.9],["西小山",2.6],["洗足",3.3],["大岡山",4.3],["奥沢",5.5],["田園調布",6.5],["多摩川",7.3],["新丸子",8.6],["武蔵小杉",9.1],["元住吉",10.4],["日吉",11.9]]},{"name":"田園都市線","st":[["渋谷",0.0],["池尻大橋",1.9],["三軒茶屋",3.3],["駒沢大学",4.8],["桜新町",6.3],["用賀",7.6],["二子玉川",9.4],["二子新地",10.1],["高津",10.7],["溝の口",11.4],["梶が谷",12.2],["宮崎台",13.7],["宮前平",14.7],["鷺沼",15.7],["たまプラーザ",17.1],["あざみ野",18.2],["江田",19.3],["市が尾",20.6],["藤が丘",22.1],["青葉台",23.1],["田奈",24.5],["長津田",25.6],["つくし野",26.8],["すずかけ台",28.0],["南町田グランベリーパーク",29.2],["つきみ野",30.3],["中央林間",31.5]]},{"name":"大井町線","st":[["大井町",0.0],["下神明",0.8],["戸越公園",1.5],["中延",2.1],["荏原町",2.7],["旗の台",3.2],["北千束",4.0],["大岡山",4.8],["緑が丘",5.3],["自由が丘",6.3],["九品仏",7.1],["尾山台",7.8],["等々力",8.3],["上野毛",9.2],["二子玉川",10.4],["溝の口",12.4]]},{"name":"池上線","st":[["五反田",0.0],["大崎広小路",0.3],["戸越銀座",1.4],["荏原中延",2.1],["旗の台",3.1],["長原",3.7],["洗足池",4.3],["石川台",4.9],["雪が谷大塚",5.6],["御嶽山",6.4],["久が原",7.1],["千鳥町",8.0],["池上",9.1],["蓮沼",10.1],["蒲田",10.9]]},{"name":"東急多摩川線","st":[["多摩川",0.0],["沼部",0.9],["鵜の木",2.0],["下丸子",2.6],["武蔵新田",3.4],["矢口渡",4.3],["蒲田",5.6]]}]},{"name":"京浜急行電鉄","fare":[[3,150,150],[6,180,180],[10,228,230],[15,277,280],[20,313,320],[25,347,350],[30,403,410],[35,455,460],[40,510,510],[45,566,570],[50,620,620],[55,667,670],[60,710,710],[65,740,740],[67,740,740]],"pass":[[1,4950],[2,5490],[3,6020],[4,6550],[5,6980],[6,7430],[7,7860],[8,8290],[9,8730],[10,9160],[11,9590],[12,9940],[13,10280],[14,10620],[15,10960],[16,11280],[17,11610],[18,11920],[19,12230],[20,12540],[21,12850],[22,13100],[23,13350],[24,13600],[25,13850],[26,14100],[27,14320],[28,14540],[29,14760],[30,14980],[31,15200],[32,15400],[33,15600],[34,15800],[35,16000],[36,16200],[37,16390],[38,16580],[39,16770],[40,16960],[41,17150],[42,17330],[43,17510],[44,17690],[45,17870],[46,18050],[47,18220],[48,18390],[49,18560],[50,18730],[51,18900],[52,19050],[53,19200],[54,19350],[55,19500],[56,19650],[57,19770],[58,19890],[59,20010],[60,20130],[61,20250],[62,20350],[63,20450],[64,20550],[65,20650],[66,20750],[67,20850]],"lines":[{"name":"本線","st":[["泉岳寺",0.0],["品川",1.2],["北品川",1.9],["新馬場",2.6],["青物横丁",3.4],["鮫洲",3.9],["立会川",4.7],["大森海岸",6.0],["平和島",6.9],["大森町",7.7],["梅屋敷",8.4],["京急蒲田",9.2],["雑色",10.6],["六郷土手",11.8],["京急川崎",13.0],["八丁畷",14.3],["鶴見市場",15.0],["京急鶴見",16.5],["花月総持寺",17.3],["生麦",18.1],["京急新子安",19.5],["子安",20.5],["神奈川新町",21.2],["京急東神奈川",21.7],["神奈川",22.7],["横浜",23.4],["戸部",24.6],["日ノ出町",26.0],["黄金町",26.8],["南太田",27.7],["井土ヶ谷",28.9],["弘明寺",30.3],["上大岡",32.0],["屏風浦",34.2],["杉田",35.5],["京急富岡",37.9],["能見台",38.6],["金沢文庫",40.7],["金沢八景",42.1],["追浜",44.0],["京急田浦",45.7],["安針塚",48.3],["逸見",49.3],["汐入",50.4],["横須賀中央",51.1],["県立大学",52.3],["堀ノ内",53.5],["京急大津",54.3],["馬堀海岸",55.4],["浦賀",56.7]]},{"name":"空港線","st":[["京急蒲田",0.0],["糀谷",0.9],["大鳥居",1.9],["穴守稲荷",2.6],["天空橋",3.3],["羽田空港第3ターミナル",4.5],["羽田空港第1・第2ターミナル",6.5]]},{"name":"大師線","st":[["京急川崎",0.0],["港町",1.2],["鈴木町",2.0],["川崎大師",2.5],["東門前",3.2],["大師橋",3.8],["小島新田",4.5]]},{"name":"逗子線","st":[["金沢八景",0.0],["六浦",1.3],["神武寺",4.1],["逗子・葉山",5.9]]},{"name":"久里浜線","st":[["堀ノ内",0.0],["新大津",0.8],["北久里浜",1.7],["京急久里浜",4.5],["YRP野比",7.2],["京急長沢",8.5],["津久井浜",9.7],["三浦海岸",11.2],["三崎口",13.4]]}]},{"name":"京成電鉄","fare":[[3,146,150],[5,167,170],[10,199,200],[15,272,280],[20,335,340],[25,387,390],[30,450,450],[35,502,510],[40,555,560],[45,618,620],[50,681,690],[55,743,750],[60,796,800],[65,859,860],[70,912,920]],"pass":[[5,5900],[10,8460],[15,11030],[20,13270],[25,15520],[30,17440],[31,18730],[32,19360],[33,19900],[34,20320],[35,20640],[36,20750],[37,20850],[38,20970],[39,21070],[40,21170],[41,21290],[42,21390],[43,21500],[44,21600],[45,21710],[46,21820],[47,21920],[48,22040],[49,22140],[50,22240],[51,22350],[52,22460],[53,22560],[54,22670],[55,22780],[56,22890],[57,22990],[58,23090],[59,23210],[60,23310],[61,23410],[62,23530],[63,23630],[64,23740],[65,23850],[66,23950],[67,24060],[68,24160],[69,24280],[70,24380]],"lines":[{"name":"本線","st":[["京成上野",0.0],["日暮里",2.1],["新三河島",3.4],["町屋",4.3],["千住大橋",5.9],["京成関屋",7.3],["堀切菖蒲園",8.8],["お花茶屋",9.9],["青砥",11.5],["京成高砂",12.7],["京成小岩",14.5],["江戸川",15.7],["国府台",16.4],["市川真間",17.3],["菅野",18.2],["京成八幡",19.1],["鬼越",20.1],["京成中山",20.8],["東中山",21.6],["京成西船",22.2],["海神",23.6],["京成船橋",25.1],["大神宮下",26.4],["船橋競馬場",27.2],["谷津",28.2],["京成津田沼",29.7],["京成大久保",32.1],["実籾",34.0],["八千代台",36.6],["京成大和田",38.7],["勝田台",40.3],["志津",42.1],["ユーカリが丘",43.2],["京成臼井",45.7],["京成佐倉",51.0],["大佐倉",53.0],["京成酒々井",55.0],["宗吾参道",57.0],["公津の杜",58.6],["京成成田",61.2],["空港第2ビル",68.3],["成田空港",69.3]]},{"name":"押上線","st":[["押上",0.0],["京成曳舟",1.1],["八広",2.3],["四ツ木",3.1],["京成立石",4.6],["青砥",5.7]]},{"name":"金町線","st":[["京成高砂",0.0],["柴又",1.0],["京成金町",2.5]]},{"name":"千葉線","st":[["京成津田沼",0.0],["京成幕張本郷",2.1],["京成幕張",4.0],["検見川",5.3],["京成稲毛",8.1],["みどり台",9.9],["西登戸",10.9],["新千葉",11.7],["京成千葉",12.3],["千葉中央",12.9]]}]},{"name":"東京臨海高速鉄道","fare":[[3,210,210],[6,272,280],[9,335,340],[13,398,400]],"pass":[[3,8160],[6,10600],[9,13060],[13,15500]],"lines":[{"name":"りんかい線","st":[["新木場",0.0],["東雲",2.2],["国際展示場",3.5],["東京テレポート",4.9],["天王洲アイル",7.8],["品川シーサイド",8.9],["大井町",10.5],["大崎",12.2]]}]},{"name":"ゆりかもめ","fare":[[2,189,190],[5,251,260],[8,325,330],[15,388,390]],"pass":[[2,5600],[5,7460],[8,9640],[15,11500]],"lines":[{"name":"ゆりかもめ線","st":[["新橋",0.0],["汐留",0.4],["竹芝",1.6],["日の出",2.2],["芝浦ふ頭",3.1],["お台場海浜公園",7.0],["台場",7.8],["東京国際クルーズターミナル",8.4],["テレコムセンター",9.2],["青海",10.2],["東京ビッグサイト",11.3],["有明",12.0],["有明テニスの森",12.7],["市場前",13.5],["新豊洲",14.0],["豊洲",14.7]]}]},{"name":"東京モノレール","fare":[[1.5,177,180],[4.5,229,230],[7.5,317,320],[10.5,388,390],[13.5,458,460],[17.8,519,520]],"pass":[[1.5,5740],[4.5,7420],[7.5,10270],[10.5,12570],[13.5,13880],[17.8,14600]],"lines":[{"name":"羽田空港線","st":[["モノレール浜松町",0.0],["天王洲アイル",4.0],["大井競馬場前",7.1],["流通センター",8.7],["昭和島",9.9],["整備場",11.8],["天空橋",12.6],["羽田空港第3ターミナル",14.0],["新整備場",16.1],["羽田空港第1ターミナル",16.9],["羽田空港第2ターミナル",17.8]]}]},{"name":"首都圏新都市鉄道","fare":[[3,180,180],[5,230,230],[7,271,280],[9,320,320],[11,362,370],[13,412,420],[15,454,460],[18,513,520],[21,574,580],[24,626,630],[27,688,690],[30,741,750],[33,800,800],[36,853,860],[39,913,920],[42,966,970],[45,1018,1020],[48,1070,1070],[51,1123,1130],[54,1175,1180],[57,1227,1230],[59,1280,1280]],"pass":[[3,6810],[5,8700],[7,10590],[9,12100],[11,13990],[13,15880],[15,17390],[18,19660],[21,21940],[24,23820],[27,26090],[30,27970],[33,30240],[36,32450],[39,34320],[42,36210],[45,38090],[48,39980],[51,41860],[54,43740],[57,45620],[59,47500]],"lines":[{"name":"つくばエクスプレス","st":[["秋葉原",0.0],["新御徒町",1.6],["浅草",3.1],["南千住",5.6],["北千住",7.5],["青井",10.6],["六町",12.0],["八潮",15.6],["三郷中央",19.3],["南流山",22.1],["流山セントラルパーク",24.3],["流山おおたかの森",26.5],["柏の葉キャンパス",30.0],["柏たなか",32.0],["守谷",37.7],["みらい平",44.3],["みどりの",48.6],["万博記念公園",51.8],["研究学園",55.6],["つくば",58.3]]}]},{"name":"東京都交通局","fare":[[2,168,170],[4,231,240],[7,283,290],[10,335,340]],"pass":[[1,6510],[2,7730],[3,8960],[4,10190],[5,10990],[6,11800],[7,12630],[8,13040],[9,13440],[10,13850]],"lines":[{"name":"日暮里・舎人ライナー","st":[["日暮里",0.0],["西日暮里",0.7],["赤土小学校前",1.7],["熊野前",2.4],["足立小台",3.0],["扇大橋",4.1],["高野",4.6],["江北",5.2],["西新井大師西",6.0],["谷在家",6.8],["舎人公園",7.7],["舎人",8.7],["見沼代親水公園",9.7]]}]},{"name":"多摩都市モノレール","fare":[[3,214,220],[5,265,270],[7,316,320],[10,367,370],[16,408,410]],"pass":[[3,8110],[5,10140],[7,12160],[10,14190],[16,16230]],"lines":[{"name":"多摩モノレール線","st":[["多摩センター",0.0],["松が谷",0.9],["大塚・帝京大学",1.7],["中央大学・明星大学",2.6],["多摩動物公園",3.7],["程久保",4.7],["高幡不動",5.5],["万願寺",6.7],["甲州街道",8.0],["柴崎体育館",9.5],["立川南",10.2],["立川北",10.6],["高松",11.8],["立飛",12.4],["泉体育館",13.0],["砂川七番",13.5],["玉川上水",14.5],["桜街道",15.3],["上北台",16.0]]}]},{"name":"北総鉄道","fare":[[3,188,190],[5,279,280],[7,330,330],[9,379,380],[11,427,430],[14,475,480],[17,547,550],[20,617,620],[23,669,670],[26,720,720],[29,768,770],[33,811,820]],"pass":[[3,7980],[5,11760],[7,13860],[9,15960],[11,18060],[14,20160],[17,23100],[20,26040],[23,28140],[26,30240],[29,32340],[33,34440]],"lines":[{"name":"北総線","st":[["京成高砂",0.0],["新柴又",1.3],["矢切",3.2],["北国分",4.7],["秋山",6.2],["東松戸",7.5],["松飛台",8.9],["大町",10.4],["新鎌ヶ谷",12.7],["西白井",15.8],["白井",17.8],["小室",19.8],["千葉ニュータウン中央",23.8],["印西牧の原",28.5],["印旛日本医大",32.3]]}]},{"name":"東葉高速鉄道","fare":[[3,210,210],[5,293,300],[7,367,370],[9,440,440],[11,513,520],[14,576,580],[17,639,640]],"pass":[[3,8960],[5,12100],[7,15240],[9,18370],[11,21520],[14,24200],[17,26890]],"lines":[{"name":"東葉高速線","st":[["西船橋",0.0],["東海神",2.1],["飯山満",6.1],["北習志野",8.1],["船橋日大前",9.8],["八千代緑が丘",11.0],["八千代中央",13.8],["村上",15.2],["東葉勝田台",16.2]]}]},{"name":"埼玉高速鉄道","fare":[[3,210,210],[5,270,270],[7,310,310],[9,350,350],[11,400,400],[13,440,440],[15,480,480]],"pass":[[3,8610],[5,10650],[7,12300],[9,13940],[11,15580],[13,17220],[15,18850]],"lines":[{"name":"埼玉スタジアム線","st":[["赤羽岩淵",0.0],["川口元郷",2.4],["南鳩ヶ谷",4.3],["鳩ヶ谷",5.9],["新井宿",7.5],["戸塚安行",10.0],["東川口",12.2],["浦和美園",14.6]]}]},{"name":"京成電鉄（松戸線）","fare":[],"pass":[],"lines":[{"name":"松戸線","st":[["松戸",0.0],["上本郷",1.7],["松戸新田",2.4],["みのり台",3.0],["八柱",3.8],["常盤平",5.6],["五香",7.4],["元山",8.7],["くぬぎ山",9.6],["北初富",11.4],["新鎌ヶ谷",12.1],["初富",13.3],["鎌ヶ谷大仏",15.4],["二和向台",16.3],["三咲",17.1],["滝不動",18.5],["高根公団",19.5],["高根木戸",20.1],["北習志野",21.0],["習志野",21.7],["薬園台",22.5],["前原",23.9],["新津田沼",25.3],["京成津田沼",26.5]]}]},{"name":"京成電鉄（成田スカイアクセス線）","fare":[],"pass":[],"lines":[{"name":"成田スカイアクセス線","st":[["京成高砂",0.0],["東松戸",7.5],["新鎌ヶ谷",12.7],["千葉ニュータウン中央",23.8],["印旛日本医大",32.3],["成田湯川",40.7],["空港第2ビル",50.4],["成田空港",51.4]]}]},{"name":"東急電鉄（世田谷線）","fare":[[9999,160,160]],"pass":[],"lines":[{"name":"世田谷線","st":[["三軒茶屋",0.0],["西太子堂",0.3],["若林",0.9],["松陰神社前",1.4],["世田谷",1.9],["上町",2.2],["宮の坂",2.7],["山下",3.4],["松原",4.2],["下高井戸",5.0]]}]}]};
+    /* ================= i18n ================= */
+    var T = {
+      my: {
+        credit:"ရေးသားသူ - ရာဇာဟိန်းထိုက်",
+        tabSlip:"လစာစာရွက်", tabCal:"ပြက္ခဒိန်", tabHist:"မှတ်တမ်း", tabSet:"ဆက်တင်",
+        slipSub:"လစဉ် လစာစာရွက် · လ ၁ ရက်မှ လကုန်အထိ",
+        gross:"စုစုပေါင်း လစာ (အခွန်မနုတ်မီ)",
+        payday:"လစာရက်", paydayEarly:"10 ရက်နေ့က ပိတ်ရက်/စနေ/တနင်္ဂနွေ ဖြစ်လို့ စောပေးသည်", periodWord:"ကာလ",
+        rDayEarn:"နေ့ဆိုင်း ဝင်ငွေ", rEveEarn:"ညနေဆိုင်း ဝင်ငွေ",
+        rDays:"အလုပ်ဆင်းရက်", rHours:"စုစုပေါင်း အလုပ်ချိန်",
+        rLate:"နောက်ကျချိန် စုစုပေါင်း", rEarly:"စောပြန်ချိန် စုစုပေါင်း",
+        rHolHours:"ပိတ်ရက် အလုပ်ချိန်",
+        transTitle:"ရထားခ (交通費)", transDesc:"ရထားခကို လစာထဲ ပေါင်းပြချင်ရင် ဖွင့်ပါ။ ရထားလိုင်းကို အရင် ရွေးပြီး ဘူတာတွေ ရွေးလိုက်ရင် 普通 ဈေးနဲ့ 定期券 ဈေးကို App က အလိုအလျောက် ရှာဖြည့်ပေးမယ် — ဈေးကိုတော့ ကိုယ်တိုင်လည်း ပြင်ထည့်လို့ ရပါတယ်။ 普通 ဆိုရင် အသွားတစ်ကြောင်း × ၂ × အလုပ်ဆင်းရက် နဲ့ တွက်ပေးပြီး၊ 定期券 ဆိုရင် တစ်လစာ ဈေးကို ပေါင်းပေးမယ်။",
+        transOff:"မထည့်ပါ", transOn:"ထည့်မည်", transNormal:"普通 · ရိုးရိုး", transPass:"定期券 · လပေး",
+        transHome:"အိမ်ဘူတာ", transWork:"အလုပ်ဘူတာ", transHomePh:"ဥပမာ 上板橋", transWorkPh:"ဥပမာ 渋谷",
+        transOneWay:"အသွားတစ်ကြောင်း ရထားခ (¥)", transLines:"စီးတဲ့ ရထားလိုင်းများ", transLinesPh:"ဥပမာ 東武東上線・JR埼京線",
+        transPassPrice:"定期券 ဈေး စုစုပေါင်း (¥)", transPassTerm:"定期 သက်တမ်း", transRoute:"လမ်းကြောင်း",
+        rpLine1:"ရထားလိုင်း ၁", rpLine2:"ရထားလိုင်း ၂ (ပြောင်းစီး)", rpFrom:"စမှတ် ဘူတာ", rpTo:"ဆုံးမှတ် ဘူတာ",
+        rpPickLine:"— လိုင်း ရွေးပါ —", rpPickStation:"— ဘူတာ ရွေးပါ —",
+        rpOne:"လိုင်း ၁ ခုတည်း", rpTwo:"ပြောင်းစီး (လိုင်း ၂ ခု)",
+        rpCalc:"ရှာတွေ့တဲ့ ဈေး", rpHint:"လိုင်းကို အရင် ရွေးပြီး ဘူတာတွေ ရွေးလိုက်ရင် ဈေးကို အလိုအလျောက် ရှာဖြည့်ပေးပါမယ်။",
+        rpManual:"ဒီလိုင်းရဲ့ ဈေးကို အလိုအလျောက် မရှာနိုင်ပါ — ဈေးကို ကိုယ်တိုင် ထည့်ပါ။",
+        rpNoTransfer:"ပြောင်းစီးမယ့် ဘူတာက ရွေးထားတဲ့ လိုင်း ၂ မှာ မရှိပါ — တခြားလိုင်း ရွေးကြည့်ပါ။",
+        rSalarySub:"လစာ (ရထားခ မပါ)", rTransport:"ရထားခ (交通費)", rGrandTotal:"စုစုပေါင်း (လစာ + ရထားခ)", transMonthUnit:"လ",
+        dailyTitle:"နေ့စဉ် မှတ်တမ်းများ", dailyHint:"နှိပ်ရင် ပြင်မည် · ဘယ်ဘက်သို့ ဆွဲရင် ပြင်/ဖျက် ပေါ်မည်",
+        emptyDays:"ဒီကာလအတွက် မှတ်တမ်း မရှိသေးပါ။ ပြက္ခဒိန်မှာ ရက်တစ်ရက်ကို နှိပ်ပြီး အလုပ်ချိန် ထည့်ပါ၊ ဒါမှမဟုတ် အပတ်စဉ်ဇယားကို တစ်ချက်တည်း ဖြည့်ပါ။",
+        applyTpl:"ဇယားအတိုင်း ဖြည့်မည်",
+        appliedTpl:"အပတ်စဉ်ဇယားအတိုင်း ဖြည့်ပြီးပါပြီ",
+        calTitle:"ပြက္ခဒိန်", calSub:"ရက်တစ်ရက်ကို နှိပ်ပြီး အလုပ်ချိန် မှတ်တမ်း ထည့်/ပြင်နိုင်ပါတယ်။ တနင်္ဂနွေနဲ့ ဂျပန်ပိတ်ရက်တွေကို အနီရောင်နဲ့ ပြထားပါတယ်။ ရက်တစ်ရက်ကို “ပိတ်ရက် အဖြစ် သတ်မှတ်မည်” ရွေးလိုက်ရင် အဲဒီရက်ကို အလုပ်မဆင်း/နားရက် အဖြစ် သတ်မှတ်ပြီး အဲဒီလရဲ့ လစာတွက်ချက်မှုကနေ လုံးဝ ဖယ်ထုတ်ပါမယ်။",
+        legDay:"နေ့ဆိုင်း", legEve:"ညနေဆိုင်း", legHol:"အနီ = တနင်္ဂနွေ / 祝日",
+        histTitle:"မှတ်တမ်း", histSub:"လစာကာလ အလိုက် မှတ်တမ်းများ။ တစ်ခုကို နှိပ်ရင် အဲဒီကာလကို ဖွင့်ပြပါမယ်။ ဘယ်ဘက်သို့ ဆွဲရင်လည်း ပြင်/ဖျက် လုပ်နိုင်ပါတယ်။",
+        emptyHist:"မှတ်တမ်း မရှိသေးပါ။",
+        setTitle:"ဆက်တင်", setSub:"နှုန်းထားနဲ့ အပတ်စဉ်ဇယားကို ဒီမှာ ပြင်နိုင်ပါတယ်။",
+        langTitle:"ဘာသာစကား / Language",
+        pickTitle:"မင်္ဂလာပါ!",
+        pickSub:"သင် ဘယ်သူလဲ ရွေးပေးပါ — ရွေးလိုက်တဲ့ ဇာတ်ကောင်အလိုက် app ရဲ့ အရောင် theme ပြောင်းသွားပါမယ်။",
+        boy:"ယောကျာ်းလေး", girl:"မိန်းကလေး",
+        cheerTitle:"သင့်အတွက် ဂုဏ်ယူပါတယ်!",
+        cheerBody:"တစ်လလုံး ပင်ပင်ပန်းပန်း ကြိုးစားခဲ့တဲ့ သင့်အတွက် ဂုဏ်ယူပါတယ်။ အလုပ်ချိန်တိုင်း၊ မိနစ်တိုင်းက သင့်ရဲ့ ကြိုးစားမှုပါပဲ — အခု သင့်လစာကို ကြည့်လိုက်ရအောင်။",
+        enterBtn:"လစာစာရွက် ကြည့်မည်",
+        charTitle:"ဇာတ်ကောင် / Theme",
+        charDesc:"ရွေးထားတဲ့ ဇာတ်ကောင်အလိုက် app ရဲ့ အရောင် theme ပြောင်းပါတယ်။",
+        themeTitle:"အရောင် ပုံစံ", themeAuto:"အလိုအလျောက်", themeLight:"အလင်း", themeDark:"အမှောင်",
+        ratesTitle:"နှုန်းထား",
+        ratesDesc:"နားချိန် မရှိပါ — အလုပ်ဝင်ချိန်ကနေ ထွက်ချိန်အထိ အချိန်အားလုံး လစာရပါတယ်။ နောက်ကျ/စောပြန် အားလုံးကို မိနစ် အတိအကျနဲ့ တွက်ပါတယ်။",
+        rate:"တစ်နာရီ နှုန်း (¥) — နေ့ဆိုင်း နဲ့ ညနေဆိုင်း အတူတူပဲ",
+        save:"သိမ်းမည်", saved:"သိမ်းပြီးပါပြီ",
+        tplTitle:"အပတ်စဉ် အလုပ်ဇယား",
+        tplDesc:"နေ့အလိုက် ပုံမှန် အလုပ်ချိန်ကို သတ်မှတ်ထားပါ။ လစာစာရွက် စာမျက်နှာက “ဇယားအတိုင်း ဖြည့်မည်” ကို နှိပ်ရင် မှတ်တမ်း မရှိသေးတဲ့ ရက်တွေကို ဒီဇယားအတိုင်း ဖြည့်ပေးပါမယ် (ရှိပြီးသား မှတ်တမ်းကို မပြောင်းပါ)။",
+        off:"ပိတ်", dayShift:"နေ့ဆိုင်း", eveShift:"ညနေဆိုင်း",
+        redTitle:"အနီရက် အလုပ် (祝日)",
+        redDesc:"စနေ/တနင်္ဂနွေ မဟုတ်တဲ့ အစိုးရပိတ်ရက် (祝日) တွေမှာ အလုပ်ဆင်းမလား ရွေးပါ။ “ဆင်းမည်” ရွေးရင် ပုံမှန်အတိုင်း တွက်ပါမယ်။ “မဆင်းပါ” ရွေးရင် အဲဒီ ပိတ်ရက်က မှတ်တမ်းတွေကို လစာတွက်ချက်မှုကနေ ဖြုတ်ထားပါမယ် — မှတ်တမ်း မပျက်ပါဘူး၊ ပြန် “ဆင်းမည်” ရွေးရင် ပြန်တွက်ပေးပါမယ်။ ဇယားအတိုင်း ဖြည့်ရင်လည်း အဲဒီ ပိတ်ရက်တွေကို ကျော်ပါမယ်။ စနေနဲ့ တနင်္ဂနွေနေ့တွေကတော့ ဒီရွေးချယ်မှုနဲ့ မဆိုင်ဘဲ အမြဲ ပုံမှန်အတိုင်း တွက်ပါတယ်။ ဒါ့အပြင် ပြက္ခဒိန်/ရက်ပြင်တဲ့ နေရာမှာ ရက်တစ်ရက်ချင်းကို ကိုယ်တိုင် “ပိတ်ရက် အဖြစ် သတ်မှတ်မည်” ရွေးလိုက်ရင်လည်း ဒီ setting နဲ့ လုံးဝ မဆိုင်ဘဲ အဲဒီရက်ကို လစာတွက်ချက်မှု၊ စုစုပေါင်းနာရီ၊ အလုပ်ဆင်းရက် အရေအတွက်နဲ့ CSV/PDF export အားလုံးကနေ အမြဲ ဖယ်ထုတ်ပါမယ် — ပိတ်ရက် သတ်မှတ်လိုက်တာနဲ့ အလုပ်မလုပ်/နားတယ် ဆိုတဲ့ သဘောပါ။ မှတ်တမ်းကိုတော့ မဖျက်ပါဘူး၊ “ပိတ်ရက် မဟုတ်တော့ပါ” ပြန်ရွေးမှ ပြန်တွက်ပေးပါမယ်။ အနှစ်ချုပ်ကတော့ — ကိုယ်တိုင် မရွေးထားတဲ့ ပြည်သူ့ပိတ်ရက် (祝日) တွေဟာ “ဆင်းမည်” ရွေးထားရင် ပုံမှန် အလုပ်ရက်လိုပဲ လစာထဲ ပါပါတယ်၊ ကိုယ်တိုင် ပိတ်ရက် အဖြစ် သတ်မှတ်လိုက်တဲ့ ရက်ပဲ နားရက် ဖြစ်ပြီး လစာထဲက ဖယ်ထုတ်တာပါ။",
+        redWork:"ဆင်းမည်", redOff:"မဆင်းပါ", redExcluded:"ပိတ်ရက် (祝日) — မတွက်ထားပါ", customExcluded:"ပိတ်ရက် အဖြစ် သတ်မှတ်ထားသည် — လစာထဲ မတွက်ပါ (နားရက် · အလုပ်မဆင်းပါ)", offShort:"နားရက်",
+        dataTitle:"ဒေတာ", dataDesc:"မှတ်တမ်းအားလုံး ဒီဖုန်းထဲမှာပဲ သိမ်းထားပါတယ်။",
+        wipe:"မှတ်တမ်း အားလုံး ဖျက်မည်", wipeConfirm:"မှတ်တမ်း အားလုံးကို တကယ် ဖျက်မှာလား? ပြန်ပြင်လို့ မရပါဘူး။",
+        cancel:"မလုပ်တော့ပါ", delete:"ဖျက်မည်", add:"ထည့်မည်", close:"ပိတ်မည်",
+        edit:"ပြင်မည်", undo:"ပြန်ထားမည်", deletedDay:"ထိုနေ့ မှတ်တမ်း ဖျက်ပြီးပါပြီ", deletedPeriod:"ထိုကာလ မှတ်တမ်းများ ဖျက်ပြီးပါပြီ",
+        addDay:"＋ နေ့ဆိုင်း ထည့်မည်", addEve:"＋ ညနေဆိုင်း ထည့်မည်",
+        schedStart:"သတ်မှတ် အစ", schedEnd:"သတ်မှတ် အဆုံး", actIn:"တကယ် ဝင်ချိန်", actOut:"တကယ် ထွက်ချိန်",
+        payable:"လစာရချိန်", late:"နောက်ကျ", early:"စောပြန်", minutes:"မိနစ်",
+        holiday:"ပိတ်ရက်", sunday:"တနင်္ဂနွေ", workday:"အလုပ်ရက်",
+        holCustom:"ပိတ်ရက် အဖြစ် သတ်မှတ်မည်", holRemove:"ပိတ်ရက် မဟုတ်တော့ပါ",
+        holNamePh:"ပိတ်ရက် အမည်",
+        daysUnit:"ရက်", hoursUnit:"နာရီ",
+        noShifts:"ဒီနေ့ အလုပ်ဆိုင်း မရှိသေးပါ။",
+        today:"ယနေ့",
+        weekdays:["တနင်္ဂနွေ","တနင်္လာ","အင်္ဂါ","ဗုဒ္ဓဟူး","ကြာသပတေး","သောကြာ","စနေ"],
+        weekdaysShort:["နွေ","လာ","ဂါ","ဟူး","တေး","ကြာ","နေ"],
+        monthNames:["ဇန်နဝါရီ","ဖေဖော်ဝါရီ","မတ်","ဧပြီ","မေ","ဇွန်","ဇူလိုင်","ဩဂုတ်","စက်တင်ဘာ","အောက်တိုဘာ","နိုဝင်ဘာ","ဒီဇင်ဘာ"]
+      },
+      en: {
+        credit:"Developed by - Yazar Hein Htike",
+        tabSlip:"Payslip", tabCal:"Calendar", tabHist:"History", tabSet:"Settings",
+        slipSub:"Monthly payslip · 1st – last day of the month",
+        gross:"TOTAL GROSS PAY",
+        payday:"Payday", paydayEarly:"Paid early — the 10th is a weekend / public holiday", periodWord:"Period",
+        rDayEarn:"Day shift earnings", rEveEarn:"Evening shift earnings",
+        rDays:"Working days", rHours:"Total working hours",
+        rLate:"Total late", rEarly:"Total early departure",
+        rHolHours:"Holiday working hours",
+        transTitle:"Transport fare (交通費)", transDesc:"Turn on to add commuting costs to your pay. Pick a train line first, then your stations, and the app looks up the normal fare and the pass price for you — you can still type over any price yourself. Normal: one-way × 2 × working days. Pass: the monthly amount (total ÷ its 1 / 3 / 6-month term) is added each period.",
+        transOff:"Don't add", transOn:"Add", transNormal:"普通 · Normal", transPass:"定期券 · Pass",
+        transHome:"Home station", transWork:"Work station", transHomePh:"e.g. Kami-Itabashi", transWorkPh:"e.g. Shibuya",
+        transOneWay:"One-way fare (¥)", transLines:"Train lines used", transLinesPh:"e.g. Tobu Tojo Line / JR Saikyo Line",
+        transPassPrice:"Pass price total (¥)", transPassTerm:"Pass term", transRoute:"Route",
+        rpLine1:"Train line 1", rpLine2:"Train line 2 (transfer)", rpFrom:"From station", rpTo:"To station",
+        rpPickLine:"— Choose a line —", rpPickStation:"— Choose a station —",
+        rpOne:"One line only", rpTwo:"Transfer (2 lines)",
+        rpCalc:"Looked-up prices", rpHint:"Pick a line first, then the stations — prices are looked up and filled in automatically.",
+        rpManual:"Prices for this line can't be looked up automatically — please type the price yourself.",
+        rpNoTransfer:"The transfer station is not on the chosen line 2 — please pick a different line.",
+        rSalarySub:"Salary (without transport)", rTransport:"Transport (交通費)", rGrandTotal:"Grand total (salary + transport)", transMonthUnit:"mo",
+        dailyTitle:"Daily records", dailyHint:"Tap to edit · swipe left for Edit / Delete",
+        emptyDays:"No records in this period yet. Tap a date on the calendar to add hours, or fill the whole period from your weekly template.",
+        applyTpl:"Fill from template",
+        appliedTpl:"Period filled from your weekly template",
+        calTitle:"Calendar", calSub:"Tap any date to add or edit working hours. Sundays and Japanese public holidays are shown in red. If you mark a date as a holiday, that date is treated as a day off (no work) and is completely excluded from that month's salary calculation.",
+        legDay:"Day shift", legEve:"Evening shift", legHol:"Red = Sunday / holiday",
+        histTitle:"History", histSub:"Saved salary periods. Tap one to open it. Swipe left on a period for Edit / Delete.",
+        emptyHist:"No records yet.",
+        setTitle:"Settings", setSub:"Hourly rate and your weekly template.",
+        langTitle:"Language / ဘာသာစကား",
+        pickTitle:"Welcome!",
+        pickSub:"Who are you? Pick your character — the app's colour theme will match your choice.",
+        boy:"Boy", girl:"Girl",
+        cheerTitle:"We're proud of you!",
+        cheerBody:"You worked hard all month long — every shift, every single minute. We're proud of you. Now let's see what you earned.",
+        enterBtn:"See my payslip",
+        charTitle:"Character / Theme",
+        charDesc:"The app's colour theme follows the character you picked.",
+        themeTitle:"Appearance", themeAuto:"Auto", themeLight:"Light", themeDark:"Dark",
+        ratesTitle:"Hourly rate",
+        ratesDesc:"There are no breaks — every minute from clock-in to clock-out is paid. Late arrivals and early departures are counted in exact minutes.",
+        rate:"Hourly rate (¥) — the same for day and evening shifts",
+        save:"Save", saved:"Saved",
+        tplTitle:"Weekly template",
+        tplDesc:"Set your usual shift for each weekday. “Fill from template” on the payslip fills only days that have no record yet — existing records are never changed.",
+        off:"Off", dayShift:"Day shift", eveShift:"Evening shift",
+        redTitle:"Work on public holidays",
+        redDesc:"Choose whether you work on public holidays (祝日) that are NOT Saturday or Sunday. “Work” calculates as usual. “Don't work” leaves those holiday records out of the salary calculation — records are kept, not deleted, and switching back to “Work” counts them again. Template fill also skips those holidays. Saturdays and Sundays are always calculated as usual, whichever you choose here. Separately, any single date you manually mark as a holiday in the calendar / day editor is ALWAYS excluded from salary, total hours, working-day count and CSV/PDF exports — regardless of this toggle — because marking it means you took that day off (no work). The record is kept; unmark it (“Not a holiday”) to count it again. In short: a public holiday you have NOT marked yourself is counted as a normal paid working day whenever “Work” is selected — only a date you mark yourself becomes an unpaid day off.",
+        redWork:"Work", redOff:"Don't work", redExcluded:"Public holiday — not counted", customExcluded:"Marked as holiday — excluded from salary (day off, no work)", offShort:"Day off",
+        dataTitle:"Data", dataDesc:"All records are stored on this phone only.",
+        wipe:"Delete all records", wipeConfirm:"Delete ALL records? This cannot be undone.",
+        cancel:"Cancel", delete:"Delete", add:"Add", close:"Close",
+        edit:"Edit", undo:"Undo", deletedDay:"That day's record was deleted", deletedPeriod:"That period's records were deleted",
+        addDay:"＋ Add day shift", addEve:"＋ Add evening shift",
+        schedStart:"Scheduled start", schedEnd:"Scheduled end", actIn:"Clock in", actOut:"Clock out",
+        payable:"Payable", late:"Late", early:"Early", minutes:"min",
+        holiday:"Public holiday", sunday:"Sunday", workday:"Working day",
+        holCustom:"Mark as holiday", holRemove:"Not a holiday",
+        holNamePh:"Holiday name",
+        daysUnit:"days", hoursUnit:"h",
+        noShifts:"No shifts on this day yet.",
+        today:"Today",
+        weekdays:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        weekdaysShort:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+        monthNames:["January","February","March","April","May","June","July","August","September","October","November","December"]
+      },
+      ja: {
+        credit:"開発者 - ヤザーヘインティケ",
+        tabSlip:"明細", tabCal:"カレンダー", tabHist:"履歴", tabSet:"設定",
+        slipSub:"月次 給与明細 · 1日 – 月末",
+        gross:"支給総額",
+        payday:"支給日", paydayEarly:"10日が土日・祝日のため前倒し", periodWord:"対象期間",
+        rDayEarn:"昼シフト 支給額", rEveEve:"", rEveEarn:"夜シフト 支給額",
+        rDays:"勤務日数", rHours:"総勤務時間",
+        rLate:"遅刻 合計", rEarly:"早退 合計",
+        rHolHours:"休日勤務時間",
+        transTitle:"交通費", transDesc:"通勤費を給与に加算します。まず路線を選び、次に駅を選ぶと、普通運賃と定期代を自動で検索して入力します（金額は手入力で上書きもできます）。普通：片道 × 2 × 勤務日数。定期券：定期代を期間（1 / 3 / 6ヶ月）で割った月額を加算します。",
+        transOff:"加算しない", transOn:"加算する", transNormal:"普通", transPass:"定期券",
+        transHome:"自宅の駅", transWork:"勤務先の駅", transHomePh:"例：上板橋", transWorkPh:"例：渋谷",
+        transOneWay:"片道運賃 (¥)", transLines:"利用する路線", transLinesPh:"例：東武東上線・JR埼京線",
+        transPassPrice:"定期代 合計 (¥)", transPassTerm:"定期の期間", transRoute:"区間",
+        rpLine1:"路線 1", rpLine2:"路線 2（乗換）", rpFrom:"出発駅", rpTo:"到着駅",
+        rpPickLine:"— 路線を選んでください —", rpPickStation:"— 駅を選んでください —",
+        rpOne:"1路線のみ", rpTwo:"乗換（2路線）",
+        rpCalc:"検索した運賃", rpHint:"先に路線を選び、次に駅を選ぶと、運賃が自動で検索・入力されます。",
+        rpManual:"この路線の運賃は自動検索できません。金額を手入力してください。",
+        rpNoTransfer:"乗換駅が選んだ路線2にありません。別の路線を選んでください。",
+        rSalarySub:"給与（交通費を除く）", rTransport:"交通費", rGrandTotal:"合計（給与＋交通費）", transMonthUnit:"ヶ月",
+        dailyTitle:"日別 記録", dailyHint:"タップで編集 · 左スワイプで編集／削除",
+        emptyDays:"この期間の記録はまだありません。カレンダーの日付をタップして勤務を追加するか、週間テンプレートから一括入力してください。",
+        applyTpl:"テンプレートで入力",
+        appliedTpl:"週間テンプレートから入力しました",
+        calTitle:"カレンダー", calSub:"日付をタップすると勤務記録を追加・編集できます。日曜と祝日は赤色で表示します。日付を「祝日にする」と選ぶと、その日は休み（勤務なし）として、その月の給与計算から完全に除外されます。",
+        legDay:"昼シフト", legEve:"夜シフト", legHol:"赤 = 日曜 / 祝日",
+        histTitle:"履歴", histSub:"保存された給与期間です。タップで開きます。左スワイプでも編集／削除できます。",
+        emptyHist:"記録はまだありません。",
+        setTitle:"設定", setSub:"時給と週間テンプレートを設定します。",
+        langTitle:"言語 / Language",
+        pickTitle:"ようこそ！",
+        pickSub:"キャラクターを選んでください。選んだキャラクターに合わせて、アプリの色テーマが変わります。",
+        boy:"男の子", girl:"女の子",
+        cheerTitle:"あなたのことを誇りに思います！",
+        cheerBody:"一ヶ月間、本当によく頑張りました。どのシフトも、どの一分も、あなたの努力です。さあ、今月のお給料を見てみましょう。",
+        enterBtn:"給与明細を見る",
+        charTitle:"キャラクター / テーマ",
+        charDesc:"選んだキャラクターに合わせて、アプリの色テーマが変わります。",
+        themeTitle:"表示モード", themeAuto:"自動", themeLight:"ライト", themeDark:"ダーク",
+        ratesTitle:"時給",
+        ratesDesc:"休憩はありません。出勤から退勤までの時間はすべて支給対象です。遅刻・早退は分単位で正確に計算します。",
+        rate:"時給 (¥) — 昼シフト・夜シフト共通",
+        save:"保存", saved:"保存しました",
+        tplTitle:"週間テンプレート",
+        tplDesc:"曜日ごとの通常シフトを設定します。「テンプレートで入力」は記録のない日だけを埋め、既存の記録は変更しません。",
+        off:"休み", dayShift:"昼シフト", eveShift:"夜シフト",
+        redTitle:"祝日の勤務（土日を除く）",
+        redDesc:"土曜・日曜ではない祝日に勤務するか選んでください。「勤務する」は通常どおり計算します。「勤務しない」を選ぶと、その祝日の記録は給与計算から外れます（記録は削除されません。「勤務する」に戻すと再び計算されます）。テンプレート入力でもその祝日はスキップします。土曜と日曜は、この設定に関係なく常に通常どおり計算します。さらに、カレンダー／日別編集で個別の日付を「祝日にする」と設定した場合は、この設定に関係なく、その日は常に給与・総時間・勤務日数・CSV/PDF出力のすべてから除外されます（休み＝勤務なしという意味です）。記録は削除されません。「祝日を解除」すると再び計算されます。つまり、自分で「祝日にする」と設定していない祝日は、「勤務する」を選んでいれば通常の勤務日として給与に含まれます。給与から除外されるのは、自分で設定した日だけです。",
+        redWork:"勤務する", redOff:"勤務しない", redExcluded:"祝日 — 計算対象外", customExcluded:"祝日に設定済み — 給与計算から除外（休み・勤務なし）", offShort:"休み",
+        dataTitle:"データ", dataDesc:"記録はこの端末内にのみ保存されます。",
+        wipe:"全記録を削除", wipeConfirm:"全ての記録を削除しますか？元に戻せません。",
+        cancel:"キャンセル", delete:"削除", add:"追加", close:"閉じる",
+        edit:"編集", undo:"元に戻す", deletedDay:"その日の記録を削除しました", deletedPeriod:"その期間の記録を削除しました",
+        addDay:"＋ 昼シフト追加", addEve:"＋ 夜シフト追加",
+        schedStart:"予定 開始", schedEnd:"予定 終了", actIn:"出勤", actOut:"退勤",
+        payable:"支給対象", late:"遅刻", early:"早退", minutes:"分",
+        holiday:"祝日", sunday:"日曜日", workday:"平日",
+        holCustom:"祝日にする", holRemove:"祝日を解除",
+        holNamePh:"祝日の名前",
+        daysUnit:"日", hoursUnit:"時間",
+        noShifts:"この日のシフトはまだありません。",
+        today:"今日",
+        weekdays:["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"],
+        weekdaysShort:["日","月","火","水","木","金","土"],
+        monthNames:["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"]
+      }
+    };
+    function t(k){ return (T[state.lang] && T[state.lang][k]) || T.en[k] || k; }
+
+    /* ================= Japanese public holidays (rule-based) ================= */
+    function nthMonday(y, m, n){ var d = new Date(y, m-1, 1); var add = ((8 - d.getDay()) % 7) + (n-1)*7; return new Date(y, m-1, 1+add); }
+    function equinoxDay(y, kind){
+      var base = kind === "spring" ? 20.8431 : 23.2488;
+      var c = kind === "spring" ? 0.242194 : 0.242194;
+      return Math.floor(base + c * (y - 1980)) - Math.floor((y - 1980) / 4);
+    }
+    function dkey(y, m, d){ return y + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0"); }
+    function parseKey(k){ var p = k.split("-"); return { y:+p[0], m:+p[1], d:+p[2] }; }
+    function dateOf(k){ var p = parseKey(k); return new Date(p.y, p.m-1, p.d); }
+    var holCache = {};
+    function baseHolidays(y){
+      if (holCache[y]) return holCache[y];
+      var h = {};
+      function add(dt, name){ h[dkey(dt.getFullYear(), dt.getMonth()+1, dt.getDate())] = name; }
+      add(new Date(y,0,1), "元日");
+      add(nthMonday(y,1,2), "成人の日");
+      add(new Date(y,1,11), "建国記念の日");
+      add(new Date(y,1,23), "天皇誕生日");
+      add(new Date(y,2,equinoxDay(y,"spring")), "春分の日");
+      add(new Date(y,3,29), "昭和の日");
+      add(new Date(y,4,3), "憲法記念日");
+      add(new Date(y,4,4), "みどりの日");
+      add(new Date(y,4,5), "こどもの日");
+      add(nthMonday(y,7,3), "海の日");
+      add(new Date(y,7,11), "山の日");
+      add(nthMonday(y,9,3), "敬老の日");
+      add(new Date(y,8,equinoxDay(y,"autumn")), "秋分の日");
+      add(nthMonday(y,10,2), "スポーツの日");
+      add(new Date(y,10,3), "文化の日");
+      add(new Date(y,10,23), "勤労感謝の日");
+      /* 振替休日: holiday on Sunday -> next non-holiday weekday */
+      Object.keys(h).slice().forEach(function(k){
+        var dt = dateOf(k);
+        if (dt.getDay() === 0){
+          var nx = new Date(dt); 
+          do { nx.setDate(nx.getDate()+1); } while (h[dkey(nx.getFullYear(), nx.getMonth()+1, nx.getDate())]);
+          h[dkey(nx.getFullYear(), nx.getMonth()+1, nx.getDate())] = "振替休日";
+        }
+      });
+      /* 国民の休日: a weekday sandwiched between two holidays */
+      Object.keys(h).slice().forEach(function(k){
+        var dt = dateOf(k); var mid = new Date(dt); mid.setDate(mid.getDate()+1);
+        var mk = dkey(mid.getFullYear(), mid.getMonth()+1, mid.getDate());
+        var aft = new Date(dt); aft.setDate(aft.getDate()+2);
+        var ak = dkey(aft.getFullYear(), aft.getMonth()+1, aft.getDate());
+        if (!h[mk] && h[ak] && mid.getDay() !== 0) h[mk] = "国民の休日";
+      });
+      holCache[y] = h; return h;
+    }
+    function holidayName(key){
+      var ov = state.holidayOverrides[key];
+      if (ov === "off") return null;
+      if (typeof ov === "string" && ov) return ov;
+      var p = parseKey(key);
+      var h = baseHolidays(p.y);
+      return h[key] || null;
+    }
+    function isHoliday(key){ return !!holidayName(key); }
+    function isRedDay(key){ return isHoliday(key) || dateOf(key).getDay() === 0; }
+    /* The Settings toggle applies ONLY to public holidays that are NOT
+       Saturday or Sunday. Sundays (and Saturdays) always count as usual. */
+    function isWeekdayHoliday(key){
+      var dow = dateOf(key).getDay();
+      return isHoliday(key) && dow !== 0 && dow !== 6;
+    }
+    /* A date the user MANUALLY marked as a holiday (via “Mark as holiday”
+       in the day editor). The mark lives in state.customOff so it works
+       for ANY date — including built-in public holidays and Sundays,
+       which already have a holiday name and so cannot be marked through
+       holidayOverrides alone. Older saves marked plain days by storing a
+       string name in holidayOverrides; those still count as custom too.
+       “off” in holidayOverrides means a built-in holiday was explicitly
+       suppressed, so it is NOT a custom holiday. Built-in holidays with
+       no mark at all are not custom either; they are governed solely by
+       the workOnRed toggle. */
+    function isCustomHoliday(key){
+      if (!state) return false;
+      if (state.customOff && state.customOff[key]) return true;
+      if (!state.holidayOverrides) return false;
+      var ov = state.holidayOverrides[key];
+      return typeof ov === "string" && ov !== "off" && ov.length > 0;
+    }
+    /* Excluded from ALL salary maths (totals, hours, day count, holiday
+       hours, CSV/PDF exports and template fill):
+         1. ANY manually-marked holiday — always, on any weekday incl.
+            Sat/Sun, regardless of the workOnRed setting. Marking a day
+            as a holiday means “did not work / day off”.
+         2. Weekday public holidays when the user chose “Don't work”
+            for red days in Settings.
+       Records themselves are never deleted; un-marking a custom holiday
+       (or switching the toggle back to “Work”) counts them again. */
+    function isExcluded(key){
+      if (!state) return false;
+      if (isCustomHoliday(key)) return true;
+      return state.workOnRed === false && isWeekdayHoliday(key);
+    }
+
+    /* ================= state ================= */
+    var LS_KEY = "monthly-salary-tracker-v1";
+    var defaultState = {
+      lang: "my", theme: "auto", workOnRed: true, ver: 2,
+      transport: { enabled: false, mode: "normal", homeStation: "", workStation: "", oneWay: 0, passPrice: 0, passMonths: 1, passLines: "", route: null },
+      rates: { day: 1400, evening: 1400 },
+      template: {
+        "0": { type:"day", s:"10:00", e:"15:00" },
+        "1": { type:"evening", s:"14:00", e:"20:00" },
+        "2": { type:"evening", s:"14:00", e:"20:00" },
+        "3": { type:"evening", s:"14:00", e:"20:00" },
+        "4": { type:"evening", s:"14:00", e:"20:00" },
+        "5": { type:"evening", s:"14:00", e:"20:00" },
+        "6": null
+      },
+      records: {},
+      holidayOverrides: {},
+      customOff: {}
+    };
+    var state;
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      state = raw ? Object.assign(JSON.parse(JSON.stringify(defaultState)), JSON.parse(raw)) : JSON.parse(JSON.stringify(defaultState));
+    } catch(e){ state = JSON.parse(JSON.stringify(defaultState)); }
+    function save(){ try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e){} }
+    /* ensure transport settings exist on older saves (added later) */
+    if (!state.transport || typeof state.transport !== "object"){
+      state.transport = JSON.parse(JSON.stringify(defaultState.transport));
+    } else {
+      var _td = defaultState.transport;
+      Object.keys(_td).forEach(function(k){ if (state.transport[k] === undefined) state.transport[k] = _td[k]; });
+      if (state.transport.mode !== "pass") state.transport.mode = "normal";
+      if ([1,3,6].indexOf(+state.transport.passMonths) < 0) state.transport.passMonths = 1;
+    }
+    /* one-time migration: installs saved with the old defaults (¥1,350,
+       day 07:00–16:00, evening 18:00–22:45) move to the new shift
+       definitions (¥1,400, day 10:00–15:00, evening 14:00–20:00).
+       Customised values and all records are left untouched. */
+    if (!state.ver || state.ver < 2){
+      if (state.rates.day === 1350) state.rates.day = 1400;
+      if (state.rates.evening === 1350) state.rates.evening = 1400;
+      Object.keys(state.template || {}).forEach(function(k){
+        var tp = state.template[k]; if (!tp) return;
+        if (tp.type === "day" && tp.s === "07:00" && tp.e === "16:00"){ tp.s = "10:00"; tp.e = "15:00"; }
+        if (tp.type === "evening" && tp.s === "18:00" && tp.e === "22:45"){ tp.s = "14:00"; tp.e = "20:00"; }
+      });
+      state.ver = 2; save();
+    }
+
+    /* ================= calc engine (exact minutes) ================= */
+    function toMin(hhmm){ if(!hhmm) return null; var p = hhmm.split(":"); return (+p[0])*60 + (+p[1]); }
+    function overlap(a1,a2,b1,b2){ var s = Math.max(a1,b1), e = Math.min(a2,b2); return e > s ? e - s : 0; }
+    function calcShift(sh){
+      var aIn = toMin(sh.actIn), aOut = toMin(sh.actOut);
+      var sIn = toMin(sh.schedS), sOut = toMin(sh.schedE);
+      var zero = { payable:0, breakMin:0, late:0, early:0, earn:0, gross:0 };
+      if (aIn === null || aOut === null || aOut <= aIn) return zero;
+      var gross = aOut - aIn;
+      /* no breaks: every minute from clock-in to clock-out is payable */
+      var breakMin = 0;
+      var payable = gross;
+      var rate = sh.type === "day" ? state.rates.day : state.rates.evening;
+      return {
+        gross: gross, breakMin: breakMin, payable: payable,
+        late: (sIn !== null) ? Math.max(0, aIn - sIn) : 0,
+        early: (sOut !== null) ? Math.max(0, sOut - aOut) : 0,
+        earn: Math.round(payable * rate / 60)
+      };
+    }
+    function dayShifts(key){ return state.records[key] || []; }
+    function dayTotal(key){
+      var tot = { payable:0, breakMin:0, late:0, early:0, earn:0, dayEarn:0, eveEarn:0 };
+      dayShifts(key).forEach(function(sh){
+        var c = calcShift(sh);
+        tot.payable += c.payable; tot.breakMin += c.breakMin;
+        tot.late += c.late; tot.early += c.early; tot.earn += c.earn;
+        if (sh.type === "day") tot.dayEarn += c.earn; else tot.eveEarn += c.earn;
+      });
+      return tot;
+    }
+
+    /* ================= salary periods (calendar month: 1st - last day, payday 10th next month) ================= */
+    function periodOf(date){
+      return periodByEnd(date.getFullYear(), date.getMonth()+1);
+    }
+    /* Payday is the 10th of the next month — but if the 10th falls on a
+       Saturday, Sunday or a public holiday (祝日, red day), payday moves
+       BACK to the nearest earlier day that is not Sat/Sun/holiday. */
+    function adjustedPayday(payY, payM){
+      var d = new Date(payY, payM - 1, 10);
+      while (true){
+        var dow = d.getDay();
+        var k = dkey(d.getFullYear(), d.getMonth() + 1, d.getDate());
+        if (dow !== 0 && dow !== 6 && !isHoliday(k)) break;
+        d.setDate(d.getDate() - 1);
+      }
+      return dkey(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    }
+    function periodByEnd(endY, endM){
+      var lastDay = new Date(endY, endM, 0).getDate();
+      var payY = endY, payM = endM + 1; if (payM > 12){ payM = 1; payY++; }
+      return {
+        start: dkey(endY, endM, 1), end: dkey(endY, endM, lastDay),
+        payday: adjustedPayday(payY, payM), endY: endY, endM: endM
+      };
+    }
+    function shiftPeriod(p, dir){
+      var m = p.endM + dir, y = p.endY;
+      if (m > 12){ m = 1; y++; } if (m < 1){ m = 12; y--; }
+      return periodByEnd(y, m);
+    }
+    function periodTotals(p){
+      var tot = { gross:0, dayEarn:0, eveEarn:0, days:0, payable:0, breakMin:0, late:0, early:0, holPayable:0 };
+      var d = dateOf(p.start), end = dateOf(p.end);
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        if (dayShifts(k).length && !isExcluded(k)){
+          var dt = dayTotal(k);
+          if (dt.payable > 0 || dt.earn > 0) tot.days++;
+          tot.gross += dt.earn; tot.dayEarn += dt.dayEarn; tot.eveEarn += dt.eveEarn;
+          tot.payable += dt.payable; tot.breakMin += dt.breakMin;
+          tot.late += dt.late; tot.early += dt.early;
+          if (isHoliday(k) || d.getDay() === 0) tot.holPayable += dt.payable;
+        }
+        d.setDate(d.getDate()+1);
+      }
+      return tot;
+    }
+    /* ================= transport fare (交通費) =================
+       Normal (普通): one-way fare × 2 × counted working days in the period.
+       Working days are exactly periodTotals().days — days with payable
+       work that are NOT excluded (custom holidays and, when set to
+       “Don't work”, weekday public holidays never inflate the fare).
+       Pass (定期券): total pass price ÷ term in months (1/3/6), rounded
+       to the nearest yen, added as a fixed monthly amount regardless of
+       the day count (a pass costs the same in a short month). */
+    function transportForPeriod(tot){
+      var tr = state.transport;
+      if (!tr || !tr.enabled) return { amount: 0, detail: "", route: "", mode: tr ? tr.mode : "normal" };
+      var route = "";
+      if (tr.homeStation || tr.workStation) route = (tr.homeStation || "—") + " → " + (tr.workStation || "—");
+      if (tr.mode === "pass"){
+        var price = Math.max(0, +tr.passPrice || 0);
+        var months = [1,3,6].indexOf(+tr.passMonths) >= 0 ? +tr.passMonths : 1;
+        if (!price) return { amount: 0, detail: "", route: route, mode: "pass" };
+        var amt = Math.round(price / months);
+        var det = "定期 ¥" + fmtYen(price) + " ÷ " + months + t("transMonthUnit");
+        if (tr.passLines) det += " · " + tr.passLines;
+        return { amount: amt, detail: det, route: route, mode: "pass" };
+      }
+      var ow = Math.max(0, +tr.oneWay || 0);
+      var days = tot ? tot.days : 0;
+      if (!ow || !days) return { amount: 0, detail: ow ? ("¥" + fmtYen(ow) + " × 2 × " + days + " " + t("daysUnit")) : "", route: route, mode: "normal" };
+      return { amount: ow * 2 * days, detail: "¥" + fmtYen(ow) + " × 2 × " + days + " " + t("daysUnit"), route: route, mode: "normal" };
+    }
+    function fmtYen(n){ return n.toLocaleString("en-US"); }
+    function fmtHM(min){
+      var h = Math.floor(min/60), m = min % 60;
+      if (state.lang === "en") return h + "h " + String(m).padStart(2,"0") + "m";
+      if (state.lang === "ja") return h + "時間" + String(m).padStart(2,"0") + "分";
+      return h + " နာရီ " + m + " မိနစ်";
+    }
+    function fmtDate(key){
+      var p = parseKey(key), dt = dateOf(key);
+      var wd = t("weekdays")[dt.getDay()];
+      if (state.lang === "ja") return p.y + "年" + p.m + "月" + p.d + "日（" + t("weekdaysShort")[dt.getDay()] + "）";
+      if (state.lang === "en") return t("monthNames")[p.m-1] + " " + p.d + ", " + p.y + " (" + wd + ")";
+      return p.y + " " + t("monthNames")[p.m-1] + " " + p.d + " (" + wd + ")";
+    }
+    function fmtDateShort(key){
+      var p = parseKey(key);
+      if (state.lang === "ja") return p.m + "月" + p.d + "日";
+      if (state.lang === "my") return t("monthNames")[p.m-1] + " " + p.d;
+      return t("monthNames")[p.m-1].slice(0,3) + " " + p.d;
+    }
+
+    /* ================= UI state ================= */
+    var curPeriod = periodOf(new Date());
+    var calCursor = { y: new Date().getFullYear(), m: new Date().getMonth()+1 };
+    var curView = "slip";
+    var todayKey = dkey(new Date().getFullYear(), new Date().getMonth()+1, new Date().getDate());
+    var $ = function(id){ return document.getElementById(id); };
+    var toastTimer = null;
+    function toast(msg){
+      var el = $("toast"); el.textContent = msg; el.classList.remove("has-undo"); el.classList.add("show");
+      clearTimeout(toastTimer); toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2200);
+    }
+    function toastUndo(msg, undoFn){
+      var el = $("toast");
+      el.innerHTML = "";
+      var span = document.createElement("span"); span.textContent = msg;
+      var btn = document.createElement("button");
+      btn.className = "toast-undo"; btn.textContent = t("undo");
+      btn.addEventListener("click", function(){
+        el.classList.remove("show"); clearTimeout(toastTimer);
+        if (undoFn) undoFn();
+      });
+      el.appendChild(span); el.appendChild(btn);
+      el.classList.add("has-undo"); el.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 4500);
+    }
+
+    /* ================= swipe-left row actions (Edit / Delete) =================
+       Dragging a daily-record or history row to the left reveals Edit and
+       Delete buttons behind it. Edit behaves exactly like tapping the row
+       (opens the day editor / the period); Delete removes the record(s)
+       and offers Undo in the toast. Vertical scrolling is untouched: the
+       gesture only engages when the drag is clearly horizontal. */
+    var SWIPE_W = 148;
+    function closeAllSwipes(except){
+      Array.prototype.forEach.call(document.querySelectorAll(".swipe.open"), function(w){
+        if (w === except) return;
+        w.classList.remove("open");
+        var row = w.querySelector(".dayrow,.histrow");
+        if (row){ row.style.transition = "transform .18s ease"; row.style.transform = "translateX(0px)"; w._swipeX = 0; }
+      });
+    }
+    function attachSwipe(wrap, row, onTap, onEdit, onDelete){
+      var startX = 0, startY = 0, base = 0, cur = 0, pid = null, decided = false, dragging = false;
+      wrap._swipeX = 0;
+      function setX(x, animate){
+        cur = x; wrap._swipeX = x;
+        row.style.transition = animate ? "transform .18s ease" : "none";
+        row.style.transform = "translateX(" + x + "px)";
+        wrap.classList.toggle("open", x <= -SWIPE_W + 2);
+      }
+      row.addEventListener("pointerdown", function(e){
+        closeAllSwipes(wrap);
+        pid = e.pointerId; startX = e.clientX; startY = e.clientY;
+        base = wrap._swipeX || 0; cur = base;
+        decided = false; dragging = false;
+        row.style.transition = "none";
+      });
+      row.addEventListener("pointermove", function(e){
+        if (pid === null || e.pointerId !== pid) return;
+        var dx = e.clientX - startX, dy = e.clientY - startY;
+        if (!decided){
+          if (Math.abs(dx) > 9 && Math.abs(dx) > Math.abs(dy) * 1.25){
+            decided = true; dragging = true;
+            try { row.setPointerCapture(pid); } catch(err){}
+          } else if (Math.abs(dy) > 9){ pid = null; return; }
+          else return;
+        }
+        setX(Math.max(-SWIPE_W, Math.min(0, base + dx)), false);
+      });
+      function finish(){
+        if (pid === null) return;
+        pid = null;
+        if (dragging){
+          wrap._swiped = true;
+          setX(cur < -SWIPE_W / 2 ? -SWIPE_W : 0, true);
+          dragging = false; decided = false;
+        }
+      }
+      row.addEventListener("pointerup", finish);
+      row.addEventListener("pointercancel", finish);
+      /* capture-phase click guard: a swipe must never trigger the row's
+         tap action, and tapping an already-open row just closes it */
+      wrap.addEventListener("click", function(e){
+        if (wrap._swiped){
+          wrap._swiped = false;
+          e.stopPropagation(); e.preventDefault(); return;
+        }
+        if (wrap.classList.contains("open") && !(e.target.closest && e.target.closest(".swipe-actions"))){
+          setX(0, true);
+          e.stopPropagation(); e.preventDefault();
+        }
+      }, true);
+      row.addEventListener("click", function(){ onTap(); });
+      wrap.querySelector('[data-act="edit"]').addEventListener("click", function(){ setX(0, false); onEdit(); });
+      wrap.querySelector('[data-act="del"]').addEventListener("click", function(){ setX(0, false); onDelete(); });
+    }
+    function bindSwipeList(container, keyFn, handlers){
+      if (!container) return;
+      Array.prototype.forEach.call(container.querySelectorAll(".swipe"), function(wrap){
+        var row = wrap.querySelector(".dayrow,.histrow");
+        if (!row) return;
+        var key = keyFn(wrap);
+        attachSwipe(wrap, row,
+          function(){ handlers.tap(key); },
+          function(){ handlers.edit(key); },
+          function(){ handlers.del(key); });
+      });
+    }
+    function swipeActionsHTML(){
+      return '<div class="swipe-actions"><button class="sw-act sw-edit" data-act="edit">' + esc(t("edit")) +
+        '</button><button class="sw-act sw-del" data-act="del">' + esc(t("delete")) + "</button></div>";
+    }
+    function deleteDayRecord(k){
+      var snap = state.records[k] ? JSON.parse(JSON.stringify(state.records[k])) : null;
+      delete state.records[k];
+      save(); renderAll();
+      toastUndo(t("deletedDay"), function(){
+        if (snap) state.records[k] = snap;
+        save(); renderAll();
+      });
+    }
+    function deletePeriodRecords(p){
+      var prefix = p.endY + "-" + String(p.endM).padStart(2, "0");
+      var snap = {};
+      Object.keys(state.records).forEach(function(k){
+        if (k.indexOf(prefix) === 0) snap[k] = JSON.parse(JSON.stringify(state.records[k]));
+      });
+      Object.keys(snap).forEach(function(k){ delete state.records[k]; });
+      save(); renderAll();
+      toastUndo(t("deletedPeriod"), function(){
+        Object.keys(snap).forEach(function(k){ state.records[k] = snap[k]; });
+        save(); renderAll();
+      });
+    }
+    function applyTheme(){
+      var dark = state.theme === "dark" || (state.theme === "auto" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    }
+    function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+    /* ================= dashboard ================= */
+    function renderSlip(){
+      $("slipSub").textContent = t("slipSub");
+      $("applyTpl").textContent = t("applyTpl");
+      $("periodRange").textContent = fmtDateShort(curPeriod.start) + " – " + fmtDateShort(curPeriod.end);
+      $("periodPayday").textContent = t("payday") + ": " + fmtDate(curPeriod.payday) + (parseKey(curPeriod.payday).d !== 10 ? " (" + t("paydayEarly") + ")" : "");
+      var tot = periodTotals(curPeriod);
+      var trans = transportForPeriod(tot);
+      var grand = tot.gross + trans.amount;
+      var hasTrans = !!(state.transport && state.transport.enabled);
+      $("grossLabel").textContent = hasTrans ? t("rGrandTotal") : t("gross");
+      $("grossAmount").textContent = fmtYen(grand);
+      var rows = [
+        ["rDayEarn", "¥" + fmtYen(tot.dayEarn), ""],
+        ["rEveEarn", "¥" + fmtYen(tot.eveEarn), ""],
+        ["rDays", tot.days + " " + t("daysUnit"), ""],
+        ["rHours", fmtHM(tot.payable), ""],
+        ["rLate", tot.late + " " + t("minutes"), tot.late ? "neg" : ""],
+        ["rEarly", tot.early + " " + t("minutes"), tot.early ? "neg" : ""],
+        ["rHolHours", fmtHM(tot.holPayable), ""]
+      ];
+      var rowsHtml = rows.map(function(r){
+        return '<div class="srow"><span class="k">' + esc(t(r[0])) + '</span><span class="v ' + r[2] + '">' + esc(r[1]) + "</span></div>";
+      }).join("");
+      if (hasTrans){
+        var transLabel = t("rTransport");
+        if (trans.route) transLabel += " · " + trans.route;
+        if (trans.detail) transLabel += " (" + trans.detail + ")";
+        rowsHtml += '<div class="srow subtle"><span class="k">' + esc(t("rSalarySub")) + '</span><span class="v">¥' + fmtYen(tot.gross) + "</span></div>";
+        rowsHtml += '<div class="srow subtle"><span class="k">' + esc(transLabel) + '</span><span class="v">¥' + fmtYen(trans.amount) + "</span></div>";
+        rowsHtml += '<div class="srow total"><span class="k">' + esc(t("rGrandTotal")) + '</span><span class="v">¥' + fmtYen(grand) + "</span></div>";
+      }
+      $("slipRows").innerHTML = rowsHtml;
+      /* daily list */
+      $("dailyTitle").textContent = t("dailyTitle");
+      $("dailyHint").textContent = t("dailyHint");
+      var html = "", any = false;
+      var d = dateOf(curPeriod.start), end = dateOf(curPeriod.end);
+      var items = [];
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        if (dayShifts(k).length) items.push(k);
+        d.setDate(d.getDate()+1);
+      }
+      items.sort().reverse().forEach(function(k){
+        any = true;
+        var dt = dateOf(k), tot2 = dayTotal(k), hn = holidayName(k);
+        var isSun = dt.getDay() === 0;
+        var excluded = isExcluded(k);
+        var shiftTxt = dayShifts(k).map(function(sh){
+          return (sh.type === "day" ? t("dayShift") : t("eveShift")) + " " + sh.actIn + "–" + sh.actOut;
+        }).join(" · ");
+        var meta = [];
+        if (hn) meta.push(hn); else if (isSun) meta.push(t("sunday"));
+        if (excluded) meta.push(isCustomHoliday(k) ? t("customExcluded") : t("redExcluded"));
+        else {
+          meta.push(fmtHM(tot2.payable));
+          if (tot2.late) meta.push(t("late") + " " + tot2.late + t("minutes"));
+          if (tot2.early) meta.push(t("early") + " " + tot2.early + t("minutes"));
+        }
+        html += '<div class="swipe" data-date="' + k + '">' + swipeActionsHTML() +
+          '<button class="dayrow' + (isSun || hn ? " sun" : "") + (excluded ? " excluded" : "") + '">' +
+          '<span class="d-num">' + dt.getDate() + "<small>" + esc(t("weekdaysShort")[dt.getDay()]) + "</small></span>" +
+          '<span class="d-main"><span class="d-shifts">' + esc(shiftTxt) + '</span><br /><span class="d-meta">' + esc(meta.join(" · ")) + "</span></span>" +
+          '<span class="d-amt">¥' + fmtYen(excluded ? 0 : tot2.earn) + "</span></button></div>";
+      });
+      $("dailyList").innerHTML = any ? html : '<div class="empty">' + esc(t("emptyDays")) + "</div>";
+      bindSwipeList($("dailyList"), function(wrap){ return wrap.getAttribute("data-date"); }, {
+        tap: function(k){ openDay(k); },
+        edit: function(k){ openDay(k); },
+        del: function(k){ deleteDayRecord(k); }
+      });
+    }
+
+    /* ================= calendar ================= */
+    function renderCal(){
+      $("calViewTitle").textContent = t("calTitle");
+      $("calViewSub").textContent = t("calSub");
+      $("legDay").textContent = t("legDay");
+      $("legEve").textContent = t("legEve");
+      $("legHol").textContent = t("legHol");
+      var title = state.lang === "ja" ? calCursor.y + "年 " + calCursor.m + "月"
+        : t("monthNames")[calCursor.m-1] + " " + calCursor.y;
+      $("calTitle").textContent = title;
+      $("calDow").innerHTML = t("weekdaysShort").map(function(w, i){
+        return '<div class="cal-dow' + (i === 0 ? " sun" : "") + '">' + esc(w) + "</div>";
+      }).join("");
+      var first = new Date(calCursor.y, calCursor.m-1, 1);
+      var startCell = new Date(first); startCell.setDate(1 - first.getDay());
+      var html = "";
+      for (var i = 0; i < 42; i++){
+        var d = new Date(startCell); d.setDate(startCell.getDate() + i);
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        var inMonth = d.getMonth() === calCursor.m-1;
+        var hn = holidayName(k), isSun = d.getDay() === 0;
+        var excluded = isExcluded(k);
+        var shifts = dayShifts(k), tot = shifts.length && !excluded ? dayTotal(k) : null;
+        var inPeriod = k >= curPeriod.start && k <= curPeriod.end;
+        var cls = "cal-cell" + (inMonth ? "" : " out") + (isSun ? " sun" : "") + (hn ? " hol" : "") + (excluded ? " excluded" : "") + (k === todayKey ? " today" : "") + (inPeriod ? " inperiod" : "");
+        html += '<button class="' + cls + '" data-date="' + k + '">' +
+          '<span class="n">' + d.getDate() + "</span>" +
+          (hn ? '<span class="holname">' + esc(hn) + "</span>" : "") +
+          (excluded ? '<span class="offlabel">' + esc(t("offShort")) + "</span>" : "") +
+          (tot && tot.earn ? '<span class="amt">¥' + fmtYen(tot.earn) + "</span>" : "") +
+          '<span class="dots">' + shifts.map(function(sh){ return '<span class="dot ' + (sh.type === "day" ? "day" : "eve") + '"></span>'; }).join("") + "</span>" +
+          "</button>";
+        if (i >= 35 && d.getMonth() !== calCursor.m-1 && d.getDay() === 6) break;
+      }
+      $("calGrid").innerHTML = html;
+      Array.prototype.forEach.call($("calGrid").querySelectorAll("[data-date]"), function(b){
+        b.addEventListener("click", function(){ openDay(b.getAttribute("data-date")); });
+      });
+    }
+
+    /* ================= history ================= */
+    function renderHistory(){
+      $("histTitle").textContent = t("histTitle");
+      $("histSub").textContent = t("histSub");
+      var byPeriod = {};
+      Object.keys(state.records).forEach(function(k){
+        if (!state.records[k].length) return;
+        var p = periodOf(dateOf(k));
+        var pk = p.endY + "-" + p.endM;
+        if (!byPeriod[pk]) byPeriod[pk] = p;
+      });
+      var list = Object.keys(byPeriod).sort().reverse();
+      if (!list.length){ $("histList").innerHTML = '<div class="empty">' + esc(t("emptyHist")) + "</div>"; return; }
+      $("histList").innerHTML = list.map(function(pk){
+        var p = byPeriod[pk], tot = periodTotals(p);
+        var trans = transportForPeriod(tot);
+        var grand = tot.gross + trans.amount;
+        var hasTrans = !!(state.transport && state.transport.enabled && trans.amount);
+        var cur = p.start === curPeriod.start;
+        var metaExtra = hasTrans ? " · " + t("rTransport") + " ¥" + fmtYen(trans.amount) : "";
+        return '<div class="swipe" data-start="' + p.start + '">' + swipeActionsHTML() +
+          '<button class="histrow' + (cur ? " current" : "") + '">' +
+          '<span class="h-main"><span class="h-range">' + fmtDateShort(p.start) + " – " + fmtDateShort(p.end) + '</span>' +
+          '<span class="h-meta" style="display:block">' + t("payday") + ": " + fmtDateShort(p.payday) + (parseKey(p.payday).d !== 10 ? " (" + t("paydayEarly") + ")" : "") + " · " + tot.days + " " + t("daysUnit") + " · " + fmtHM(tot.payable) + esc(metaExtra) + "</span></span>" +
+          '<span class="h-amt">¥' + fmtYen(grand) + "</span></button></div>";
+      }).join("");
+      bindSwipeList($("histList"), function(wrap){ return wrap.getAttribute("data-start"); }, {
+        tap: function(s){ openPeriodByStart(s); },
+        edit: function(s){ openPeriodByStart(s); },
+        del: function(s){
+          var d = dateOf(s); d.setDate(d.getDate() + 15);
+          deletePeriodRecords(periodOf(d));
+        }
+      });
+    }
+
+    /* ================= transport UI helpers ================= */
+    function refreshTransVisibility(){
+      var eb = document.querySelector('#transEnableSeg button.on');
+      var enabled = eb && eb.getAttribute("data-tenable") === "on";
+      var mb = document.querySelector('#transModeSeg button.on');
+      var mode = mb ? mb.getAttribute("data-tmode") : (state.transport ? state.transport.mode : "normal");
+      var body = $("transBody"); if (!body) return;
+      body.style.display = enabled ? "" : "none";
+      var nf = $("transNormalFields"), pf = $("transPassFields");
+      if (nf) nf.style.display = (enabled && mode !== "pass") ? "" : "none";
+      if (pf) pf.style.display = (enabled && mode === "pass") ? "" : "none";
+    }
+    function updateTransPreview(){
+      var el = $("transPreview"); if (!el) return;
+      if (!state.transport || !state.transport.enabled){
+        el.innerHTML = "<span style=\"color:var(--ink-soft)\">" + esc(t("transOff")) + " — " + esc(t("transTitle")) + "</span>";
+        return;
+      }
+      var tot = periodTotals(curPeriod);
+      var trans = transportForPeriod(tot);
+      var parts = [];
+      if (trans.route) parts.push("<b>" + esc(t("transRoute")) + ":</b> " + esc(trans.route));
+      if (state.transport.mode === "pass" && state.transport.passLines) parts.push(esc(state.transport.passLines));
+      if (trans.detail) parts.push(esc(trans.detail));
+      parts.push("<b>" + esc(t("periodWord")) + " " + esc(fmtDateShort(curPeriod.start) + " – " + fmtDateShort(curPeriod.end)) + ":</b> ¥" + fmtYen(trans.amount));
+      el.innerHTML = parts.join(" · ");
+    }
+
+    /* ================= route picker (line first, then stations) =================
+       The user never types a line or station name: pick a line, then pick
+       stations from that line's own list. Prices come from the embedded
+       TRAIN_DATA tables (per-operator distance brackets):
+         segment distance d = |kmA − kmB|; lookupKm = ceil(d − 1e-9);
+         普通 = IC fare of the first bracket with upToKm >= lookupKm;
+         定期 = 1-month price of the first matching pass bracket.
+       A route may have a second segment (transfer): line 2 starts at
+       segment 1's arrival station. An operator with an empty fare or
+       pass table is manual-entry only for that price — the picker shows
+       a note and never auto-fills it. Typing over an auto-filled price
+       is always possible; changing the route re-fills it. */
+    var picker = { op1:"", line1:"", from1:"", to1:"", two:false, op2:"", line2:"", to2:"" };
+    function tdOp(name){
+      if (!name || typeof TRAIN_DATA === "undefined") return null;
+      for (var i = 0; i < TRAIN_DATA.operators.length; i++)
+        if (TRAIN_DATA.operators[i].name === name) return TRAIN_DATA.operators[i];
+      return null;
+    }
+    function tdLine(op, name){
+      if (!op || !name) return null;
+      for (var i = 0; i < op.lines.length; i++)
+        if (op.lines[i].name === name) return op.lines[i];
+      return null;
+    }
+    function tdKm(line, st){
+      if (!line || !st) return null;
+      for (var i = 0; i < line.st.length; i++)
+        if (line.st[i][0] === st) return line.st[i][1];
+      return null;
+    }
+    function tdBracket(table, lk, idx){
+      if (!table || !table.length) return null;
+      for (var i = 0; i < table.length; i++)
+        if (table[i][0] >= lk) return table[i][idx];
+      return table[table.length-1][idx];
+    }
+    function tdSegPrice(opName, lineName, a, b){
+      var op = tdOp(opName), line = tdLine(op, lineName);
+      var ka = tdKm(line, a), kb = tdKm(line, b);
+      if (ka === null || kb === null) return null;
+      var lk = Math.ceil(Math.abs(ka - kb) - 1e-9);
+      return { fare: tdBracket(op.fare, lk, 1), pass: tdBracket(op.pass, lk, 1) };
+    }
+    /* short display name for the pass-lines text, e.g. 東武鉄道+東上線 ->
+       東武東上線, JR東日本+埼京線 -> JR埼京線 */
+    function tdShortLine(opName, lineName){
+      var s = String(opName || "").replace(/（.*?）/g, "").replace(/(鉄道|電鉄)$/, "");
+      if (s === "JR東日本") s = "JR";
+      if (!s || lineName.indexOf(s) === 0) return lineName;
+      return s + lineName;
+    }
+    function computeRoute(){
+      var r = { complete:false, fare:null, pass:null, manualFare:false, manualPass:false, noTransfer:false, names:[] };
+      if (!picker.op1 || !picker.line1 || !picker.from1 || !picker.to1) return r;
+      var p1 = tdSegPrice(picker.op1, picker.line1, picker.from1, picker.to1);
+      if (!p1) return r;
+      var segs = [p1];
+      r.names.push(tdShortLine(picker.op1, picker.line1));
+      if (picker.two){
+        if (!picker.op2 || !picker.line2 || !picker.to2) return r;
+        var line2 = tdLine(tdOp(picker.op2), picker.line2);
+        if (tdKm(line2, picker.to1) === null){ r.noTransfer = true; return r; }
+        var p2 = tdSegPrice(picker.op2, picker.line2, picker.to1, picker.to2);
+        if (!p2) return r;
+        segs.push(p2);
+        r.names.push(tdShortLine(picker.op2, picker.line2));
+      }
+      r.complete = true;
+      r.fare = 0; r.pass = 0;
+      segs.forEach(function(p){
+        if (p.fare === null) r.manualFare = true; else r.fare += p.fare;
+        if (p.pass === null) r.manualPass = true; else r.pass += p.pass;
+      });
+      if (r.manualFare) r.fare = null;
+      if (r.manualPass) r.pass = null;
+      return r;
+    }
+    function fillLineSelect(sel, opName, lineName){
+      var html = '<option value="">' + esc(t("rpPickLine")) + "</option>";
+      if (typeof TRAIN_DATA !== "undefined"){
+        TRAIN_DATA.operators.forEach(function(op){
+          html += '<optgroup label="' + esc(op.name) + '">';
+          op.lines.forEach(function(ln){
+            html += '<option value="' + esc(op.name + "\t" + ln.name) + '"' +
+              (op.name === opName && ln.name === lineName ? " selected" : "") + ">" +
+              esc(op.name + " — " + ln.name) + "</option>";
+          });
+          html += "</optgroup>";
+        });
+      }
+      sel.innerHTML = html;
+    }
+    function fillStationSelect(sel, opName, lineName, selected){
+      var line = tdLine(tdOp(opName), lineName);
+      var html = '<option value="">' + esc(t("rpPickStation")) + "</option>";
+      if (line) line.st.forEach(function(s){
+        html += '<option value="' + esc(s[0]) + '"' + (s[0] === selected ? " selected" : "") + ">" + esc(s[0]) + "</option>";
+      });
+      sel.innerHTML = html;
+      sel.disabled = !line;
+    }
+    function curTransMode(){
+      var mb = document.querySelector('#transModeSeg button.on');
+      return mb ? mb.getAttribute("data-tmode") : (state.transport ? state.transport.mode : "normal");
+    }
+    function updateRoutePreview(autofill){
+      var el = $("rpPreview"); if (!el) return;
+      var r = computeRoute();
+      var mode = curTransMode();
+      if (r.noTransfer){
+        el.innerHTML = '<span style="color:var(--red);font-weight:700">' + esc(t("rpNoTransfer")) + "</span>";
+        return;
+      }
+      if (!r.complete){
+        el.innerHTML = '<span style="color:var(--ink-soft)">' + esc(t("rpHint")) + "</span>";
+        return;
+      }
+      var parts = ["<b>" + esc(t("rpCalc")) + ":</b>",
+        esc(t("transNormal")) + " ¥" + (r.fare !== null ? fmtYen(r.fare) : "—"),
+        esc(t("transPass")) + " ¥" + (r.pass !== null ? fmtYen(r.pass) : "—") + " / 1" + esc(t("transMonthUnit"))];
+      var manual = mode === "pass" ? r.manualPass : r.manualFare;
+      el.innerHTML = parts.join(" · ") +
+        (manual ? '<br /><span style="color:var(--red);font-weight:700">' + esc(t("rpManual")) + "</span>" : "");
+      if (autofill){
+        if (mode !== "pass"){
+          if (r.fare !== null) $("transOneWay").value = r.fare;
+        } else {
+          if (r.pass !== null) $("transPassPrice").value = r.pass;
+          $("transLines").value = r.names.join("・");
+        }
+      }
+    }
+    function renderPicker(autofill){
+      if (!$("rpLine1")) return;
+      $("rpLine1Label").textContent = t("rpLine1");
+      $("rpLine2Label").textContent = t("rpLine2");
+      $("rpFrom1Label").textContent = t("rpFrom");
+      $("rpTo1Label").textContent = t("rpTo");
+      $("rpFrom2Label").textContent = t("rpFrom");
+      $("rpTo2Label").textContent = t("rpTo");
+      var twoBtns = $("rpTwoSeg").querySelectorAll("button");
+      twoBtns[0].textContent = t("rpOne"); twoBtns[1].textContent = t("rpTwo");
+      fillLineSelect($("rpLine1"), picker.op1, picker.line1);
+      fillStationSelect($("rpFrom1"), picker.op1, picker.line1, picker.from1);
+      fillStationSelect($("rpTo1"), picker.op1, picker.line1, picker.to1);
+      Array.prototype.forEach.call(twoBtns, function(b){
+        b.classList.toggle("on", (b.getAttribute("data-rp2") === "two") === !!picker.two);
+      });
+      $("rpSeg2").style.display = picker.two ? "" : "none";
+      fillLineSelect($("rpLine2"), picker.op2, picker.line2);
+      $("rpFrom2").value = picker.to1 || "";
+      $("rpFrom2").placeholder = t("rpPickStation");
+      fillStationSelect($("rpTo2"), picker.op2, picker.line2, picker.to2);
+      updateRoutePreview(autofill);
+    }
+    function initPickerFromState(){
+      picker = { op1:"", line1:"", from1:"", to1:"", two:false, op2:"", line2:"", to2:"" };
+      var rt = state.transport && state.transport.route;
+      if (rt && rt.seg1){
+        picker.op1 = rt.seg1.op || ""; picker.line1 = rt.seg1.line || "";
+        picker.from1 = rt.seg1.from || ""; picker.to1 = rt.seg1.to || "";
+        if (rt.seg2){
+          picker.two = true;
+          picker.op2 = rt.seg2.op || ""; picker.line2 = rt.seg2.line || ""; picker.to2 = rt.seg2.to || "";
+        }
+      }
+    }
+
+    /* ================= settings ================= */
+    function renderSettings(){
+      $("setTitle").textContent = t("setTitle");
+      $("setSub").textContent = t("setSub");
+      $("langTitle").textContent = t("langTitle");
+      $("themeTitle").textContent = t("themeTitle");
+      var thBtns = $("themeSeg").querySelectorAll("button");
+      thBtns[0].textContent = t("themeAuto"); thBtns[1].textContent = t("themeLight"); thBtns[2].textContent = t("themeDark");
+      Array.prototype.forEach.call($("langSeg").querySelectorAll("button"), function(b){
+        b.classList.toggle("on", b.getAttribute("data-lang") === state.lang);
+      });
+      Array.prototype.forEach.call(thBtns, function(b){
+        b.classList.toggle("on", b.getAttribute("data-theme") === state.theme);
+      });
+      $("ratesTitle").textContent = t("ratesTitle");
+      $("ratesDesc").textContent = t("ratesDesc");
+      $("rateLabel").textContent = t("rate");
+      $("saveRates").textContent = t("save");
+      $("rateAll").value = state.rates.day;
+      /* --- transport fare --- */
+      $("transTitle").textContent = t("transTitle");
+      $("transDesc").textContent = t("transDesc");
+      var teBtns = $("transEnableSeg").querySelectorAll("button");
+      teBtns[0].textContent = t("transOff"); teBtns[1].textContent = t("transOn");
+      Array.prototype.forEach.call(teBtns, function(b){
+        var isOn = b.getAttribute("data-tenable") === "on";
+        b.classList.toggle("on", isOn ? !!state.transport.enabled : !state.transport.enabled);
+      });
+      var tmBtns = $("transModeSeg").querySelectorAll("button");
+      tmBtns[0].textContent = t("transNormal"); tmBtns[1].textContent = t("transPass");
+      Array.prototype.forEach.call(tmBtns, function(b){
+        b.classList.toggle("on", b.getAttribute("data-tmode") === state.transport.mode);
+      });
+      initPickerFromState();
+      renderPicker(false);
+      $("transOneWayLabel").textContent = t("transOneWay");
+      $("transOneWay").value = state.transport.oneWay ? state.transport.oneWay : "";
+      $("transLinesLabel").textContent = t("transLines");
+      $("transLines").placeholder = t("transLinesPh");
+      $("transLines").value = state.transport.passLines || "";
+      $("transPassPriceLabel").textContent = t("transPassPrice");
+      $("transPassPrice").value = state.transport.passPrice ? state.transport.passPrice : "";
+      $("transPassTermLabel").textContent = t("transPassTerm");
+      Array.prototype.forEach.call($("transMonthsSeg").querySelectorAll("button"), function(b){
+        b.classList.toggle("on", +b.getAttribute("data-tmonths") === +state.transport.passMonths);
+        b.textContent = b.getAttribute("data-tmonths") + " " + t("transMonthUnit");
+      });
+      $("saveTrans").textContent = t("save");
+      refreshTransVisibility();
+      updateTransPreview();
+      $("redTitle").textContent = t("redTitle");
+      $("redDesc").textContent = t("redDesc");
+      var redBtns = $("redSeg").querySelectorAll("button");
+      redBtns[0].textContent = t("redWork"); redBtns[1].textContent = t("redOff");
+      Array.prototype.forEach.call(redBtns, function(b){
+        var isWork = b.getAttribute("data-red") === "work";
+        b.classList.toggle("on", isWork ? state.workOnRed !== false : state.workOnRed === false);
+      });
+      $("tplTitle").textContent = t("tplTitle");
+      $("tplDesc").textContent = t("tplDesc");
+      $("saveTpl").textContent = t("save");
+      $("dataTitle").textContent = t("dataTitle");
+      $("dataDesc").textContent = t("dataDesc");
+      $("wipeData").textContent = t("wipe");
+      var rows = "";
+      for (var wd = 0; wd < 7; wd++){
+        var tp = state.template[String(wd)];
+        rows += '<div class="tpl-row"><span class="wd' + (wd === 0 ? " sun" : "") + '">' + esc(t("weekdaysShort")[wd]) + "</span>" +
+          '<select data-wd="' + wd + '" class="tpl-type">' +
+          '<option value="off"' + (!tp ? " selected" : "") + ">" + esc(t("off")) + "</option>" +
+          '<option value="day"' + (tp && tp.type === "day" ? " selected" : "") + ">" + esc(t("dayShift")) + "</option>" +
+          '<option value="evening"' + (tp && tp.type === "evening" ? " selected" : "") + ">" + esc(t("eveShift")) + "</option></select>" +
+          '<input type="time" class="tpl-s" data-wd="' + wd + '" value="' + (tp ? tp.s : "10:00") + '"' + (!tp ? " disabled" : "") + ' />' +
+          '<span class="dash">–</span>' +
+          '<input type="time" class="tpl-e" data-wd="' + wd + '" value="' + (tp ? tp.e : "15:00") + '"' + (!tp ? " disabled" : "") + " />" +
+          "</div>";
+      }
+      $("tplRows").innerHTML = rows;
+      Array.prototype.forEach.call($("tplRows").querySelectorAll(".tpl-type"), function(sel){
+        sel.addEventListener("change", function(){
+          var wd2 = sel.getAttribute("data-wd");
+          var off = sel.value === "off";
+          $("tplRows").querySelector('.tpl-s[data-wd="' + wd2 + '"]').disabled = off;
+          $("tplRows").querySelector('.tpl-e[data-wd="' + wd2 + '"]').disabled = off;
+          if (!off){
+            var isDay = sel.value === "day";
+            $("tplRows").querySelector('.tpl-s[data-wd="' + wd2 + '"]').value = isDay ? "10:00" : "14:00";
+            $("tplRows").querySelector('.tpl-e[data-wd="' + wd2 + '"]').value = isDay ? "15:00" : "20:00";
+          }
+        });
+      });
+    }
+
+    /* ================= day editor sheet ================= */
+    var sheetDate = null;
+    function openDay(key){
+      sheetDate = key;
+      renderSheet();
+    }
+    function closeSheet(){ $("sheetRoot").innerHTML = ""; sheetDate = null; }
+    function renderSheet(){
+      if (!sheetDate) return;
+      var key = sheetDate, dt = dateOf(key);
+      var hn = holidayName(key), isSun = dt.getDay() === 0;
+      var shifts = dayShifts(key);
+      var holLine = hn ? '<span class="rn">' + esc(hn) + " · " + esc(t("holiday")) + "</span>"
+        : isSun ? '<span class="rn">' + esc(t("sunday")) + "</span>" : esc(t("workday"));
+      var html = '<div class="sheet-wrap"><div class="sheet-bg" id="sheetBg"></div><div class="sheet">' +
+        "<h3>" + esc(fmtDate(key)) + (key === todayKey ? ' <span style="font-size:12px;color:var(--red)">' + esc(t("today")) + "</span>" : "") + "</h3>" +
+        '<p class="hol-line">' + holLine + "</p>" +
+        (isExcluded(key) ? '<p class="excluded-note">' + esc(isCustomHoliday(key) ? t("customExcluded") : t("redExcluded")) + "</p>" : "") +
+        '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' +
+        (isCustomHoliday(key)
+          ? '<button class="btn small" id="holOff">' + esc(t("holRemove")) + "</button>"
+          : '<button class="btn small" id="holOn">' + esc(t("holCustom")) + "</button>") +
+        "</div>" +
+        '<div id="holNameRow"></div>' +
+        '<div id="shiftList">' +
+        (shifts.length ? "" : '<div class="empty" style="margin-top:14px">' + esc(t("noShifts")) + "</div>") +
+        shifts.map(function(sh, i){ return shiftCardHTML(sh, i); }).join("") +
+        "</div>" +
+        '<div class="sheet-actions">' +
+        '<button class="btn" id="addDayBtn">' + esc(t("addDay")) + "</button>" +
+        '<button class="btn" id="addEveBtn">' + esc(t("addEve")) + "</button>" +
+        "</div>" +
+        '<div class="sheet-actions"><button class="btn primary" id="sheetClose">' + esc(t("close")) + "</button></div>" +
+        "</div></div>";
+      $("sheetRoot").innerHTML = html;
+      $("sheetBg").addEventListener("click", closeSheet);
+      $("sheetClose").addEventListener("click", closeSheet);
+      var holOn = $("holOn");
+      if (holOn) holOn.addEventListener("click", function(){
+        /* Marking a day as a holiday is a personal choice: it makes the
+           day a day off (no work) and excludes it from salary — for ANY
+           date, including built-in public holidays and Sundays, whatever
+           the Settings red-day toggle says. A date that already has a
+           holiday name is marked with one tap; other dates ask for a
+           display name first. */
+        if (holidayName(key)){
+          if (!state.customOff) state.customOff = {};
+          state.customOff[key] = true;
+          save(); renderSheet(); renderAll();
+          return;
+        }
+        $("holNameRow").innerHTML = '<div style="display:flex;gap:8px;margin-top:10px"><input type="text" id="holNameInput" placeholder="' + esc(t("holNamePh")) + '" style="flex:1;min-width:0;font-size:16px;border:1.5px solid var(--card-edge);background:var(--field);color:var(--ink);border-radius:4px;padding:8px 10px;min-height:42px" />' +
+          '<button class="btn small primary" id="holNameSave">' + esc(t("add")) + "</button></div>";
+        $("holNameSave").addEventListener("click", function(){
+          var v = $("holNameInput").value.trim();
+          if (!state.customOff) state.customOff = {};
+          state.customOff[key] = true;
+          state.holidayOverrides[key] = v || "祝日";
+          save(); renderSheet(); renderAll();
+        });
+      });
+      var holOff = $("holOff");
+      if (holOff) holOff.addEventListener("click", function(){
+        /* Un-marking removes ONLY the personal mark: the day returns to
+           its default treatment — a built-in public holiday shows its
+           name again and follows the Settings red-day toggle (counted
+           when “Work” is chosen), and a normal day counts as usual. */
+        if (state.customOff) delete state.customOff[key];
+        var ov = state.holidayOverrides[key];
+        if (typeof ov === "string" && ov !== "off") delete state.holidayOverrides[key];
+        save(); renderSheet(); renderAll();
+      });
+      $("addDayBtn").addEventListener("click", function(){ addShift("day"); });
+      $("addEveBtn").addEventListener("click", function(){ addShift("evening"); });
+      bindShiftCards();
+    }
+    function shiftCardHTML(sh, i){
+      var c = calcShift(sh);
+      return '<div class="shift-card ' + (sh.type === "evening" ? "eve" : "") + '" data-idx="' + i + '">' +
+        '<div class="sc-head"><span class="sc-type">' + esc(sh.type === "day" ? t("dayShift") : t("eveShift")) + " · ¥" + fmtYen(sh.type === "day" ? state.rates.day : state.rates.evening) + "/h</span>" +
+        '<button class="icon-btn sc-del" data-idx="' + i + '" aria-label="Delete">✕</button></div>' +
+        '<div class="grid2">' +
+        '<div class="field"><label>' + esc(t("schedStart")) + '</label><input type="time" class="f-ss" value="' + sh.schedS + '" /></div>' +
+        '<div class="field"><label>' + esc(t("schedEnd")) + '</label><input type="time" class="f-se" value="' + sh.schedE + '" /></div>' +
+        '<div class="field"><label>' + esc(t("actIn")) + '</label><input type="time" class="f-ai" value="' + sh.actIn + '" /></div>' +
+        '<div class="field"><label>' + esc(t("actOut")) + '</label><input type="time" class="f-ao" value="' + sh.actOut + '" /></div>' +
+        "</div>" +
+        '<div class="sc-result">' +
+        "<span>" + esc(t("payable")) + " <b>" + fmtHM(c.payable) + "</b></span>" +
+        (c.late ? "<span>" + esc(t("late")) + " <b>" + c.late + esc(t("minutes")) + "</b></span>" : "") +
+        (c.early ? "<span>" + esc(t("early")) + " <b>" + c.early + esc(t("minutes")) + "</b></span>" : "") +
+        '<span class="earn">¥' + fmtYen(c.earn) + "</span>" +
+        "</div></div>";
+    }
+    function bindShiftCards(){
+      Array.prototype.forEach.call(document.querySelectorAll("#shiftList .shift-card"), function(card){
+        var idx = +card.getAttribute("data-idx");
+        function upd(field, val){
+          var arr = state.records[sheetDate]; if (!arr || !arr[idx]) return;
+          arr[idx][field] = val; save();
+          var c = calcShift(arr[idx]);
+          var res = card.querySelector(".sc-result");
+          res.innerHTML =
+            "<span>" + esc(t("payable")) + " <b>" + fmtHM(c.payable) + "</b></span>" +
+            (c.late ? "<span>" + esc(t("late")) + " <b>" + c.late + esc(t("minutes")) + "</b></span>" : "") +
+            (c.early ? "<span>" + esc(t("early")) + " <b>" + c.early + esc(t("minutes")) + "</b></span>" : "") +
+            '<span class="earn">¥' + fmtYen(c.earn) + "</span>";
+          renderAll();
+        }
+        card.querySelector(".f-ss").addEventListener("change", function(e){ upd("schedS", e.target.value); });
+        card.querySelector(".f-se").addEventListener("change", function(e){ upd("schedE", e.target.value); });
+        card.querySelector(".f-ai").addEventListener("change", function(e){ upd("actIn", e.target.value); });
+        card.querySelector(".f-ao").addEventListener("change", function(e){ upd("actOut", e.target.value); });
+      });
+      Array.prototype.forEach.call(document.querySelectorAll("#shiftList .sc-del"), function(btn){
+        btn.addEventListener("click", function(){
+          var idx = +btn.getAttribute("data-idx");
+          state.records[sheetDate].splice(idx, 1);
+          if (!state.records[sheetDate].length) delete state.records[sheetDate];
+          save(); renderSheet(); renderAll();
+        });
+      });
+    }
+    function addShift(type){
+      var sh = type === "day"
+        ? { type:"day", schedS:"10:00", schedE:"15:00", actIn:"10:00", actOut:"15:00" }
+        : { type:"evening", schedS:"14:00", schedE:"20:00", actIn:"14:00", actOut:"20:00" };
+      if (!state.records[sheetDate]) state.records[sheetDate] = [];
+      state.records[sheetDate].push(sh);
+      save(); renderSheet(); renderAll();
+    }
+
+    /* ================= exports ================= */
+    function periodRows(){
+      var rows = [];
+      var d = dateOf(curPeriod.start), end = dateOf(curPeriod.end);
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        var hn = holidayName(k) || (d.getDay() === 0 ? "Sunday" : "");
+        if (isExcluded(k)){ d.setDate(d.getDate()+1); continue; }
+        dayShifts(k).forEach(function(sh){
+          var c = calcShift(sh);
+          rows.push([k, hn, sh.type, sh.schedS, sh.schedE, sh.actIn, sh.actOut, c.payable, c.late, c.early, c.earn]);
+        });
+        d.setDate(d.getDate()+1);
+      }
+      return rows;
+    }
+    function download(name, blob){
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 400);
+    }
+    function exportCSV(){
+      var head = "Date,Holiday,Shift,Scheduled Start,Scheduled End,Clock In,Clock Out,Payable Minutes,Late Minutes,Early Minutes,Earnings (JPY)";
+      var lines = periodRows().map(function(r){ return r.join(","); });
+      var tot = periodTotals(curPeriod);
+      var trans = transportForPeriod(tot);
+      var grand = tot.gross + trans.amount;
+      var hasTrans = !!(state.transport && state.transport.enabled);
+      lines.push("SALARY TOTAL,,,,,,," + tot.payable + "," + tot.late + "," + tot.early + "," + tot.gross);
+      if (hasTrans){
+        var routeCsv = (trans.route ? trans.route.replace(/,/g, " ") : "") + (trans.detail ? " (" + trans.detail.replace(/,/g, " ") + ")" : "");
+        lines.push("TRANSPORT (Kotsuhi),,,,,,,,,," + trans.amount + (routeCsv ? ",\"" + routeCsv + "\"" : ""));
+        lines.push("GRAND TOTAL (Salary + Transport),,,,,,,,,," + grand);
+      }
+      var csv = "﻿" + head + "\n" + lines.join("\n");
+      download("salary-" + curPeriod.start + "_to_" + curPeriod.end + ".csv", new Blob([csv], { type:"text/csv;charset=utf-8" }));
+    }
+    function exportPDF(){
+      var rows = periodRows(), tot = periodTotals(curPeriod);
+      var trans = transportForPeriod(tot);
+      var grand = tot.gross + trans.amount;
+      var hasTrans = !!(state.transport && state.transport.enabled);
+      if (window.jspdf && window.jspdf.jsPDF){
+        var doc = new window.jspdf.jsPDF();
+        doc.setFontSize(15);
+        doc.text("Salary Report  " + curPeriod.start + " - " + curPeriod.end, 14, 16);
+        doc.setFontSize(11);
+        doc.text("Payday: " + curPeriod.payday + "    Salary: JPY " + fmtYen(tot.gross) + (hasTrans ? "    Transport: JPY " + fmtYen(trans.amount) : "") + "    Grand total: JPY " + fmtYen(grand), 14, 24);
+        if (hasTrans && (trans.route || trans.detail)){
+          doc.setFontSize(9.5);
+          doc.text("Transport: " + (trans.route ? trans.route + "  " : "") + (trans.detail || ""), 14, 29);
+        }
+        doc.setFontSize(11);
+        doc.text("Working days: " + tot.days + "    Payable: " + Math.floor(tot.payable/60) + "h " + (tot.payable%60) + "m    Late: " + tot.late + "m    Early: " + tot.early + "m", 14, hasTrans ? 36 : 31);
+        var y = hasTrans ? 47 : 42;
+        doc.setFontSize(9.5);
+        doc.text("Date        Shift     Sched        Actual       Payable  Late  Early  Earnings", 14, y); y += 3;
+        doc.line(14, y, 196, y); y += 6;
+        rows.forEach(function(r){
+          if (y > 282){ doc.addPage(); y = 16; }
+          var line = r[0] + "  " + (r[2] === "day" ? "Day    " : "Evening") + "  " + r[3] + "-" + r[4] + "  " + r[5] + "-" + r[6] + "   " +
+            String(r[7]).padStart(4) + "m   " + String(r[8]).padStart(3) + "m  " + String(r[9]).padStart(3) + "m   JPY " + fmtYen(r[10]);
+          doc.text(line, 14, y); y += 5.5;
+        });
+        doc.save("salary-" + curPeriod.start + "_to_" + curPeriod.end + ".pdf");
+      } else {
+        exportCSV();
+        toast("PDF unavailable offline — CSV saved");
+      }
+    }
+
+    /* ================= template fill ================= */
+    function applyTemplate(){
+      var d = dateOf(curPeriod.start), end = dateOf(curPeriod.end), added = 0;
+      while (d <= end){
+        var k = dkey(d.getFullYear(), d.getMonth()+1, d.getDate());
+        if (!dayShifts(k).length && !isExcluded(k)){
+          var tp = state.template[String(d.getDay())];
+          if (tp){
+            state.records[k] = [{ type: tp.type, schedS: tp.s, schedE: tp.e, actIn: tp.s, actOut: tp.e }];
+            added++;
+          }
+        }
+        d.setDate(d.getDate()+1);
+      }
+      save(); renderAll();
+      if (added) toast(t("appliedTpl"));
+    }
+
+    /* ================= navigation & wiring ================= */
+    function switchView(v){
+      curView = v;
+      ["slip","cal","history","settings"].forEach(function(name){
+        $("view-" + name).classList.toggle("hidden", name !== v);
+      });
+      Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
+        b.classList.toggle("on", b.getAttribute("data-view") === v);
+      });
+      window.scrollTo(0, 0);
+    }
+    function renderStatic(){
+      document.querySelectorAll("[data-i18n]").forEach(function(el){ el.textContent = t(el.getAttribute("data-i18n")); });
+      document.querySelectorAll("[data-credit]").forEach(function(el){ el.textContent = t("credit"); });
+      document.documentElement.lang = state.lang === "my" ? "my" : state.lang;
+    }
+    function renderAll(){
+      renderStatic(); renderSlip(); renderCal(); renderHistory(); renderSettings();
+    }
+    Array.prototype.forEach.call($("tabbar").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ switchView(b.getAttribute("data-view")); });
+    });
+    $("prevPeriod").addEventListener("click", function(){ curPeriod = shiftPeriod(curPeriod, -1); renderAll(); });
+    $("nextPeriod").addEventListener("click", function(){ curPeriod = shiftPeriod(curPeriod, 1); renderAll(); });
+    $("prevMonth").addEventListener("click", function(){
+      calCursor.m--; if (calCursor.m < 1){ calCursor.m = 12; calCursor.y--; } renderCal();
+    });
+    $("nextMonth").addEventListener("click", function(){
+      calCursor.m++; if (calCursor.m > 12){ calCursor.m = 1; calCursor.y++; } renderCal();
+    });
+    $("exportCsv").addEventListener("click", exportCSV);
+    $("exportPdf").addEventListener("click", exportPDF);
+    $("applyTpl").addEventListener("click", applyTemplate);
+    Array.prototype.forEach.call($("langSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ state.lang = b.getAttribute("data-lang"); save(); renderAll(); if (sheetDate) renderSheet(); });
+    });
+    Array.prototype.forEach.call($("themeSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ state.theme = b.getAttribute("data-theme"); save(); applyTheme(); renderSettings(); });
+    });
+    Array.prototype.forEach.call($("redSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ state.workOnRed = b.getAttribute("data-red") === "work"; save(); renderAll(); toast(t("saved")); });
+    });
+    $("saveRates").addEventListener("click", function(){
+      var r = Math.max(0, +$("rateAll").value || 0);
+      state.rates.day = r; state.rates.evening = r;
+      save(); renderAll(); toast(t("saved"));
+    });
+    /* transport: enable / mode / term segs only toggle the UI until Save */
+    Array.prototype.forEach.call($("transEnableSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){
+        Array.prototype.forEach.call($("transEnableSeg").querySelectorAll("button"), function(x){ x.classList.toggle("on", x === b); });
+        refreshTransVisibility();
+      });
+    });
+    Array.prototype.forEach.call($("transModeSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){
+        Array.prototype.forEach.call($("transModeSeg").querySelectorAll("button"), function(x){ x.classList.toggle("on", x === b); });
+        refreshTransVisibility();
+        updateRoutePreview(true);
+      });
+    });
+    /* route picker: line first, then stations — any change re-looks-up
+       the prices and re-fills the price fields for the current mode */
+    function rpParseLine(v){
+      if (!v) return ["", ""];
+      var p = String(v).split("\t");
+      return [p[0] || "", p[1] || ""];
+    }
+    $("rpLine1").addEventListener("change", function(){
+      var pr = rpParseLine($("rpLine1").value);
+      picker.op1 = pr[0]; picker.line1 = pr[1]; picker.from1 = ""; picker.to1 = "";
+      renderPicker(true);
+    });
+    $("rpFrom1").addEventListener("change", function(){ picker.from1 = $("rpFrom1").value; renderPicker(true); });
+    $("rpTo1").addEventListener("change", function(){ picker.to1 = $("rpTo1").value; renderPicker(true); });
+    Array.prototype.forEach.call($("rpTwoSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){ picker.two = b.getAttribute("data-rp2") === "two"; renderPicker(true); });
+    });
+    $("rpLine2").addEventListener("change", function(){
+      var pr = rpParseLine($("rpLine2").value);
+      picker.op2 = pr[0]; picker.line2 = pr[1]; picker.to2 = "";
+      renderPicker(true);
+    });
+    $("rpTo2").addEventListener("change", function(){ picker.to2 = $("rpTo2").value; renderPicker(true); });
+    Array.prototype.forEach.call($("transMonthsSeg").querySelectorAll("button"), function(b){
+      b.addEventListener("click", function(){
+        Array.prototype.forEach.call($("transMonthsSeg").querySelectorAll("button"), function(x){ x.classList.toggle("on", x === b); });
+      });
+    });
+    $("saveTrans").addEventListener("click", function(){
+      var eb = $("transEnableSeg").querySelector("button.on");
+      var mb = $("transModeSeg").querySelector("button.on");
+      var pb = $("transMonthsSeg").querySelector("button.on");
+      state.transport.enabled = !!(eb && eb.getAttribute("data-tenable") === "on");
+      state.transport.mode = mb ? mb.getAttribute("data-tmode") : "normal";
+      state.transport.route = {
+        seg1: { op: picker.op1, line: picker.line1, from: picker.from1, to: picker.to1 },
+        seg2: picker.two ? { op: picker.op2, line: picker.line2, to: picker.to2 } : null
+      };
+      if (picker.from1) state.transport.homeStation = picker.from1;
+      var wEnd = picker.two ? picker.to2 : picker.to1;
+      if (wEnd) state.transport.workStation = wEnd;
+      state.transport.oneWay = Math.max(0, +$("transOneWay").value || 0);
+      state.transport.passLines = $("transLines").value.trim();
+      state.transport.passPrice = Math.max(0, +$("transPassPrice").value || 0);
+      state.transport.passMonths = pb ? (+pb.getAttribute("data-tmonths") || 1) : 1;
+      save(); renderAll(); toast(t("saved"));
+    });
+    $("saveTpl").addEventListener("click", function(){
+      for (var wd = 0; wd < 7; wd++){
+        var type = $("tplRows").querySelector('.tpl-type[data-wd="' + wd + '"]').value;
+        if (type === "off") state.template[String(wd)] = null;
+        else state.template[String(wd)] = {
+          type: type,
+          s: $("tplRows").querySelector('.tpl-s[data-wd="' + wd + '"]').value || "10:00",
+          e: $("tplRows").querySelector('.tpl-e[data-wd="' + wd + '"]').value || "15:00"
+        };
+      }
+      save(); toast(t("saved"));
+    });
+    var wipeArmed = false;
+    $("wipeData").addEventListener("click", function(){
+      if (!wipeArmed){
+        wipeArmed = true; $("wipeData").textContent = t("wipeConfirm");
+        setTimeout(function(){ wipeArmed = false; $("wipeData").textContent = t("wipe"); }, 3500);
+        return;
+      }
+      state.records = {}; state.holidayOverrides = {}; state.customOff = {};
+      save(); wipeArmed = false; renderAll(); toast(t("saved"));
+    });
+
+    function openPeriodByStart(s){
+      var d = dateOf(s); d.setDate(d.getDate() + 15);
+      curPeriod = periodOf(d);
+      switchView("slip"); renderAll();
+    }
+    /* keep the layout locked to the screen: no pinch / double-tap zoom
+       (the viewport meta already asks for this; these cover iOS Safari,
+       which ignores user-scalable=no) */
+    document.addEventListener("gesturestart", function(e){ e.preventDefault(); });
+    document.addEventListener("gesturechange", function(e){ e.preventDefault(); });
+    document.addEventListener("pointerdown", function(e){
+      if (!(e.target.closest && e.target.closest(".swipe"))) closeAllSwipes(null);
+    });
+
+    applyTheme();
+    switchView("slip");
+    renderAll();
+    </script>
+  </body>
+</html>
