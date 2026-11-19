@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MUSIC WORLD — One World · Every Sound</title>
+<meta name="description" content="MUSIC WORLD — global music streaming. Myanmar and world music, playlists, charts and Premium.">
+<meta property="og:title" content="MUSIC WORLD">
+<meta property="og:description" content="One World · Every Sound">
+<meta property="og:type" content="website">
+<style>
+:root{
+  --bg:#0D0D1F; --bg2:#14142B; --card:#1B1B33; --card2:#23233F;
+  --violet:#6D28D9; --magenta:#E84393; --gold:#D4AF37;
+  --text:#F4F2FF; --muted:#A7A5C4; --line:#2C2C4A;
+  --grad:linear-gradient(120deg,#6D28D9,#E84393);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans Myanmar",sans-serif;min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit}
+a{color:inherit}
+/* ---------- layout ---------- */
+#app{display:flex;min-height:100vh}
+aside{width:230px;flex:0 0 230px;background:var(--bg2);border-right:1px solid var(--line);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+main{flex:1;min-width:0;padding:26px 30px 120px}
+.logo{display:flex;align-items:center;gap:10px;padding:2px 8px 18px}
+.logo .mark{width:38px;height:38px;flex:0 0 38px}
+.logo b{font-size:19px;letter-spacing:.5px}
+.logo small{display:block;color:var(--gold);font-size:10px;letter-spacing:1.5px;font-weight:600}
+.navbtn{display:flex;align-items:center;gap:11px;width:100%;background:none;border:0;color:var(--muted);font-size:15px;padding:10px 12px;border-radius:10px;text-align:left}
+.navbtn:hover{background:var(--card);color:var(--text)}
+.navbtn.on{background:var(--grad);color:#fff;font-weight:600}
+.navbtn .ic{width:20px;text-align:center}
+.navsec{color:var(--muted);font-size:11px;letter-spacing:1.6px;margin:16px 12px 4px;font-weight:700}
+aside .sp{flex:1}
+.userchip{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;flex:0 0 34px}
+.userchip .nm{font-size:13.5px;font-weight:600;line-height:1.25}
+.userchip .pl{font-size:11.5px;color:var(--gold)}
+/* ---------- generic ---------- */
+h1{font-size:26px;margin-bottom:6px}
+h2{font-size:19px;margin:26px 0 12px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:#000}
+.card .bd{padding:11px 13px 13px}
+.card .tt{font-size:14.5px;font-weight:600;line-height:1.35}
+.card .ar{color:var(--muted);font-size:12.5px;margin-top:3px}
+.rowbtns{display:flex;gap:8px;margin-top:10px}
+.mini{border:1px solid var(--line);background:var(--card2);color:var(--text);border-radius:8px;padding:6px 11px;font-size:12.5px}
+.mini:hover{border-color:var(--magenta)}
+.mini.love.on{color:#fff;background:var(--magenta);border-color:var(--magenta)}
+.btn{background:var(--grad);color:#fff;border:0;border-radius:10px;padding:11px 20px;font-size:15px;font-weight:600}
+.btn.gold{background:var(--gold);color:#191926}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--text)}
+.btn:disabled{opacity:.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:999px;padding:8px 15px;font-size:13.5px}
+.chip:hover{border-color:var(--violet)}
+.chip.on{background:var(--grad);border-color:transparent;color:#fff}
+.hero{background:linear-gradient(120deg,#241245,#3B1150 55%,#57123E);border:1px solid var(--line);border-radius:18px;padding:28px}
+.hero h1{font-size:30px}
+.hero .tag{color:var(--gold);letter-spacing:2px;font-size:12px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+td,th{padding:10px 8px;border-bottom:1px solid var(--line);font-size:14px;text-align:left;vertical-align:middle}
+th{color:var(--muted);font-size:12px;letter-spacing:1px}
+.rank{font-size:17px;font-weight:800;color:var(--gold);width:34px}
+.playrow{cursor:pointer}
+.playrow:hover td{background:var(--card)}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.field input,.field select{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px 12px;font-size:15px}
+.authwrap{max-width:400px;margin:7vh auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px}
+.err{color:#FF7A9E;font-size:13.5px;min-height:18px;margin:6px 0}
+.ok{color:#7BE3A8;font-size:13.5px;min-height:18px;margin:6px 0}
+dialog{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:16px;padding:24px;width:min(430px,92vw)}
+dialog::backdrop{background:rgba(5,5,15,.7)}
+.plan{border:1px solid var(--line);border-radius:16px;padding:22px;background:var(--card)}
+.plan.pro{border-color:var(--gold);background:linear-gradient(160deg,#1E1B33,#2A1E3E)}
+.plan .price{font-size:30px;font-weight:800;margin:6px 0}
+.plan ul{list-style:none;margin:12px 0 16px}
+.plan li{padding:4px 0;color:var(--muted);font-size:14px}
+.plan li::before{content:"✓ ";color:var(--gold);font-weight:700}
+.badge{display:inline-block;background:var(--gold);color:#191926;font-size:11px;font-weight:800;border-radius:6px;padding:2px 8px;letter-spacing:.6px}
+.badge.free{background:var(--card2);color:var(--muted);border:1px solid var(--line)}
+/* ---------- player bar ---------- */
+#playerbar{position:fixed;left:0;right:0;bottom:0;background:rgba(16,16,32,.97);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:none;z-index:50}
+#playerbar.show{display:block}
+#playerbar .in{max-width:860px;margin:0 auto}
+#playerbar iframe{width:100%;aspect-ratio:16/9;max-height:46vh;border:0;border-radius:12px;background:#000}
+#playerbar .bar{display:flex;align-items:center;gap:10px;margin-top:8px}
+#playerbar .now{flex:1;min-width:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--gold);color:#191926;font-weight:700;font-size:14px;border-radius:10px;padding:11px 18px;z-index:99;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.empty{color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:26px;text-align:center;font-size:14.5px}
+.toprow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.toprow .grow{flex:1}
+select.lang{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13.5px}
+.searchbox{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:13px 15px;font-size:16px}
+@media(max-width:760px){
+  aside{width:64px;flex-basis:64px;padding:16px 8px}
+  aside .lbl,aside .navsec,.logo .lt,.userchip .uc-t{display:none}
+  .logo{justify-content:center;padding-bottom:12px}
+  .navbtn{justify-content:center;padding:11px 0}
+  main{padding:18px 14px 130px}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+  .hero h1{font-size:23px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar"></aside>
+  <main id="main"></main>
+</div>
+<div id="playerbar"><div class="in">
+  <div id="framewrap"></div>
+  <div class="bar"><div class="now" id="nowtitle"></div>
+    <button class="mini" id="barlove">♥</button>
+    <button class="mini" id="barclose">✕</button>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+<dialog id="dlg"></dialog>
+<script>
+/* ================= DATA ================= */
+const VIDEOS=[
+ {id:"2Vv-BfVoq4g",title:"Perfect",artist:"Ed Sheeran",genre:"Pop",region:"GLOBAL"},
+ {id:"RgKAFK5djSk",title:"See You Again",artist:"Wiz Khalifa ft. Charlie Puth",genre:"Hip-Hop",region:"GLOBAL"},
+ {id:"hT_nvWreIhg",title:"Counting Stars",artist:"OneRepublic",genre:"Pop Rock",region:"GLOBAL"},
+ {id:"60ItHLz5WEA",title:"Faded",artist:"Alan Walker",genre:"EDM",region:"GLOBAL"},
+ {id:"pn2ceofUjhA",title:"အထီးကျန် (Lonely)",artist:"Sai Sai Kham Leng",genre:"Myanmar Pop",region:"MM"},
+ {id:"UxgCj0FRRc8",title:"နားနားနား (Na Na Na)",artist:"Sai Sai Kham Leng",genre:"Myanmar Pop",region:"MM"}
+];
+const GENRES=["Pop","Hip-Hop","R&B","Rock","Pop Rock","EDM","Jazz","Classical","Country","Latin","K-Pop","J-Pop","Myanmar Pop","Myanmar Rock","Myanmar Hip-Hop","Traditional Myanmar","Folk","Blues","Metal","Reggae","Soul","Funk","Indie","Lo-Fi"];
+const DEMO_CODES={"MW-DEMO-2026":{plan:"PREMIUM",days:30}};
+/* ================= I18N ================= */
+const T={
+ my:{home:"ပင်မ",search:"ရှာဖွေ",explore:"စူးစမ်း",charts:"ဇယား",library:"စာကြည့်တိုက်",youtube:"YouTube",playlists:"Playlist များ",favorites:"အကြိုက်ဆုံး",history:"နားထောင်ခဲ့သမျှ",subscription:"အသင်းဝင်",settings:"ဆက်တင်",login:"ဝင်မည်",register:"အကောင့်ဖွင့်",logout:"ထွက်မည်",welcome:"MUSIC WORLD မှ ကြိုဆိုပါတယ်",tagline:"One World · Every Sound",featured:"ရွေးချယ်ထားသော သီချင်းများ",genres:"အမျိုးအစားများ",all:"အားလုံး",play:"ဖွင့်",addList:"Playlist ထဲထည့်",newList:"Playlist အသစ်",listName:"Playlist နာမည်",create:"ဖန်တီး",cancel:"မလုပ်တော့",save:"သိမ်း",delete:"ဖျက်",empty:"ဘာမှ မရှိသေးပါ",searchPh:"သီချင်း၊ အဆိုတော် ရှာရန်…",topNow:"လူကြိုက်အများဆုံး",daily:"နေ့စဉ်",weekly:"အပတ်စဉ်",allTime:"အချိန်တိုင်း",myanmar:"မြန်မာ",global:"ကမ္ဘာ",free:"Free",premium:"Premium",perMonth:"/လ",subscribe:"အသင်းဝင်",current:"လက်ရှိ အစီအစဉ်",redeem:"Access Code သုံး",redeemPh:"MW-XXXXXX-XXXXXX",redeemBtn:"Code သုံး",email:"အီးမေးလ်",password:"စကားဝှက်",name:"နာမည်",noAcc:"အကောင့် မရှိသေးဘူးလား",haveAcc:"အကောင့် ရှိပြီးသားလား",demoNote:"ဤသည်မှာ web demo ဗားရှင်းဖြစ်သည် — data သည် ဤ browser ထဲတွင်သာ သိမ်းထားသည်။",ytNote:"YouTube ၏ တရားဝင် player ဖြင့် ဖွင့်သည် — မူပိုင်ခွင့် သက်ဆိုင်ရာ ပိုင်ရှင်များထံတွင် ရှိသည်။",follow:"Follow",following:"Following",plays:"ကြိမ် နားထောင်",langName:"ဘာသာစကား",demoCheckout:"Demo checkout — အစစ်အမှန် ငွေမဖြတ်ပါ",payNow:"ပေးချေ",cardNum:"ကတ်နံပါတ် (demo: 4242 4242 4242 4242)",wrongLogin:"အီးမေးလ် သို့မဟုတ် စကားဝှက် မှားနေပါတယ်",emailUsed:"ဤအီးမေးလ်ဖြင့် အကောင့် ရှိပြီးသားပါ",codeOk:"Premium ရပါပြီ",codeBad:"Code မှားနေပါတယ်",addedFav:"အကြိုက်ဆုံးထဲ ထည့်ပြီး",addedList:"Playlist ထဲ ထည့်ပြီး",created:"ဖန်တီးပြီး",removed:"ဖယ်ရှားပြီး",hi:"မင်္ဂလာပါ"},
+ en:{home:"Home",search:"Search",explore:"Explore",charts:"Charts",library:"Library",youtube:"YouTube",playlists:"Playlists",favorites:"Favorites",history:"History",subscription:"Subscription",settings:"Settings",login:"Log in",register:"Register",logout:"Log out",welcome:"Welcome to MUSIC WORLD",tagline:"One World · Every Sound",featured:"Featured songs",genres:"Genres",all:"All",play:"Play",addList:"Add to playlist",newList:"New playlist",listName:"Playlist name",create:"Create",cancel:"Cancel",save:"Save",delete:"Delete",empty:"Nothing here yet",searchPh:"Search songs, artists…",topNow:"Top now",daily:"Daily",weekly:"Weekly",allTime:"All time",myanmar:"Myanmar",global:"Global",free:"Free",premium:"Premium",perMonth:"/mo",subscribe:"Subscribe",current:"Current plan",redeem:"Redeem access code",redeemPh:"MW-XXXXXX-XXXXXX",redeemBtn:"Redeem",email:"Email",password:"Password",name:"Name",noAcc:"No account yet?",haveAcc:"Already have an account?",demoNote:"Web demo version — your data is stored only in this browser.",ytNote:"Plays via YouTube's official player — rights belong to their owners.",follow:"Follow",following:"Following",plays:"plays",langName:"Language",demoCheckout:"Demo checkout — no real charge",payNow:"Pay now",cardNum:"Card number (demo: 4242 4242 4242 4242)",wrongLogin:"Wrong email or password",emailUsed:"An account with this email already exists",codeOk:"Premium activated",codeBad:"Invalid code",addedFav:"Added to favorites",addedList:"Added to playlist",created:"Created",removed:"Removed",hi:"Hello"},
+ ja:{home:"ホーム",search:"検索",explore:"探索",charts:"チャート",library:"ライブラリ",youtube:"YouTube",playlists:"プレイリスト",favorites:"お気に入り",history:"履歴",subscription:"サブスク",settings:"設定",login:"ログイン",register:"登録",logout:"ログアウト",welcome:"MUSIC WORLD へようこそ",tagline:"One World · Every Sound",featured:"おすすめの曲",genres:"ジャンル",all:"すべて",play:"再生",addList:"リストに追加",newList:"新規プレイリスト",listName:"プレイリスト名",create:"作成",cancel:"キャンセル",save:"保存",delete:"削除",empty:"まだ何もありません",searchPh:"曲・アーティストを検索…",topNow:"人気ランキング",daily:"日別",weekly:"週別",allTime:"全期間",myanmar:"ミャンマー",global:"グローバル",free:"Free",premium:"Premium",perMonth:"/月",subscribe:"登録する",current:"現在のプラン",redeem:"アクセスコードを使う",redeemPh:"MW-XXXXXX-XXXXXX",redeemBtn:"使う",email:"メール",password:"パスワード",name:"名前",noAcc:"アカウントがありませんか？",haveAcc:"すでにアカウントがありますか？",demoNote:"Webデモ版です — データはこのブラウザ内にのみ保存されます。",ytNote:"YouTube公式プレーヤーで再生します — 権利は各権利者に帰属します。",follow:"フォロー",following:"フォロー中",plays:"回再生",langName:"言語",demoCheckout:"デモ決済 — 実際の請求はありません",payNow:"支払う",cardNum:"カード番号（デモ: 4242 4242 4242 4242）",wrongLogin:"メールまたはパスワードが違います",emailUsed:"このメールは登録済みです",codeOk:"Premium が有効になりました",codeBad:"コードが無効です",addedFav:"お気に入りに追加しました",addedList:"プレイリストに追加しました",created:"作成しました",removed:"削除しました",hi:"こんにちは"},
+ zh:{home:"首页",search:"搜索",explore:"探索",charts:"排行榜",library:"音乐库",youtube:"YouTube",playlists:"播放列表",favorites:"收藏",history:"历史",subscription:"订阅",settings:"设置",login:"登录",register:"注册",logout:"退出",welcome:"欢迎来到 MUSIC WORLD",tagline:"One World · Every Sound",featured:"精选歌曲",genres:"流派",all:"全部",play:"播放",addList:"加入播放列表",newList:"新建播放列表",listName:"列表名称",create:"创建",cancel:"取消",save:"保存",delete:"删除",empty:"暂无内容",searchPh:"搜索歌曲、歌手…",topNow:"热门排行",daily:"日榜",weekly:"周榜",allTime:"总榜",myanmar:"缅甸",global:"全球",free:"Free",premium:"Premium",perMonth:"/月",subscribe:"订阅",current:"当前套餐",redeem:"使用兑换码",redeemPh:"MW-XXXXXX-XXXXXX",redeemBtn:"兑换",email:"邮箱",password:"密码",name:"名字",noAcc:"还没有账号？",haveAcc:"已有账号？",demoNote:"网页演示版 — 数据仅保存在此浏览器中。",ytNote:"通过 YouTube 官方播放器播放 — 版权归权利人所有。",follow:"关注",following:"已关注",plays:"次播放",langName:"语言",demoCheckout:"演示支付 — 不会真实扣款",payNow:"支付",cardNum:"卡号（演示：4242 4242 4242 4242）",wrongLogin:"邮箱或密码错误",emailUsed:"该邮箱已注册",codeOk:"Premium 已激活",codeBad:"兑换码无效",addedFav:"已加入收藏",addedList:"已加入播放列表",created:"已创建",removed:"已移除",hi:"你好"}
+};
+/* ================= STATE ================= */
+const DBKEY="musicworld_web_v1";
+let DB=load();
+function load(){try{const d=JSON.parse(localStorage.getItem(DBKEY));if(d&&d.users)return d;}catch(e){}
+ return {users:[{name:"Demo User",email:"demo@musicworld.app",pass:"demo1234",plan:"FREE",planUntil:0}],
+ session:null,lang:"my",favs:{},lists:{},follows:{},plays:[],redeemed:{}};}
+function save(){localStorage.setItem(DBKEY,JSON.stringify(DB));}
+function user(){return DB.users.find(u=>u.email===DB.session)||null;}
+function uk(){return DB.session||"guest";}
+function planOf(u){if(!u)return"FREE";if(u.plan==="PREMIUM"&&u.planUntil>Date.now())return"PREMIUM";return"FREE";}
+let route="home",genreFilter="ALL",chartTab="all",chartRegion="ALL",nowPlaying=null;
+const $=s=>document.querySelector(s);
+function t(k){return (T[DB.lang]||T.my)[k]||T.en[k]||k;}
+function toast(msg){const el=$("#toast");el.textContent=msg;el.style.display="block";setTimeout(()=>el.style.display="none",2200);}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+/* ================= PLAYER ================= */
+function play(v){
+ nowPlaying=v;
+ DB.plays.push({vid:v.id,ts:Date.now()}); save();
+ $("#framewrap").innerHTML='<iframe src="https://www.youtube.com/embed/'+v.id+'?autoplay=1&rel=0" title="'+esc(v.title)+'" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+ $("#nowtitle").textContent=v.title+" — "+v.artist;
+ $("#playerbar").classList.add("show");
+ syncLove();
+}
+function closePlayer(){$("#playerbar").classList.remove("show");$("#framewrap").innerHTML="";nowPlaying=null;}
+function isFav(id){return (DB.favs[uk()]||[]).includes(id);}
+function toggleFav(id){const k=uk();DB.favs[k]=DB.favs[k]||[];const i=DB.favs[k].indexOf(id);
+ if(i>=0)DB.favs[k].splice(i,1);else{DB.favs[k].push(id);toast(t("addedFav"));} save(); render(); syncLove();}
+function syncLove(){if(nowPlaying)$("#barlove").classList.toggle("on",isFav(nowPlaying.id));}
+$("#barclose").onclick=closePlayer;
+$("#barlove").onclick=()=>{if(nowPlaying)toggleFav(nowPlaying.id);};
+/* ================= SIDEBAR ================= */
+const LOGO='<svg class="mark" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#D4AF37" stroke-width="2.4" stroke-dasharray="90 36" stroke-linecap="round"/><rect x="15" y="20" width="3.4" height="9" rx="1.7" fill="#6D28D9"/><rect x="20.5" y="15" width="3.4" height="18" rx="1.7" fill="#E84393"/><rect x="26" y="18" width="3.4" height="13" rx="1.7" fill="#D4AF37"/><rect x="31.5" y="21" width="3.4" height="7" rx="1.7" fill="#6D28D9"/></svg>';
+function navBtn(r,ic,key){return '<button class="navbtn'+(route===r?" on":"")+'" onclick="go(\''+r+'\')"><span class="ic">'+ic+'</span><span class="lbl">'+t(key)+'</span></button>';}
+function sidebar(){
+ const u=user(),plan=u?planOf(u):"FREE";
+ let h='<div class="logo">'+LOGO+'<div class="lt"><b>MUSIC WORLD</b><small>ONE WORLD · EVERY SOUND</small></div></div>';
+ h+=navBtn("home","🏠","home")+navBtn("search","🔍","search")+navBtn("explore","🧭","explore")+navBtn("charts","📊","charts")+navBtn("youtube","▶","youtube");
+ h+='<div class="navsec">'+t("library").toUpperCase()+'</div>';
+ h+=navBtn("playlists","🎵","playlists")+navBtn("favorites","♥","favorites")+navBtn("history","🕘","history");
+ h+='<div class="navsec">MUSIC WORLD</div>';
+ h+=navBtn("subscription","👑","subscription")+navBtn("settings","⚙","settings");
+ h+='<div class="sp"></div>';
+ if(u){h+='<div class="userchip"><div class="avatar">'+esc(u.name.trim()[0]||"U")+'</div><div class="uc-t"><div class="nm">'+esc(u.name)+'</div><div class="pl">'+(plan==="PREMIUM"?"👑 Premium":"Free")+'</div></div></div>';
+  h+='<button class="navbtn" onclick="logout()"><span class="ic">↩</span><span class="lbl">'+t("logout")+'</span></button>';}
+ else{h+='<button class="btn" style="width:100%" onclick="go(\'login\')">'+t("login")+'</button>';}
+ $("#sidebar").innerHTML=h;
+}
+function go(r){route=r;render();window.scrollTo(0,0);}
+/* ================= CARDS ================= */
+function card(v){
+ const fav=isFav(v.id);
+ return '<div class="card"><img class="thumb" loading="lazy" src="https://i.ytimg.com/vi/'+v.id+'/hqdefault.jpg" alt="" onclick=\'playById("'+v.id+'")\' style="cursor:pointer"><div class="bd"><div class="tt">'+esc(v.title)+'</div><div class="ar">'+esc(v.artist)+' · '+esc(v.genre)+'</div><div class="rowbtns"><button class="mini" onclick=\'playById("'+v.id+'")\'>▶ '+t("play")+'</button><button class="mini love'+(fav?" on":"")+'" onclick=\'toggleFav("'+v.id+'")\'>♥</button><button class="mini" onclick=\'addToListDlg("'+v.id+'")\'>＋ '+t("addList")+'</button></div></div></div>';
+}
+function playById(id){const v=VIDEOS.find(x=>x.id===id);if(v)play(v);}
+function grid(list){return list.length?'<div class="grid">'+list.map(card).join("")+'</div>':'<div class="empty">'+t("empty")+'</div>';}
+function langSelect(){return '<select class="lang" onchange="setLang(this.value)">'+["my","en","ja","zh"].map(l=>'<option value="'+l+'"'+(DB.lang===l?" selected":"")+'>'+({my:"မြန်မာ",en:"English",ja:"日本語",zh:"中文"})[l]+'</option>').join("")+'</select>';}
+function setLang(l){DB.lang=l;save();render();}
+/* ================= VIEWS ================= */
+function vHome(){
+ const u=user();
+ let h='<div class="toprow"><div class="grow"></div>'+langSelect()+'</div>';
+ h+='<div class="hero"><div class="tag">'+t("tagline")+'</div><h1>'+(u?t("hi")+", "+esc(u.name):t("welcome"))+'</h1><div class="sub" style="margin:8px 0 0">'+t("featured")+' · MUSIC WORLD</div></div>';
+ h+='<h2>▶ YouTube — '+t("featured")+'</h2>'+grid(VIDEOS);
+ h+='<h2>'+t("genres")+'</h2><div class="chips">'+GENRES.map(g=>'<button class="chip" onclick="goGenre(\''+esc(g)+'\')">'+esc(g)+'</button>').join("")+'</div>';
+ h+='<p class="sub" style="margin-top:26px">'+t("demoNote")+'</p>';
+ return h;
+}
+function goGenre(g){genreFilter=g;route="explore";render();window.scrollTo(0,0);}
+function vExplore(){
+ let h='<h1>'+t("explore")+'</h1><div class="chips" style="margin-bottom:18px"><button class="chip'+(genreFilter==="ALL"?" on":"")+'" onclick="goGenre(\'ALL\')">'+t("all")+'</button>'+GENRES.map(g=>'<button class="chip'+(genreFilter===g?" on":"")+'" onclick="goGenre(\''+esc(g)+'\')">'+esc(g)+'</button>').join("")+'</div>';
+ h+=grid(genreFilter==="ALL"?VIDEOS:VIDEOS.filter(v=>v.genre===genreFilter));
+ return h;
+}
+function vSearch(){
+ let h='<h1>'+t("search")+'</h1><input class="searchbox" id="q" placeholder="'+t("searchPh")+'" oninput="doSearch(this.value)"><div id="sres" style="margin-top:18px">'+grid(VIDEOS)+'</div>';
+ return h;
+}
+function doSearch(q){q=q.trim().toLowerCase();const r=VIDEOS.filter(v=>!q||v.title.toLowerCase().includes(q)||v.artist.toLowerCase().includes(q)||v.genre.toLowerCase().includes(q));$("#sres").innerHTML=grid(r);}
+function chartData(){
+ const now=Date.now(),day=864e5;
+ const from=chartTab==="daily"?now-day:chartTab==="weekly"?now-7*day:0;
+ const counts={};
+ DB.plays.filter(p=>p.ts>=from).forEach(p=>{const v=VIDEOS.find(x=>x.id===p.vid);if(!v)return;if(chartRegion==="MM"&&v.region!=="MM")return;if(chartRegion==="GLOBAL"&&v.region!=="GLOBAL")return;counts[p.vid]=(counts[p.vid]||0)+1;});
+ return Object.entries(counts).map(([id,c])=>({v:VIDEOS.find(x=>x.id===id),c})).sort((a,b)=>b.c-a.c);
+}
+function vCharts(){
+ let h='<h1>'+t("charts")+' — '+t("topNow")+'</h1>';
+ h+='<div class="chips" style="margin-bottom:10px">'+[["daily","daily"],["weekly","weekly"],["all","allTime"]].map(([k,lk])=>'<button class="chip'+(chartTab===k?" on":"")+'" onclick="chartTab=\''+k+'\';render()">'+t(lk)+'</button>').join("")+'</div>';
+ h+='<div class="chips" style="margin-bottom:18px">'+[["ALL","all"],["MM","myanmar"],["GLOBAL","global"]].map(([k,lk])=>'<button class="chip'+(chartRegion===k?" on":"")+'" onclick="chartRegion=\''+k+'\';render()">'+t(lk)+'</button>').join("")+'</div>';
+ const rows=chartData();
+ if(!rows.length)h+='<div class="empty">'+t("empty")+'</div>';
+ else h+='<table><tr><th>#</th><th></th><th>'+t("featured")+'</th><th>'+t("plays")+'</th></tr>'+rows.map((r,i)=>'<tr class="playrow" onclick=\'playById("'+r.v.id+'")\'><td class="rank">'+(i+1)+'</td><td><img src="https://i.ytimg.com/vi/'+r.v.id+'/default.jpg" style="width:64px;border-radius:6px"></td><td><b>'+esc(r.v.title)+'</b><br><span style="color:var(--muted);font-size:12.5px">'+esc(r.v.artist)+'</span></td><td>'+r.c+'</td></tr>').join("")+'</table>';
+ return h;
+}
+function vYoutube(){
+ return '<h1>▶ YouTube</h1><p class="sub">'+t("ytNote")+'</p>'+grid(VIDEOS);
+}
+function myLists(){return DB.lists[uk()]||[];}
+function vPlaylists(){
+ const ls=myLists();
+ let h='<div class="toprow"><h1 style="margin:0">'+t("playlists")+'</h1><div class="grow"></div><button class="btn" onclick="newListDlg()">＋ '+t("newList")+'</button></div>';
+ if(!ls.length)h+='<div class="empty" style="margin-top:16px">'+t("empty")+'</div>';
+ ls.forEach((L,idx)=>{
+  h+='<h2>'+esc(L.name)+' <button class="mini" onclick="delList('+idx+')">'+t("delete")+'</button></h2>';
+  const vs=L.items.map(id=>VIDEOS.find(v=>v.id===id)).filter(Boolean);
+  h+=vs.length?grid(vs):'<div class="empty">'+t("empty")+'</div>';
+ });
+ return h;
+}
+function vFavorites(){
+ const vs=(DB.favs[uk()]||[]).map(id=>VIDEOS.find(v=>v.id===id)).filter(Boolean);
+ return '<h1>♥ '+t("favorites")+'</h1>'+grid(vs);
+}
+function vHistory(){
+ const seen=[];const vs=[];
+ [...DB.plays].reverse().forEach(p=>{if(!seen.includes(p.vid)){seen.push(p.vid);const v=VIDEOS.find(x=>x.id===p.vid);if(v)vs.push(v);}});
+ return '<h1>🕘 '+t("history")+'</h1>'+grid(vs);
+}
+function vSubscription(){
+ const u=user(),plan=u?planOf(u):"FREE";
+ let h='<h1>'+t("subscription")+'</h1>';
+ h+='<p class="sub">'+t("current")+': <span class="badge'+(plan==="FREE"?" free":"")+'">'+plan+'</span>'+(u&&plan==="PREMIUM"&&u.planUntil?' · ~'+new Date(u.planUntil).toLocaleDateString():'')+'</p>';
+ h+='<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">';
+ h+='<div class="plan"><h3>Free</h3><div class="price">$0<span style="font-size:14px;color:var(--muted)">'+t("perMonth")+'</span></div><ul><li>YouTube streaming</li><li>Playlists & favorites</li><li>Charts</li></ul>'+(plan==="FREE"?'<span class="badge free">'+t("current")+'</span>':'')+'</div>';
+ h+='<div class="plan pro"><span class="badge">PREMIUM</span><div class="price">$4.99<span style="font-size:14px;color:var(--muted)">'+t("perMonth")+'</span></div><ul><li>FLAC quality</li><li>Offline downloads</li><li>No ads</li><li>Priority support</li></ul>'+(plan==="PREMIUM"?'<span class="badge">'+t("current")+'</span>':'<button class="btn gold" onclick="checkoutDlg()">'+t("subscribe")+'</button>')+'</div>';
+ h+='</div>';
+ h+='<h2>'+t("redeem")+'</h2><div class="toprow"><input class="searchbox" style="max-width:320px" id="code" placeholder="'+t("redeemPh")+'"><button class="btn" onclick="redeem()">'+t("redeemBtn")+'</button></div><div class="ok" id="codemsg"></div>';
+ h+='<p class="sub" style="margin-top:14px">'+t("demoNote")+'</p>';
+ return h;
+}
+function vSettings(){
+ const artists=[...new Set(VIDEOS.map(v=>v.artist))];
+ const fol=DB.follows[uk()]||[];
+ let h='<h1>'+t("settings")+'</h1>';
+ h+='<div class="field" style="max-width:300px"><label>'+t("langName")+'</label>'+langSelect()+'</div>';
+ h+='<h2>🎤 Artists</h2><table>'+artists.map(a=>'<tr><td><b>'+esc(a)+'</b></td><td style="text-align:right"><button class="mini'+(fol.includes(a)?" love on":"")+'" onclick=\'toggleFollow("'+esc(a)+'")\'>'+(fol.includes(a)?t("following"):t("follow"))+'</button></td></tr>').join("")+'</table>';
+ h+='<p class="sub" style="margin-top:22px">'+t("demoNote")+'</p>';
+ return h;
+}
+function toggleFollow(a){const k=uk();DB.follows[k]=DB.follows[k]||[];const i=DB.follows[k].indexOf(a);if(i>=0)DB.follows[k].splice(i,1);else DB.follows[k].push(a);save();render();}
+function vLogin(){
+ return '<div class="authwrap"><div style="text-align:center;margin-bottom:16px">'+LOGO.replace('class="mark"','width="52" height="52"')+'<h1 style="font-size:22px;margin-top:8px">MUSIC WORLD</h1><div class="sub">'+t("tagline")+'</div></div>'
+ +'<div class="field"><label>'+t("email")+'</label><input id="em" type="email" placeholder="demo@musicworld.app"></div>'
+ +'<div class="field"><label>'+t("password")+'</label><input id="pw" type="password" placeholder="demo1234"></div>'
+ +'<div class="err" id="aerr"></div><button class="btn" style="width:100%" onclick="doLogin()">'+t("login")+'</button>'
+ +'<p class="sub" style="margin-top:14px;text-align:center">'+t("noAcc")+' <a href="#" onclick="go(\'register\');return false" style="color:var(--gold)">'+t("register")+'</a></p></div>';
+}
+function vRegister(){
+ return '<div class="authwrap"><h1 style="font-size:22px;text-align:center">MUSIC WORLD</h1><div class="sub" style="text-align:center">'+t("register")+'</div>'
+ +'<div class="field"><label>'+t("name")+'</label><input id="nm" type="text"></div>'
+ +'<div class="field"><label>'+t("email")+'</label><input id="em" type="email"></div>'
+ +'<div class="field"><label>'+t("password")+'</label><input id="pw" type="password"></div>'
+ +'<div class="err" id="aerr"></div><button class="btn" style="width:100%" onclick="doRegister()">'+t("register")+'</button>'
+ +'<p class="sub" style="margin-top:14px;text-align:center">'+t("haveAcc")+' <a href="#" onclick="go(\'login\');return false" style="color:var(--gold)">'+t("login")+'</a></p></div>';
+}
+function doLogin(){
+ const em=$("#em").value.trim().toLowerCase(),pw=$("#pw").value;
+ const u=DB.users.find(x=>x.email===em&&x.pass===pw);
+ if(!u){$("#aerr").textContent=t("wrongLogin");return;}
+ DB.session=em;save();go("home");
+}
+function doRegister(){
+ const nm=$("#nm").value.trim(),em=$("#em").value.trim().toLowerCase(),pw=$("#pw").value;
+ if(!nm||!em||pw.length<6){$("#aerr").textContent="—";return;}
+ if(DB.users.some(x=>x.email===em)){$("#aerr").textContent=t("emailUsed");return;}
+ DB.users.push({name:nm,email:em,pass:pw,plan:"FREE",planUntil:0});DB.session=em;save();go("home");
+}
+function logout(){DB.session=null;save();go("home");}
+/* ================= DIALOGS ================= */
+function openDlg(html){const d=$("#dlg");d.innerHTML=html;d.showModal();}
+function closeDlg(){$("#dlg").close();}
+function addToListDlg(vid){
+ const ls=myLists();
+ let h='<h2 style="margin-top:0">'+t("addList")+'</h2>';
+ ls.forEach((L,i)=>{h+='<button class="navbtn" onclick="addToList('+i+',\''+vid+'\')">🎵 '+esc(L.name)+'</button>';});
+ h+='<div class="field" style="margin-top:14px"><label>'+t("newList")+'</label><input id="nl" placeholder="'+t("listName")+'"></div><div class="rowbtns"><button class="btn" onclick="createAndAdd(\''+vid+'\')">'+t("create")+'</button><button class="btn ghost" onclick="closeDlg()">'+t("cancel")+'</button></div>';
+ openDlg(h);
+}
+function addToList(i,vid){const k=uk();if(!DB.lists[k][i].items.includes(vid))DB.lists[k][i].items.push(vid);save();closeDlg();toast(t("addedList"));if(route==="playlists")render();}
+function createAndAdd(vid){const name=$("#nl").value.trim();if(!name)return;const k=uk();DB.lists[k]=DB.lists[k]||[];DB.lists[k].push({name,items:[vid]});save();closeDlg();toast(t("created"));}
+function newListDlg(){openDlg('<h2 style="margin-top:0">'+t("newList")+'</h2><div class="field"><label>'+t("listName")+'</label><input id="nl"></div><div class="rowbtns"><button class="btn" onclick="createListOnly()">'+t("create")+'</button><button class="btn ghost" onclick="closeDlg()">'+t("cancel")+'</button></div>');}
+function createListOnly(){const name=$("#nl").value.trim();if(!name)return;const k=uk();DB.lists[k]=DB.lists[k]||[];DB.lists[k].push({name,items:[]});save();closeDlg();toast(t("created"));render();}
+function delList(i){DB.lists[uk()].splice(i,1);save();render();}
+function checkoutDlg(){
+ if(!user()){go("login");return;}
+ openDlg('<h2 style="margin-top:0">👑 Premium</h2><p class="sub">$4.99'+t("perMonth")+' · '+t("demoCheckout")+'</p><div class="field"><label>'+t("cardNum")+'</label><input id="card" placeholder="4242 4242 4242 4242"></div><div class="err" id="cerr"></div><div class="rowbtns"><button class="btn gold" onclick="doCheckout()">'+t("payNow")+'</button><button class="btn ghost" onclick="closeDlg()">'+t("cancel")+'</button></div>');
+}
+function doCheckout(){
+ const card=$("#card").value.replace(/\s/g,"");
+ if(!card||card.includes("0002")){$("#cerr").textContent="PAYMENT_FAILED";return;}
+ const u=user();u.plan="PREMIUM";u.planUntil=Math.max(Date.now(),u.planUntil||0)+30*864e5;save();closeDlg();toast(t("codeOk"));render();
+}
+function redeem(){
+ const code=$("#code").value.trim().toUpperCase();const m=$("#codemsg");
+ if(!user()){go("login");return;}
+ const d=DEMO_CODES[code];
+ if(!d||DB.redeemed[uk()+":"+code]){m.style.color="#FF7A9E";m.textContent=t("codeBad");return;}
+ DB.redeemed[uk()+":"+code]=1;const u=user();u.plan="PREMIUM";u.planUntil=Math.max(Date.now(),u.planUntil||0)+d.days*864e5;save();
+ m.style.color="#7BE3A8";m.textContent=t("codeOk")+" (+30 days)";sidebar();
+}
+/* ================= RENDER ================= */
+const VIEWS={home:vHome,explore:vExplore,search:vSearch,charts:vCharts,youtube:vYoutube,playlists:vPlaylists,favorites:vFavorites,history:vHistory,subscription:vSubscription,settings:vSettings,login:vLogin,register:vRegister};
+function render(){sidebar();$("#main").innerHTML=(VIEWS[route]||vHome)();}
+render();
+</script>
+</body>
+</html>
