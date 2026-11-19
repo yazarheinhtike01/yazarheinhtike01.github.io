@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>MUSIC WORLD — သီချင်းနားထောင်</title>
+<meta name="description" content="MUSIC WORLD — မြန်မာအဆိုတော်များ နှင့် Global အဆိုတော်များ၏ သီချင်းများကို အဆိုတော်အလိုက် နားထောင်ရန်။">
+<meta property="og:title" content="MUSIC WORLD — သီချင်းနားထောင်">
+<meta property="og:description" content="One World · Every Sound">
+<style>
+:root{--bg:#0D0D1F;--bg2:#14142B;--card:#1B1B33;--card2:#23233F;--violet:#6D28D9;--magenta:#E84393;--gold:#D4AF37;--text:#F4F2FF;--muted:#A7A5C4;--line:#2C2C4A;--grad:linear-gradient(120deg,#6D28D9,#E84393)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans Myanmar",sans-serif;min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+header{position:sticky;top:0;z-index:30;background:rgba(13,13,31,.96);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:12px}
+header .mark{width:34px;height:34px;flex:0 0 34px}
+header b{font-size:18px;letter-spacing:.4px}
+header small{display:block;color:var(--gold);font-size:9.5px;letter-spacing:1.6px;font-weight:700}
+header .sp{flex:1}
+.hbtn{background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 13px;font-size:14px}
+.wrap{max-width:760px;margin:0 auto;padding:18px 14px 60px}
+#playerbox{display:none;background:#000;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:16px}
+#playerbox.show{display:block}
+#playerbox .fr{position:relative;aspect-ratio:16/9;background:#000}
+#playerbox iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+#playerbox .meta{display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--bg2)}
+#playerbox .meta .tt{flex:1;min-width:0;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#playerbox .meta .tt small{display:block;color:var(--muted);font-weight:400;font-size:12.5px}
+.pbtn{background:var(--card2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px 12px;font-size:14px}
+.pbtn.love.on{background:var(--magenta);border-color:var(--magenta);color:#fff}
+.crumb{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.crumb .back{background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:9px 14px;font-size:14.5px}
+.crumb h1{font-size:21px}
+.crumb .cnt{color:var(--muted);font-size:13.5px}
+.menu{display:flex;flex-direction:column;gap:12px}
+.bigrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;color:var(--text)}
+.bigrow:active{border-color:var(--magenta)}
+.bigrow .emo{font-size:30px;width:46px;text-align:center;flex:0 0 46px}
+.bigrow .nm{font-size:18.5px;font-weight:700;line-height:1.3}
+.bigrow .ds{color:var(--muted);font-size:13.5px;margin-top:2px}
+.bigrow .arr{margin-left:auto;color:var(--gold);font-size:20px}
+.arow{display:flex;align-items:center;gap:13px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;color:var(--text)}
+.arow .ini{width:44px;height:44px;flex:0 0 44px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;color:#fff}
+.arow .nm{font-size:17px;font-weight:600}
+.arow .ds{color:var(--muted);font-size:13px;margin-top:1px}
+.arow .arr{margin-left:auto;color:var(--gold);font-size:19px}
+.srow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:9px 11px;color:var(--text)}
+.srow.playing{border-color:var(--gold);background:#262040}
+.srow img{width:86px;aspect-ratio:16/9;object-fit:cover;border-radius:8px;flex:0 0 86px;background:#000}
+.srow .tt{font-size:15.5px;font-weight:600;line-height:1.35}
+.srow .no{color:var(--gold);font-weight:800;font-size:14px;width:22px;flex:0 0 22px;text-align:center}
+.srow .eq{margin-left:auto;color:var(--gold);font-size:15px;display:none}
+.srow.playing .eq{display:block}
+.favbtn{background:none;border:0;color:var(--muted);font-size:20px;padding:6px;flex:0 0 auto}
+.favbtn.on{color:var(--magenta)}
+.search{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:12px;color:var(--text);padding:13px 15px;font-size:16px;margin-bottom:16px}
+.sec{color:var(--muted);font-size:12px;letter-spacing:1.6px;font-weight:700;margin:20px 2px 10px}
+.note{color:var(--muted);font-size:13px;line-height:1.6;margin-top:22px;text-align:center}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--gold);color:#191926;font-weight:700;font-size:14px;border-radius:10px;padding:11px 18px;z-index:99;display:none;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.empty{color:var(--muted);background:var(--card);border:1px dashed var(--line);border-radius:14px;padding:24px;text-align:center}
+select.timer{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px 9px;font-size:13.5px}
+</style>
+</head>
+<body>
+<header>
+  <svg class="mark" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="20" stroke="#D4AF37" stroke-width="2.4" stroke-dasharray="90 36" stroke-linecap="round"/><rect x="15" y="20" width="3.4" height="9" rx="1.7" fill="#6D28D9"/><rect x="20.5" y="15" width="3.4" height="18" rx="1.7" fill="#E84393"/><rect x="26" y="18" width="3.4" height="13" rx="1.7" fill="#D4AF37"/><rect x="31.5" y="21" width="3.4" height="7" rx="1.7" fill="#6D28D9"/></svg>
+  <div><b>MUSIC WORLD</b><small>ONE WORLD · EVERY SOUND</small></div>
+  <div class="sp"></div>
+  <select class="timer" id="timer" onchange="setTimer(this.value)">
+    <option value="0">⏱ Timer</option><option value="15">15 မိနစ်</option><option value="30">30 မိနစ်</option><option value="60">60 မိနစ်</option>
+  </select>
+  <button class="hbtn" onclick="showFavs()">♥ <span id="favcount"></span></button>
+</header>
+<div class="wrap">
+  <div id="playerbox">
+    <div class="fr" id="framewrap"></div>
+    <div class="meta"><div class="tt" id="nowtt"></div>
+      <button class="pbtn" id="prevbtn">⏮</button>
+      <button class="pbtn" id="nextbtn">⏭</button>
+      <button class="pbtn love" id="lovebtn">♥</button>
+      <button class="pbtn" id="closebtn">✕</button>
+    </div>
+  </div>
+  <main id="main"></main>
+  <p class="note">သီချင်းများကို YouTube ၏ တရားဝင် player ဖြင့် ဖွင့်ပေးပါသည်။ မူပိုင်ခွင့်များသည် သက်ဆိုင်ရာ အဆိုတော်နှင့် ထုတ်လုပ်သူများထံတွင် ရှိပါသည်။</p>
+</div>
+<div class="toast" id="toast"></div>
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+/* ================= DATA ================= */
+const ARTISTS=[
+ {g:"MM",name:"စိုင်းစိုင်းခမ်းလှိုင်",en:"Sai Sai Kham Leng",songs:[
+   ["အထီးကျန် (Lonely)","pn2ceofUjhA"],["နားနားနား (Na Na Na)","UxgCj0FRRc8"]]},
+ {g:"MM",name:"လေးဖြူ",en:"Lay Phyu",songs:[
+   ["ထားခဲ့ဦး","4UyPIogNryo"],["ဖွဲမီး","BlJlZd8QWuw"],["ဒိုင်ယာရီ","tajG-3YseGI"],["မိုးတိမ်ထဲဝဲ","hvW_02bX_Jo"],["အိပ်မက်","CSCXJYm6fRU"]]},
+ {g:"MM",name:"ဘန်နီဖြိုး",en:"Bunny Phyoe",songs:[
+   ["အပေါ်ယံများ (ft. Doublej)","UCWooncYMbU"],["Don't Leave Me","_O7aGHYSSbk"],["Bittersweet December","etiG_BuT1BA"],["လူပျိုလှည့်တေး","LwiR9hMrw0E"],["Stay With Me","ITvFJNR8ElE"]]},
+ {g:"MM",name:"လွှမ်းပိုင်",en:"Hlwan Paing",songs:[
+   ["Wish You Have A Better Day","XFbYXGmawoE"],["အသက်သွင်းပေးပါ","RpIjP-4SwBM"],["ဘိုကေ","fspXsxTGe1I"],["အချစ်ရေးဆို","YtSVwQG3dHU"]]},
+ {g:"MM",name:"နီနီခင်ဇော်",en:"Ni Ni Khin Zaw",songs:[
+   ["မလိုချင်ဘူးစစ်","f7a4-WbU62E"],["အလကားပဲ","dw6F_FINvZs"],["Good Kisser","-U6Vl3sOH4A"],["မူး","K710CL4erE4"]]},
+ {g:"GL",name:"Ed Sheeran",en:"Ed Sheeran",songs:[["Perfect","2Vv-BfVoq4g"]]},
+ {g:"GL",name:"Wiz Khalifa · Charlie Puth",en:"Wiz Khalifa ft. Charlie Puth",songs:[["See You Again","RgKAFK5djSk"]]},
+ {g:"GL",name:"OneRepublic",en:"OneRepublic",songs:[["Counting Stars","hT_nvWreIhg"]]},
+ {g:"GL",name:"Alan Walker",en:"Alan Walker",songs:[["Faded","60ItHLz5WEA"]]},
+ {g:"GL",name:"Maroon 5",en:"Maroon 5",songs:[["Sugar","09R8_2nJtjg"]]},
+ {g:"GL",name:"Adele",en:"Adele",songs:[["Hello","YQHsXMglC9A"]]},
+ {g:"GL",name:"Bruno Mars",en:"Bruno Mars",songs:[["Just The Way You Are","LjhCEhWiKXk"]]},
+ {g:"GL",name:"BTS",en:"BTS",songs:[["Dynamite","gdZLi9oWNZg"]]},
+ {g:"GL",name:"Imagine Dragons",en:"Imagine Dragons",songs:[["Believer","7wtfhZwyrcc"]]},
+ {g:"GL",name:"Charlie Puth",en:"Charlie Puth",songs:[["Attention","nfs8NYg7yQM"]]}
+];
+/* ================= STATE ================= */
+const KEY="music_listen_v1";
+let S=load();
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d)return d;}catch(e){}return{favs:[],recent:[]};}
+function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+let view={name:"home"},queue=[],qi=-1,player=null,apiReady=false,timerId=null;
+const $=s=>document.querySelector(s);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function toast(m){const e=$("#toast");e.textContent=m;e.style.display="block";setTimeout(()=>e.style.display="none",2000);}
+function songCount(a){return a.songs.length;}
+function allSongs(){const out=[];ARTISTS.forEach((a,ai)=>a.songs.forEach((s,si)=>out.push({a:ai,s:si,title:s[0],id:s[1]})));return out;}
+function isFav(id){return S.favs.includes(id);}
+function toggleFav(id){const i=S.favs.indexOf(id);if(i>=0)S.favs.splice(i,1);else{S.favs.push(id);toast("♥ အကြိုက်ဆုံးထဲ ထည့်ပြီး");}save();syncFavUI();}
+function syncFavUI(){$("#favcount").textContent=S.favs.length?S.favs.length:"";if(qi>=0&&queue[qi])$("#lovebtn").classList.toggle("on",isFav(queue[qi].id));render();}
+function noteRecent(id){S.recent=[id,...S.recent.filter(x=>x!==id)].slice(0,10);save();}
+/* ================= PLAYER (YouTube IFrame API — auto-next) ================= */
+function onYouTubeIframeAPIReady(){apiReady=true;}
+function playList(list,idx){
+ queue=list;qi=idx;const cur=queue[qi];if(!cur)return;
+ noteRecent(cur.id);
+ $("#playerbox").classList.add("show");
+ $("#nowtt").innerHTML=esc(cur.title)+"<small>"+esc(ARTISTS[cur.a].name)+"</small>";
+ $("#lovebtn").classList.toggle("on",isFav(cur.id));
+ if(player&&player.loadVideoById){player.loadVideoById(cur.id);}
+ else{
+   $("#framewrap").innerHTML='<div id="ytplayer"></div>';
+   const mk=()=>{player=new YT.Player("ytplayer",{videoId:cur.id,playerVars:{autoplay:1,rel:0,playsinline:1},events:{onStateChange:e=>{if(e.data===YT.PlayerState.ENDED)step(1);}}});};
+   if(apiReady&&window.YT&&YT.Player)mk();else{const iv=setInterval(()=>{if(window.YT&&YT.Player){clearInterval(iv);mk();}},300);}
+ }
+ document.querySelectorAll(".srow").forEach(r=>r.classList.toggle("playing",r.dataset.vid===cur.id));
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function step(d){if(!queue.length)return;const n=qi+d;if(n<0||n>=queue.length){if(d>0)closePlayer();return;}playList(queue,n);}
+function closePlayer(){$("#playerbox").classList.remove("show");if(player&&player.stopVideo)player.stopVideo();queue=[];qi=-1;document.querySelectorAll(".srow.playing").forEach(r=>r.classList.remove("playing"));}
+$("#nextbtn").onclick=()=>step(1);
+$("#prevbtn").onclick=()=>step(-1);
+$("#closebtn").onclick=closePlayer;
+$("#lovebtn").onclick=()=>{if(qi>=0&&queue[qi])toggleFav(queue[qi].id);};
+function setTimer(v){if(timerId)clearTimeout(timerId);const m=parseInt(v);if(m>0){timerId=setTimeout(()=>{closePlayer();toast("⏱ Timer ပြည့်လို့ ရပ်လိုက်ပါပြီ");$("#timer").value="0";},m*60000);toast("⏱ "+m+" မိနစ်အကြာ ရပ်ပါမယ်");}}
+/* ================= VIEWS ================= */
+function groupArtists(g){return ARTISTS.map((a,i)=>({a,i})).filter(x=>x.a.g===g);}
+function homeHTML(){
+ let h='<input class="search" id="q" placeholder="🔍 အဆိုတော် / သီချင်း ရှာရန်…" oninput="doSearch(this.value)"><div id="homebody">';
+ h+=homeBodyHTML();
+ h+='</div>';return h;
+}
+function homeBodyHTML(){
+ const mm=groupArtists("MM"),gl=groupArtists("GL");
+ const mmN=mm.reduce((n,x)=>n+songCount(x.a),0),glN=gl.reduce((n,x)=>n+songCount(x.a),0);
+ let h='<div class="menu">'
+  +'<button class="bigrow" onclick="showGroup(\'MM\')"><span class="emo">🇲🇲</span><span><span class="nm">မြန်မာအဆိုတော်များ</span><span class="ds" style="display:block">အဆိုတော် '+mm.length+' ဦး · သီချင်း '+mmN+' ပုဒ်</span></span><span class="arr">›</span></button>'
+  +'<button class="bigrow" onclick="showGroup(\'GL\')"><span class="emo">🌍</span><span><span class="nm">Global အဆိုတော်များ</span><span class="ds" style="display:block">အဆိုတော် '+gl.length+' ဦး · သီချင်း '+glN+' ပုဒ်</span></span><span class="arr">›</span></button>'
+  +'</div>';
+ if(S.recent.length){
+   const rec=S.recent.map(id=>allSongs().find(x=>x.id===id)).filter(Boolean);
+   if(rec.length){h+='<div class="sec">🕘 မကြာသေးမီက နားထောင်ခဲ့သည်</div><div class="menu">'+rec.map((x,i)=>srow(x,i)).join("")+'</div>';}
+ }
+ return h;
+}
+function srow(x,i){
+ const playing=qi>=0&&queue[qi]&&queue[qi].id===x.id;
+ return '<div class="srow'+(playing?" playing":"")+'" data-vid="'+x.id+'"><span class="no">'+(i+1)+'</span><img loading="lazy" src="https://i.ytimg.com/vi/'+x.id+'/hqdefault.jpg" alt="" onclick="playFromView('+x.a+','+x.s+')"><span class="tt" onclick="playFromView('+x.a+','+x.s+')">'+esc(x.title)+'</span><button class="favbtn'+(isFav(x.id)?" on":"")+'" onclick="toggleFav(\''+x.id+'\')">♥</button><span class="eq">🎵</span></div>';
+}
+function playFromView(ai,si){
+ let list;
+ if(view.name==="artist")list=ARTISTS[view.ai].songs.map((s,j)=>({a:view.ai,s:j,title:s[0],id:s[1]}));
+ else if(view.name==="favs")list=S.favs.map(id=>allSongs().find(x=>x.id===id)).filter(Boolean);
+ else if(view.name==="search")list=view.results;
+ else list=ARTISTS[ai].songs.map((s,j)=>({a:ai,s:j,title:s[0],id:s[1]}));
+ const idx=list.findIndex(x=>x.a===ai&&x.s===si);
+ playList(list,idx>=0?idx:0);
+}
+function groupHTML(g){
+ const list=groupArtists(g);
+ let h='<div class="crumb"><button class="back" onclick="goHome()">‹ နောက်သို့</button><h1>'+(g==="MM"?"🇲🇲 မြန်မာအဆိုတော်များ":"🌍 Global အဆိုတော်များ")+'</h1><span class="cnt">'+list.length+' ဦး</span></div><div class="menu">';
+ h+=list.map(x=>'<button class="arow" onclick="showArtist('+x.i+')"><span class="ini">'+esc(x.a.name.trim()[0])+'</span><span><span class="nm">'+esc(x.a.name)+'</span><span class="ds" style="display:block">'+esc(x.a.en)+' · သီချင်း '+songCount(x.a)+' ပုဒ်</span></span><span class="arr">›</span></button>').join("");
+ return h+'</div>';
+}
+function artistHTML(ai){
+ const a=ARTISTS[ai];
+ let h='<div class="crumb"><button class="back" onclick="showGroup(\''+a.g+'\')">‹ နောက်သို့</button><h1>'+esc(a.name)+'</h1><span class="cnt">သီချင်း '+a.songs.length+' ပုဒ်</span></div><div class="menu">';
+ h+=a.songs.map((s,si)=>srow({a:ai,s:si,title:s[0],id:s[1]},si)).join("");
+ return h+'</div>';
+}
+function favsHTML(){
+ const favs=S.favs.map(id=>allSongs().find(x=>x.id===id)).filter(Boolean);
+ let h='<div class="crumb"><button class="back" onclick="goHome()">‹ နောက်သို့</button><h1>♥ အကြိုက်ဆုံးများ</h1><span class="cnt">'+favs.length+' ပုဒ်</span></div>';
+ h+=favs.length?'<div class="menu">'+favs.map((x,i)=>srow(x,i)).join("")+'</div>':'<div class="empty">ဘာမှ မရှိသေးပါ — သီချင်းဘေးက ♥ ကို နှိပ်ပြီး မှတ်ထားနိုင်ပါတယ်</div>';
+ return h;
+}
+function searchHTML(q){
+ const ql=q.trim().toLowerCase();
+ const res=allSongs().filter(x=>!ql||x.title.toLowerCase().includes(ql)||ARTISTS[x.a].name.toLowerCase().includes(ql)||ARTISTS[x.a].en.toLowerCase().includes(ql));
+ view={name:"search",results:res};
+ if(!res.length)return '<div class="empty">မတွေ့ပါ</div>';
+ return '<div class="menu">'+res.map((x,i)=>srow(x,i)).join("")+'</div>';
+}
+function doSearch(q){const hb=$("#homebody");if(!hb)return;if(q.trim()){hb.innerHTML=searchHTML(q);}else{view={name:"home"};hb.innerHTML=homeBodyHTML();}}
+function render(){
+ const m=$("#main");
+ if(view.name==="home")m.innerHTML=homeHTML();
+ else if(view.name==="group")m.innerHTML=groupHTML(view.g);
+ else if(view.name==="artist")m.innerHTML=artistHTML(view.ai);
+ else if(view.name==="favs")m.innerHTML=favsHTML();
+ else if(view.name==="search"){const q=($("#q")||{}).value||"";m.innerHTML=homeHTML();const inp=$("#q");inp.value=q;$("#homebody").innerHTML=searchHTML(q);inp.focus();}
+}
+function goHome(){view={name:"home"};render();window.scrollTo(0,0);}
+function showGroup(g){view={name:"group",g};render();window.scrollTo(0,0);}
+function showArtist(ai){view={name:"artist",ai};render();window.scrollTo(0,0);}
+function showFavs(){view={name:"favs"};render();window.scrollTo(0,0);}
+/* in-app Back support */
+history.replaceState({v:"home"},"");
+window.addEventListener("popstate",()=>{if(view.name!=="home"){goHome();}});
+render();
+</script>
+</body>
+</html>
