@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SalonReserve — ဆိုင် ကြိုတင်မှာယူမှု စနစ်</title>
+<meta name="description" content="SalonReserve — online booking system for salons and shops. Book a service, pick your staff, date and time.">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --ink:#2B2622; --paper:#FAF6F0; --card:#FFFFFF; --line:#E5DCCB;
+    --accent:#8C5A2B; --accent2:#C89B5A; --muted:#8A7D6B; --bad:#B3402E; --ok:#3E7C4F;
+  }
+  body{ font-family:-apple-system,"Hiragino Sans","Noto Sans Myanmar",sans-serif; background:var(--paper); color:var(--ink); min-height:100vh; }
+  header{ background:var(--ink); color:#F3EAD8; padding:16px; position:sticky; top:0; z-index:10; }
+  .hrow{ display:flex; align-items:center; gap:10px; max-width:760px; margin:0 auto; }
+  .logo{ font-size:26px; }
+  .brand{ font-family:Georgia,"Times New Roman",serif; font-size:21px; letter-spacing:.5px; flex:1; }
+  .brand small{ display:block; font-family:inherit; font-size:11px; color:var(--accent2); letter-spacing:2px; }
+  .langBtn{ background:none; border:1px solid #6B5D4F; color:#F3EAD8; border-radius:16px; padding:5px 10px; font-size:12px; cursor:pointer; }
+  .langBtn.on{ background:var(--accent2); color:var(--ink); border-color:var(--accent2); font-weight:700; }
+  .adminBtn{ background:var(--accent); color:#fff; border:none; border-radius:16px; padding:6px 12px; font-size:12px; cursor:pointer; }
+  main{ max-width:760px; margin:0 auto; padding:16px 14px 40px; }
+  .tabs{ display:flex; gap:8px; margin-bottom:16px; }
+  .tab{ flex:1; padding:11px; border:1.5px solid var(--line); background:var(--card); border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; text-align:center; }
+  .tab.on{ background:var(--ink); color:#F3EAD8; border-color:var(--ink); }
+  .step{ font-size:13px; color:var(--accent); font-weight:700; letter-spacing:1px; margin:18px 0 8px; }
+  .svc{ display:flex; gap:12px; background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px; cursor:pointer; align-items:center; }
+  .svc.sel{ border-color:var(--accent); background:#FBF3E4; }
+  .svc .ic{ font-size:30px; }
+  .svc .nm{ font-weight:700; font-size:16px; }
+  .svc .ds{ font-size:12.5px; color:var(--muted); margin-top:2px; }
+  .svc .pr{ margin-left:auto; text-align:right; font-weight:700; color:var(--accent); white-space:nowrap; }
+  .svc .pr small{ display:block; color:var(--muted); font-weight:400; font-size:11.5px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ padding:9px 14px; border:1.5px solid var(--line); background:var(--card); border-radius:20px; font-size:14.5px; cursor:pointer; }
+  .chip.sel{ background:var(--accent); color:#fff; border-color:var(--accent); font-weight:700; }
+  .chip:disabled{ opacity:.35; cursor:default; text-decoration:line-through; }
+  .dates{ display:flex; gap:8px; overflow-x:auto; padding-bottom:6px; }
+  .dateBox{ min-width:62px; text-align:center; padding:9px 4px; border:1.5px solid var(--line); background:var(--card); border-radius:12px; cursor:pointer; }
+  .dateBox.sel{ background:var(--ink); color:#F3EAD8; border-color:var(--ink); }
+  .dateBox.closed{ opacity:.4; cursor:default; }
+  .dateBox .dw{ font-size:11px; }
+  .dateBox .dn{ font-size:19px; font-weight:700; }
+  .dateBox .dm{ font-size:11px; }
+  label{ display:block; font-size:13.5px; font-weight:700; margin:14px 0 6px; }
+  input, select, textarea{ width:100%; padding:12px; border:1.5px solid var(--line); border-radius:10px; font-size:16px; background:var(--card); font-family:inherit; }
+  .bigBtn{ width:100%; padding:15px; background:var(--accent); color:#fff; border:none; border-radius:12px; font-size:17px; font-weight:700; cursor:pointer; margin-top:20px; }
+  .bigBtn:disabled{ opacity:.4; }
+  .ghostBtn{ width:100%; padding:13px; background:none; color:var(--accent); border:1.5px solid var(--accent); border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-top:10px; }
+  .bk{ background:var(--card); border:1.5px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px; }
+  .bk .top{ display:flex; justify-content:space-between; align-items:center; }
+  .bk .code{ font-family:ui-monospace,Menlo,monospace; font-weight:700; color:var(--accent); }
+  .badge{ font-size:11.5px; padding:3px 10px; border-radius:12px; font-weight:700; }
+  .b-new{ background:#FDF0D5; color:#8C5A2B; } .b-conf{ background:#E2F0E6; color:var(--ok); }
+  .b-done{ background:#E8E4DC; color:var(--muted); } .b-canc{ background:#F9E3DE; color:var(--bad); }
+  .bk .row{ font-size:14px; margin-top:5px; }
+  .bk .row span{ color:var(--muted); }
+  .mini{ padding:7px 12px; border-radius:9px; border:1.5px solid var(--line); background:var(--card); font-size:13px; cursor:pointer; margin:8px 6px 0 0; }
+  .mini.red{ color:var(--bad); border-color:#E5B7AE; }
+  .mini.grn{ color:var(--ok); border-color:#A9CBB2; }
+  .doneBox{ text-align:center; padding:34px 16px; background:var(--card); border:1.5px solid var(--line); border-radius:16px; }
+  .doneBox .big{ font-size:46px; }
+  .doneBox .cd{ font-family:ui-monospace,Menlo,monospace; font-size:24px; font-weight:700; color:var(--accent); margin:10px 0; }
+  .note{ font-size:13px; color:var(--muted); line-height:1.7; margin-top:10px; }
+  .empty{ text-align:center; color:var(--muted); padding:28px 10px; font-size:14.5px; line-height:1.8; }
+  footer{ text-align:center; color:var(--muted); font-size:12px; padding:18px 10px 26px; }
+  .stat{ display:flex; gap:8px; margin-bottom:14px; }
+  .statBox{ flex:1; background:var(--card); border:1.5px solid var(--line); border-radius:12px; padding:12px; text-align:center; }
+  .statBox .n{ font-size:22px; font-weight:700; color:var(--accent); }
+  .statBox .t{ font-size:11.5px; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="logo">✂️</div>
+    <div class="brand">SalonReserve<small>ONLINE BOOKING</small></div>
+    <button class="langBtn" id="lg-my" onclick="setLang('my')">မြန်မာ</button>
+    <button class="langBtn" id="lg-en" onclick="setLang('en')">EN</button>
+    <button class="langBtn" id="lg-ja" onclick="setLang('ja')">日本語</button>
+    <button class="adminBtn" onclick="openAdmin()" data-i="admin">Admin</button>
+  </div>
+</header>
+<main id="view"></main>
+<footer>SalonReserve · <span data-i="hours">Open 10:00–19:00 · Closed Mondays</span><br>Developed by Yazar Hein Htike · Version 1.0</footer>
+
+<script>
+const SERVICES = [
+  { id:"cut",   icon:"✂️", ja:"カット", en:"Haircut", my:"ဆံပင် ညှပ်", price:4500, mins:45, dja:"シャンプー・ブロー込み", den:"Includes shampoo & blow-dry", dmy:"ခေါင်းလျှော် + ဆံပင် မှုတ် အပါ" },
+  { id:"perm",  icon:"🌀", ja:"パーマ", en:"Perm", my:"ဆံပင် ကောက်", price:8500, mins:90, dja:"カット込み", den:"Includes haircut", dmy:"ဆံပင် ညှပ် အပါ" },
+  { id:"color", icon:"🎨", ja:"カラー", en:"Hair Color", my:"ဆံပင် ဆေးဆိုး", price:7000, mins:75, dja:"リタッチ / フルカラー", den:"Retouch or full color", dmy:"အရောင် အပြည့် / အမြစ် ပြန်ဆိုး" },
+  { id:"treat", icon:"💆", ja:"トリートメント", en:"Treatment", my:"ဆံပင် ပြုပြင် ထိန်းသိမ်း", price:5000, mins:40, dja:"集中補修ケア", den:"Deep repair care", dmy:"ဆံပင် အတွင်းပိုင်း အထိ ပြုပြင်" },
+  { id:"set",   icon:"💇", ja:"シャンプー・セット", en:"Shampoo & Set", my:"ခေါင်းလျှော် + ပုံသွင်း", price:3000, mins:30, dja:"お出かけ前に", den:"Quick styling before you go out", dmy:"အပြင် မသွားခင် အမြန် ပုံသွင်း" }
+];
+const STAFF = [
+  { id:"any", ja:"おまかせ", en:"No preference", my:"ဘယ်သူဖြစ်ဖြစ်" },
+  { id:"tanaka", ja:"田中", en:"Tanaka", my:"တာနာကာ" },
+  { id:"sato", ja:"佐藤", en:"Sato", my:"ဆာတို" },
+  { id:"suzuki", ja:"鈴木", en:"Suzuki", my:"ဆူဇူကီ" }
+];
+const I18N = {
+  my:{ book:"ကြိုတင် မှာယူရန်", mybk:"ကျွန်တော့် မှာယူမှုများ", admin:"Admin", hours:"ဖွင့်ချိန် 10:00–19:00 · တနင်္လာနေ့ ပိတ်",
+    s1:"အဆင့် 1 — ဝန်ဆောင်မှု ရွေးပါ", s2:"အဆင့် 2 — ဝန်ထမ်း ရွေးပါ", s3:"အဆင့် 3 — ရက် ရွေးပါ", s4:"အဆင့် 4 — အချိန် ရွေးပါ", s5:"အဆင့် 5 — အချက်အလက် ဖြည့်ပါ",
+    name:"နာမည်", phone:"ဖုန်းနံပါတ်", note:"မှတ်ချက် (ရှိရင်)", confirm:"မှာယူမှု အတည်ပြုပါ", closed:"ပိတ်ရက် (တနင်္လာ)",
+    phSearch:"ဖုန်းနံပါတ် ရိုက်ပြီး ရှာပါ", search:"ရှာရန်", cancel:"မှာယူမှု ဖျက်ရန်", cancQ:"ဒီ မှာယူမှုကို ဖျက်မှာ သေချာလား?",
+    stNew:"အသစ်", stConf:"အတည်ပြုပြီး", stDone:"ပြီးဆုံး", stCanc:"ဖျက်ပြီး",
+    doneT:"မှာယူမှု ရသွားပါပြီ!", doneD:"ဒီ code ကို ဆိုင်မှာ ပြပါ။ ဆိုင်က ဖုန်းနဲ့ အတည်ပြု ဆက်သွယ်ပါလိမ့်မယ်။", again:"နောက်တစ်ခု ထပ်မှာရန်",
+    noBk:"မှာယူမှု မရှိသေးပါ", yen:"¥", min:"မိနစ်", login:"ဝင်ရန်", logout:"ထွက်ရန်", pw:"Password", id:"ID",
+    today:"ယနေ့ မှာယူမှု", all:"အားလုံး", totBk:"စုစုပေါင်း မှာယူမှု", rev:"ခန့်မှန်း ဝင်ငွေ (ယနေ့)", conf:"အတည်ပြု", done:"ပြီးဆုံး မှတ်", del:"ဖျက်",
+    pickAll:"ဝန်ဆောင်မှု၊ ရက်၊ အချိန် အရင် ရွေးပါ", fillAll:"နာမည်နဲ့ ဖုန်း ဖြည့်ပါ", date:"ရက်", time:"အချိန်", svc:"ဝန်ဆောင်မှု", staff:"ဝန်ထမ်း", price:"ကျသင့်" },
+  en:{ book:"Book", mybk:"My Bookings", admin:"Admin", hours:"Open 10:00–19:00 · Closed Mondays",
+    s1:"Step 1 — Choose a service", s2:"Step 2 — Choose staff", s3:"Step 3 — Choose a date", s4:"Step 4 — Choose a time", s5:"Step 5 — Your details",
+    name:"Name", phone:"Phone number", note:"Note (optional)", confirm:"Confirm booking", closed:"Closed (Mon)",
+    phSearch:"Enter your phone number", search:"Search", cancel:"Cancel booking", cancQ:"Cancel this booking?",
+    stNew:"New", stConf:"Confirmed", stDone:"Done", stCanc:"Cancelled",
+    doneT:"Booking received!", doneD:"Show this code at the salon. We will call to confirm.", again:"Make another booking",
+    noBk:"No bookings yet", yen:"¥", min:"min", login:"Log in", logout:"Log out", pw:"Password", id:"ID",
+    today:"Today's bookings", all:"All", totBk:"Total bookings", rev:"Est. revenue (today)", conf:"Confirm", done:"Mark done", del:"Delete",
+    pickAll:"Choose a service, date and time first", fillAll:"Please enter your name and phone", date:"Date", time:"Time", svc:"Service", staff:"Staff", price:"Price" },
+  ja:{ book:"予約する", mybk:"私の予約", admin:"管理", hours:"営業 10:00–19:00 · 月曜定休",
+    s1:"ステップ1 — メニューを選ぶ", s2:"ステップ2 — スタッフを選ぶ", s3:"ステップ3 — 日付を選ぶ", s4:"ステップ4 — 時間を選ぶ", s5:"ステップ5 — お客様情報",
+    name:"お名前", phone:"電話番号", note:"備考（任意）", confirm:"予約を確定する", closed:"定休日（月）",
+    phSearch:"電話番号を入力", search:"検索", cancel:"予約をキャンセル", cancQ:"この予約をキャンセルしますか？",
+    stNew:"新規", stConf:"確認済み", stDone:"完了", stCanc:"キャンセル",
+    doneT:"予約を受け付けました！", doneD:"このコードを店頭でお見せください。確認のお電話をします。", again:"別の予約をする",
+    noBk:"予約はまだありません", yen:"¥", min:"分", login:"ログイン", logout:"ログアウト", pw:"パスワード", id:"ID",
+    today:"今日の予約", all:"すべて", totBk:"予約総数", rev:"売上見込み（今日）", conf:"確認", done:"完了にする", del:"削除",
+    pickAll:"メニュー・日付・時間を先に選んでください", fillAll:"お名前と電話番号を入力してください", date:"日付", time:"時間", svc:"メニュー", staff:"スタッフ", price:"料金" }
+};
+let lang = localStorage.getItem('sr_lang') || 'my';
+let db = JSON.parse(localStorage.getItem('sr_bookings') || '[]');
+let sel = { svc:null, staff:'any', date:null, time:null };
+let tab = 'book';
+let adminMode = false, adminFilter = 'today';
+
+function t(k){ return I18N[lang][k]; }
+function save(){ localStorage.setItem('sr_bookings', JSON.stringify(db)); }
+function svcName(s){ return lang==='ja'?s.ja:lang==='en'?s.en:s.my; }
+function svcDesc(s){ return lang==='ja'?s.dja:lang==='en'?s.den:s.dmy; }
+function staffName(id){ const s = STAFF.find(x=>x.id===id); return lang==='ja'?s.ja:lang==='en'?s.en:s.my; }
+function fmtDate(ds){ const d = new Date(ds+'T00:00:00'); const dw=['日','月','火','水','木','金','土'][d.getDay()]; return `${d.getMonth()+1}/${d.getDate()} (${dw})`; }
+function setLang(l){ lang = l; localStorage.setItem('sr_lang', l); render(); }
+function applyI18n(){
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.dataset.i); });
+  ['my','en','ja'].forEach(x => document.getElementById('lg-'+x).classList.toggle('on', x===lang));
+}
+
+function nextDays(){
+  const out = []; const now = new Date();
+  for (let i=0;i<14;i++){ const d = new Date(now); d.setDate(now.getDate()+i);
+    const ds = d.toISOString().slice(0,10);
+    out.push({ ds, dn:d.getDate(), dm:d.getMonth()+1, dw:['日','月','火','水','木','金','土'][d.getDay()], closed:d.getDay()===1 });
+  }
+  return out;
+}
+function slots(){ const s=[]; for(let h=10;h<19;h++){ s.push(h+':00'); if(h<18) s.push(h+':30'); } return s; }
+function slotTaken(date, time, staff){
+  const active = db.filter(b => b.date===date && b.time===time && b.status!=='canc');
+  if (staff==='any') return active.length >= 3;
+  return active.some(b => b.staff===staff || b.staff==='any');
+}
+function statusBadge(st){ return `<span class="badge ${st==='new'?'b-new':st==='conf'?'b-conf':st==='done'?'b-done':'b-canc'}">${st==='new'?t('stNew'):st==='conf'?t('stConf'):st==='done'?t('stDone'):t('stCanc')}</span>`; }
+function bkCard(b, admin){
+  const s = SERVICES.find(x=>x.id===b.svc);
+  return `<div class="bk"><div class="top"><span class="code">${b.code}</span>${statusBadge(b.status)}</div>
+    <div class="row"><span>${t('svc')}:</span> ${svcName(s)} (${t('yen')}${s.price.toLocaleString()})</div>
+    <div class="row"><span>${t('staff')}:</span> ${staffName(b.staff)} · <span>${t('date')}:</span> ${fmtDate(b.date)} · <span>${t('time')}:</span> ${b.time}</div>
+    <div class="row"><span>${t('name')}:</span> ${b.name} · ${b.phone}${b.note?` · ${b.note}`:''}</div>
+    ${admin
+      ? `<div>${b.status==='new'?`<button class="mini grn" onclick="setStatus('${b.code}','conf')">${t('conf')}</button>`:''}${b.status==='conf'?`<button class="mini grn" onclick="setStatus('${b.code}','done')">${t('done')}</button>`:''}${b.status!=='canc'?`<button class="mini red" onclick="setStatus('${b.code}','canc')">${t('cancel')}</button>`:''}<button class="mini red" onclick="delBk('${b.code}')">${t('del')}</button></div>`
+      : (b.status==='new'||b.status==='conf') ? `<div><button class="mini red" onclick="cancelBk('${b.code}')">${t('cancel')}</button></div>` : ''}
+  </div>`;
+}
+
+function render(){
+  applyI18n();
+  const v = document.getElementById('view');
+  if (adminMode) { renderAdmin(v); return; }
+  let h = `<div class="tabs">
+    <div class="tab ${tab==='book'?'on':''}" onclick="tab='book';render()">${t('book')}</div>
+    <div class="tab ${tab==='my'?'on':''}" onclick="tab='my';render()">${t('mybk')}</div></div>`;
+  if (tab==='book'){
+    h += `<div class="step">${t('s1')}</div>` + SERVICES.map(s =>
+      `<div class="svc ${sel.svc===s.id?'sel':''}" onclick="sel.svc='${s.id}';render()"><div class="ic">${s.icon}</div>
+       <div><div class="nm">${svcName(s)}</div><div class="ds">${svcDesc(s)}</div></div>
+       <div class="pr">${t('yen')}${s.price.toLocaleString()}<small>${s.mins} ${t('min')}</small></div></div>`).join('');
+    h += `<div class="step">${t('s2')}</div><div class="chips">` + STAFF.map(s =>
+      `<button class="chip ${sel.staff===s.id?'sel':''}" onclick="sel.staff='${s.id}';render()">${staffName(s.id)}</button>`).join('') + `</div>`;
+    h += `<div class="step">${t('s3')}</div><div class="dates">` + nextDays().map(d =>
+      `<div class="dateBox ${sel.date===d.ds?'sel':''} ${d.closed?'closed':''}" ${d.closed?'':`onclick="sel.date='${d.ds}';sel.time=null;render()"`}>
+       <div class="dw">${d.dw}</div><div class="dn">${d.dn}</div><div class="dm">${d.dm}月${d.closed?'<br>'+t('closed'):''}</div></div>`).join('') + `</div>`;
+    if (sel.date){
+      h += `<div class="step">${t('s4')}</div><div class="chips">` + slots().map(tm =>
+        `<button class="chip ${sel.time===tm?'sel':''}" ${slotTaken(sel.date,tm,sel.staff)?'disabled':''} onclick="sel.time='${tm}';render()">${tm}</button>`).join('') + `</div>`;
+    }
+    h += `<div class="step">${t('s5')}</div>
+      <label>${t('name')}</label><input id="f-name" placeholder="Yazar Hein Htike">
+      <label>${t('phone')}</label><input id="f-phone" inputmode="tel" placeholder="090-1234-5678">
+      <label>${t('note')}</label><input id="f-note">
+      <button class="bigBtn" onclick="submitBk()">${t('confirm')}</button>`;
+  } else {
+    h += `<label>${t('phone')}</label><div style="display:flex;gap:8px"><input id="q-phone" inputmode="tel" placeholder="090-1234-5678" style="flex:1"><button class="adminBtn" style="padding:0 20px;font-size:15px" onclick="render()">${t('search')}</button></div><div style="margin-top:16px">`;
+    const q = (document.getElementById('q-phone')||{}).value || '';
+    const mine = q ? db.filter(b => b.phone.replace(/[-\s]/g,'')===q.replace(/[-\s]/g,'')).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)) : [];
+    h += q ? (mine.length ? mine.map(b=>bkCard(b,false)).join('') : `<div class="empty">${t('noBk')}</div>`) : `<div class="empty">${t('phSearch')}</div>`;
+    h += `</div>`;
+  }
+  v.innerHTML = h;
+  applyI18n();
+}
+
+function submitBk(){
+  const name = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const note = document.getElementById('f-note').value.trim();
+  if (!sel.svc || !sel.date || !sel.time) { alert(t('pickAll')); return; }
+  if (!name || !phone) { alert(t('fillAll')); return; }
+  const code = 'SR-' + Math.random().toString(36).slice(2,8).toUpperCase();
+  db.push({ code, svc:sel.svc, staff:sel.staff, date:sel.date, time:sel.time, name, phone, note, status:'new' });
+  save();
+  const s = SERVICES.find(x=>x.id===sel.svc);
+  document.getElementById('view').innerHTML = `<div class="doneBox"><div class="big">🎉</div>
+    <div style="font-size:19px;font-weight:700">${t('doneT')}</div><div class="cd">${code}</div>
+    <div class="row">${svcName(s)} · ${staffName(sel.staff)}<br>${fmtDate(sel.date)} · ${sel.time} · ${t('yen')}${s.price.toLocaleString()}</div>
+    <div class="note">${t('doneD')}</div>
+    <button class="ghostBtn" onclick="sel={svc:null,staff:'any',date:null,time:null};tab='book';render()">${t('again')}</button></div>`;
+  applyI18n();
+}
+function cancelBk(code){ if(!confirm(t('cancQ'))) return; const b = db.find(x=>x.code===code); b.status='canc'; save(); render(); }
+function setStatus(code, st){ const b = db.find(x=>x.code===code); b.status = st; save(); render(); }
+function delBk(code){ db = db.filter(x=>x.code!==code); save(); render(); }
+
+function openAdmin(){
+  if (sessionStorage.getItem('sr_admin')==='1') { adminMode = true; render(); return; }
+  document.getElementById('view').innerHTML = `<div class="step">🔐 Admin</div>
+    <label>${t('id')}</label><input id="a-id" placeholder="admin">
+    <label>${t('pw')}</label><input id="a-pw" type="password">
+    <button class="bigBtn" onclick="doLogin()">${t('login')}</button>
+    <button class="ghostBtn" onclick="adminMode=false;render()">← ${t('book')}</button>`;
+  applyI18n();
+}
+function doLogin(){
+  const id = document.getElementById('a-id').value.trim(), pw = document.getElementById('a-pw').value;
+  if (id==='admin' && pw==='admin123') { sessionStorage.setItem('sr_admin','1'); adminMode = true; render(); }
+  else alert('ID / Password မှားပါတယ်');
+}
+function renderAdmin(v){
+  const today = new Date().toISOString().slice(0,10);
+  const list = db.filter(b => adminFilter==='all' ? true : b.date===today).sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const todayBk = db.filter(b => b.date===today && b.status!=='canc');
+  const rev = todayBk.reduce((sum,b) => sum + SERVICES.find(s=>s.id===b.svc).price, 0);
+  v.innerHTML = `<div class="stat">
+      <div class="statBox"><div class="n">${todayBk.length}</div><div class="t">${t('today')}</div></div>
+      <div class="statBox"><div class="n">${db.length}</div><div class="t">${t('totBk')}</div></div>
+      <div class="statBox"><div class="n">${t('yen')}${rev.toLocaleString()}</div><div class="t">${t('rev')}</div></div></div>
+    <div class="tabs">
+      <div class="tab ${adminFilter==='today'?'on':''}" onclick="adminFilter='today';render()">${t('today')}</div>
+      <div class="tab ${adminFilter==='all'?'on':''}" onclick="adminFilter='all';render()">${t('all')}</div>
+      <div class="tab" onclick="sessionStorage.removeItem('sr_admin');adminMode=false;render()">${t('logout')}</div></div>
+    ${list.length ? list.map(b=>bkCard(b,true)).join('') : `<div class="empty">${t('noBk')}</div>`}`;
+  applyI18n();
+}
+render();
+</script>
+</body>
+</html>
