@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Muse</title>
+<meta name="description" content="Muse — your personal AI agent. Chat, Feed, Ideas, Goals and Library.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%236D28D9'/%3E%3Cstop offset='1' stop-color='%23E84393'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='url(%23g)'/%3E%3Ccircle cx='50' cy='42' r='17' fill='white'/%3E%3Ccircle cx='43' cy='39' r='3' fill='%232B2622'/%3E%3Ccircle cx='57' cy='39' r='3' fill='%232B2622'/%3E%3Cpath d='M42 49 Q50 56 58 49' stroke='%232B2622' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --bg:#F7F5FA; --card:#FFFFFF; --ink:#241F2E; --muted:#7A7287; --line:#E7E1F0;
+    --vio:#6D28D9; --mag:#E84393; --grad:linear-gradient(120deg,#6D28D9,#E84393);
+    --ok:#2E7D4F; --bad:#B3402E; --amber:#B97F16;
+  }
+  body{ font-family:-apple-system,"Hiragino Sans","Noto Sans Myanmar",sans-serif; background:var(--bg); color:var(--ink); min-height:100vh; }
+  button{ font-family:inherit; }
+  /* ---------- Welcome / auth ---------- */
+  .welcome{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 22px; text-align:center;
+    background:radial-gradient(120% 90% at 50% 0%, #EFE7FB 0%, var(--bg) 60%); }
+  .mascot{ width:120px; height:120px; border-radius:30px; background:var(--grad); display:flex; align-items:center; justify-content:center; box-shadow:0 14px 34px rgba(109,40,217,.35); }
+  .wTitle{ font-size:34px; font-weight:800; margin-top:22px; letter-spacing:-.5px; }
+  .wSub{ color:var(--muted); font-size:15.5px; line-height:1.65; margin:10px 0 26px; max-width:420px; }
+  .wBtn{ width:100%; max-width:340px; padding:15px; border:none; border-radius:14px; font-size:16.5px; font-weight:700; cursor:pointer; margin-bottom:10px; }
+  .wPrimary{ background:var(--grad); color:#fff; }
+  .wGhost{ background:var(--card); color:var(--vio); border:1.5px solid var(--line); }
+  .wLink{ background:none; border:none; color:var(--muted); font-size:14.5px; cursor:pointer; padding:8px; text-decoration:underline; }
+  .authCard{ width:100%; max-width:360px; background:var(--card); border:1.5px solid var(--line); border-radius:18px; padding:22px; text-align:left; }
+  .authCard h2{ font-size:21px; margin-bottom:14px; }
+  label{ display:block; font-size:13px; font-weight:700; margin:12px 0 5px; color:var(--ink); }
+  input, textarea, select{ width:100%; padding:12px; border:1.5px solid var(--line); border-radius:10px; font-size:16px; background:#fff; font-family:inherit; }
+  .hint{ font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.6; }
+  .err{ color:var(--bad); font-size:13.5px; margin-top:10px; min-height:18px; }
+  /* ---------- App shell ---------- */
+  .shell{ max-width:820px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+  header.app{ position:sticky; top:0; z-index:20; background:rgba(247,245,250,.92); backdrop-filter:blur(8px); border-bottom:1px solid var(--line); }
+  .hrow{ display:flex; align-items:center; gap:10px; padding:11px 14px; }
+  .iconBtn{ background:none; border:none; font-size:21px; cursor:pointer; padding:4px 6px; color:var(--ink); }
+  .hTitle{ font-size:18px; font-weight:800; flex:1; }
+  .avatarMini{ width:32px; height:32px; border-radius:10px; background:var(--grad); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; }
+  .previewBar{ background:#FFF4D6; color:#7A5B00; font-size:13px; text-align:center; padding:7px 10px; border-bottom:1px solid #F0DFA0; }
+  main{ flex:1; padding:14px 14px 86px; }
+  nav.tabs{ position:fixed; bottom:0; left:0; right:0; background:var(--card); border-top:1px solid var(--line); z-index:20; }
+  .tabsIn{ max-width:820px; margin:0 auto; display:flex; }
+  .tabB{ flex:1; background:none; border:none; padding:9px 2px 12px; font-size:11px; color:var(--muted); cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .tabB .ti{ font-size:21px; }
+  .tabB.on{ color:var(--vio); font-weight:700; }
+  /* ---------- Drawer ---------- */
+  .scrim{ position:fixed; inset:0; background:rgba(20,12,35,.45); z-index:40; }
+  .drawer{ position:fixed; top:0; left:0; bottom:0; width:290px; max-width:86vw; background:var(--card); z-index:41; padding:18px 14px; overflow-y:auto; box-shadow:4px 0 24px rgba(0,0,0,.18); }
+  .drawer h3{ font-size:13px; color:var(--muted); letter-spacing:1px; margin:16px 4px 8px; }
+  .convItem{ padding:11px 12px; border-radius:11px; cursor:pointer; font-size:14.5px; display:flex; gap:8px; align-items:center; }
+  .convItem.on{ background:#F1EAFB; font-weight:700; }
+  .convItem small{ color:var(--muted); margin-left:auto; font-size:11px; white-space:nowrap; }
+  .setRow{ padding:11px 12px; border-radius:11px; cursor:pointer; font-size:14.5px; display:flex; align-items:center; gap:9px; }
+  .setRow:hover{ background:#F6F2FC; }
+  /* ---------- Chat ---------- */
+  .msgs{ display:flex; flex-direction:column; gap:12px; }
+  .msg{ max-width:88%; padding:11px 14px; border-radius:16px; font-size:15px; line-height:1.65; white-space:pre-wrap; word-break:break-word; }
+  .msg.user{ align-self:flex-end; background:var(--grad); color:#fff; border-bottom-right-radius:5px; }
+  .msg.ai{ align-self:flex-start; background:var(--card); border:1px solid var(--line); border-bottom-left-radius:5px; }
+  .msg img.att{ max-width:210px; border-radius:10px; display:block; margin-bottom:7px; }
+  .msg code{ background:#EFEAF7; padding:1px 5px; border-radius:5px; font-size:13.5px; }
+  .msg.user code{ background:rgba(255,255,255,.25); }
+  .toolRow{ align-self:flex-start; max-width:88%; background:#FBF9FE; border:1px dashed #CDBEEA; color:#5B4A86; border-radius:12px; padding:8px 12px; font-size:13px; cursor:pointer; }
+  .toolRow .det{ display:none; margin-top:6px; color:var(--muted); font-size:12.5px; line-height:1.6; }
+  .toolRow.open .det{ display:block; }
+  .appr{ align-self:flex-start; max-width:88%; background:#FFF8E8; border:1.5px solid #EAD9A0; border-radius:14px; padding:13px 14px; font-size:14px; }
+  .appr .ttl{ font-weight:800; margin-bottom:5px; }
+  .apprBtns{ display:flex; gap:8px; margin-top:10px; }
+  .aBtn{ flex:1; padding:10px; border-radius:10px; border:none; font-size:14.5px; font-weight:700; cursor:pointer; }
+  .aOk{ background:var(--ok); color:#fff; } .aNo{ background:#fff; color:var(--bad); border:1.5px solid #E5B7AE; }
+  .composer{ position:sticky; bottom:70px; background:var(--bg); padding-top:8px; }
+  .compIn{ display:flex; gap:7px; align-items:flex-end; background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:7px; }
+  .compIn textarea{ border:none; padding:8px; resize:none; max-height:110px; }
+  .compIn textarea:focus{ outline:none; }
+  .cBtn{ background:none; border:none; font-size:20px; cursor:pointer; padding:6px; }
+  .sendBtn{ background:var(--grad); color:#fff; border:none; width:40px; height:40px; border-radius:12px; font-size:17px; cursor:pointer; flex:none; }
+  .screenModal{ position:fixed; inset:0; z-index:50; background:rgba(15,8,30,.72); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .screenBox{ background:#14101F; border-radius:16px; width:100%; max-width:640px; padding:14px; color:#D8D2E8; }
+  .fakeDesk{ background:linear-gradient(140deg,#2A2140,#171126); border-radius:10px; height:300px; padding:12px; font-family:ui-monospace,Menlo,monospace; font-size:12px; line-height:1.7; overflow:hidden; }
+  /* ---------- Cards / feed / ideas / goals / library ---------- */
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:15px; margin-bottom:12px; }
+  .card .kick{ font-size:11px; font-weight:800; letter-spacing:1.2px; color:var(--mag); }
+  .card h3{ font-size:16.5px; margin:5px 0 6px; line-height:1.45; }
+  .card p{ font-size:14px; color:#453D57; line-height:1.7; }
+  .rowBtns{ display:flex; gap:8px; margin-top:11px; align-items:center; }
+  .mini{ padding:7px 13px; border-radius:15px; border:1.5px solid var(--line); background:#fff; font-size:13px; cursor:pointer; }
+  .mini.on{ background:#FDEAF3; border-color:var(--mag); color:var(--mag); font-weight:700; }
+  .mini.vio{ color:var(--vio); border-color:#CDBEEA; }
+  .chips{ display:flex; flex-wrap:wrap; gap:7px; margin:4px 0 14px; }
+  .chip{ padding:7px 13px; border-radius:16px; border:1.5px solid var(--line); background:#fff; font-size:13px; cursor:pointer; }
+  .chip.on{ background:var(--vio); color:#fff; border-color:var(--vio); font-weight:700; }
+  .secT{ font-size:13px; font-weight:800; letter-spacing:1px; color:var(--muted); margin:16px 0 9px; }
+  .bigBtn{ width:100%; padding:14px; background:var(--grad); color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; margin-top:12px; }
+  .ghostBtn{ width:100%; padding:12px; background:none; color:var(--vio); border:1.5px solid #CDBEEA; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; margin-top:9px; }
+  .prog{ height:9px; background:#EFEAF7; border-radius:6px; overflow:hidden; margin:9px 0 4px; }
+  .prog > div{ height:100%; background:var(--grad); border-radius:6px; }
+  .libItem{ display:flex; gap:12px; align-items:center; background:var(--card); border:1px solid var(--line); border-radius:13px; padding:12px 13px; margin-bottom:9px; cursor:pointer; }
+  .libItem .fi{ font-size:24px; } .libItem .fn{ font-weight:700; font-size:14.5px; }
+  .libItem .fm{ font-size:12px; color:var(--muted); }
+  .viewer{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px; }
+  .viewer pre{ white-space:pre-wrap; font-family:ui-monospace,Menlo,monospace; font-size:13px; line-height:1.7; }
+  .viewer table{ border-collapse:collapse; width:100%; font-size:13.5px; }
+  .viewer th,.viewer td{ border:1px solid var(--line); padding:7px 9px; text-align:left; }
+  .viewer th{ background:#F4EFFC; }
+  .viewer .md h1{ font-size:21px; margin:8px 0; } .viewer .md h2{ font-size:17px; margin:12px 0 5px; } .viewer .md p{ margin:6px 0; line-height:1.7; font-size:14.5px; }
+  .viewer .md li{ margin-left:18px; line-height:1.7; font-size:14.5px; }
+  .viewer iframe{ width:100%; height:300px; border:1px solid var(--line); border-radius:9px; background:#fff; }
+  .empty{ text-align:center; color:var(--muted); padding:30px 12px; font-size:14.5px; line-height:1.8; }
+  .goalRow{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--muted); }
+  .histItem{ font-size:13.5px; padding:8px 0; border-bottom:1px dashed var(--line); line-height:1.6; }
+  .histItem small{ color:var(--muted); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+/* ================= State ================= */
+const LS = 'muse_app_v1';
+let S = JSON.parse(localStorage.getItem(LS) || 'null') || {
+  user: null,            // {name, email}
+  preview: false,
+  convs: [],             // {id, title, msgs:[{who, html, tool?, appr?}]}
+  curConv: null,
+  feedLikes: {}, feedTopics: ['Arsenal','JLPT','Tokyo life','Tech'],
+  feedSeed: 1,
+  goals: [],             // {id, title, target, unit, progress, created, history:[{date, text}]}
+  libSeeded: false
+};
+function save(){ localStorage.setItem(LS, JSON.stringify(S)); }
+const $root = document.getElementById('root');
+let tab = 'chat';
+let drawerOpen = false;
+let screenOpen = false;
+let viewingLib = null;
+let viewingGoal = null;
+
+const MASCOT = `<svg width="74" height="74" viewBox="0 0 100 100"><circle cx="50" cy="42" r="19" fill="white"/><circle cx="43" cy="39" r="3.2" fill="#241F2E"/><circle cx="57" cy="39" r="3.2" fill="#241F2E"/><path d="M42 49 Q50 57 58 49" stroke="#241F2E" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M28 78 Q50 64 72 78" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" opacity=".85"/></svg>`;
+
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+function md(s){
+  let h = esc(s);
+  h = h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>');
+  h = h.split('\n').map(l => l.startsWith('- ') ? '• ' + l.slice(2) : l).join('\n');
+  return h;
+}
+function todayStr(){ return new Date().toLocaleDateString('en-GB',{weekday:'short', day:'numeric', month:'short'}); }
+
+/* ================= Welcome / Auth ================= */
+function renderWelcome(mode){
+  let inner = '';
+  if (mode === 'signin' || mode === 'signup'){
+    const su = mode === 'signup';
+    inner = `<div class="authCard">
+      <h2>${su ? 'Create your account' : 'Welcome back'}</h2>
+      ${su ? `<label>Your name</label><input id="a-name" placeholder="Yazar Hein Htike">` : ''}
+      <label>Email</label><input id="a-email" type="email" placeholder="you@example.com">
+      <label>Password</label><input id="a-pw" type="password" placeholder="••••••••">
+      ${su ? `<label>Invite code</label><input id="a-inv" placeholder="MUSE-2026">
+             <div class="hint">Accounts are invite-only right now. Demo invite code: <b>MUSE-2026</b></div>` : ''}
+      <div class="err" id="a-err"></div>
+      <button class="wBtn wPrimary" style="max-width:none" onclick="doAuth(${su})">${su ? 'Create account' : 'Sign in'}</button>
+      <button class="wLink" onclick="renderWelcome('home')">${su ? 'Already have an account? Sign in' : 'Back'}</button>
+    </div>`;
+  } else {
+    inner = `<div class="mascot">${MASCOT}</div>
+      <div class="wTitle">Muse</div>
+      <div class="wSub">Your personal AI agent — it chats, remembers, plans your day, and gets things done on its own cloud computer.</div>
+      <button class="wBtn wPrimary" onclick="renderWelcome('signup')">Get started</button>
+      <button class="wBtn wGhost" onclick="renderWelcome('signin')">Sign in</button>
+      <button class="wLink" onclick="enterPreview()">Take a look around</button>`;
+  }
+  $root.innerHTML = `<div class="welcome">${inner}</div>`;
+}
+function doAuth(signup){
+  const email = document.getElementById('a-email').value.trim();
+  const pw = document.getElementById('a-pw').value;
+  const err = document.getElementById('a-err');
+  if (!email.includes('@')) { err.textContent = 'Please enter a valid email address.'; return; }
+  if (pw.length < 6) { err.textContent = 'Password must be at least 6 characters.'; return; }
+  let name = email.split('@')[0];
+  if (signup){
+    name = document.getElementById('a-name').value.trim() || name;
+    const inv = document.getElementById('a-inv').value.trim().toUpperCase();
+    if (inv !== 'MUSE-2026') { err.textContent = 'That invite code is not valid.'; return; }
+  }
+  S.user = { name, email }; S.preview = false; save();
+  if (!S.convs.length) newConv(true);
+  renderApp();
+}
+function enterPreview(){
+  S.preview = true; save();
+  if (!S.convs.length) newConv(true);
+  if (!S.goals.length) seedGoals();
+  renderApp();
+}
+function signOut(){ S.user = null; S.preview = false; save(); renderWelcome('home'); }
+
+/* ================= Shell ================= */
+const TABS = [
+  ['chat','💬','Chat'], ['feed','📰','Feed'], ['ideas','💡','Ideas'], ['goals','🎯','Goals'], ['library','📚','Library']
+];
+function renderApp(){
+  seedLibrary();
+  const titles = { chat:'Chat', feed:'Feed', ideas:'Ideas', goals:'Goals', library:'Library' };
+  $root.innerHTML = `
+  ${S.preview ? `<div class="previewBar">👀 Preview mode — you're taking a look around. <b style="cursor:pointer;text-decoration:underline" onclick="signOut()">Create an account</b> to keep everything.</div>` : ''}
+  <div class="shell">
+    <header class="app"><div class="hrow">
+      <button class="iconBtn" onclick="drawerOpen=true;renderApp()">☰</button>
+      <div class="hTitle">${titles[tab]}</div>
+      ${tab==='chat' ? `<button class="iconBtn" title="New chat" onclick="newConv()">＋</button>
+      <button class="iconBtn" title="View Muse's computer" onclick="screenOpen=true;renderApp()">🖥️</button>` : ''}
+      <div class="avatarMini">${(S.user ? S.user.name : 'G').slice(0,1).toUpperCase()}</div>
+    </div></header>
+    <main id="main"></main>
+  </div>
+  <nav class="tabs"><div class="tabsIn">${TABS.map(([id,ic,lb]) =>
+    `<button class="tabB ${tab===id?'on':''}" onclick="tab='${id}';viewingLib=null;viewingGoal=null;renderApp()"><span class="ti">${ic}</span>${lb}</button>`).join('')}
+  </div></nav>
+  ${drawerOpen ? drawerHTML() : ''}
+  ${screenOpen ? screenHTML() : ''}`;
+  ({chat:renderChat, feed:renderFeed, ideas:renderIdeas, goals:renderGoals, library:renderLibrary})[tab]();
+  const m = document.getElementById('main'); if (tab==='chat') m.scrollTop = m.scrollHeight;
+  window.scrollTo(0, document.body.scrollHeight);
+}
+function drawerHTML(){
+  const convs = S.convs.map(c => `<div class="convItem ${c.id===S.curConv?'on':''}" onclick="S.curConv='${c.id}';drawerOpen=false;save();renderApp()">💬 ${esc(c.title)}<small>${c.msgs.length}</small></div>`).join('');
+  return `<div class="scrim" onclick="drawerOpen=false;renderApp()"></div>
+  <div class="drawer">
+    <div style="display:flex;align-items:center;gap:9px;padding:2px 4px">
+      <div class="avatarMini">${(S.user ? S.user.name : 'G').slice(0,1).toUpperCase()}</div>
+      <div><div style="font-weight:800;font-size:15px">${S.user ? esc(S.user.name) : 'Guest'}</div>
+      <div style="font-size:12px;color:var(--muted)">${S.user ? esc(S.user.email) : 'Preview mode'}</div></div>
+    </div>
+    <h3>CONVERSATIONS</h3>
+    <div class="setRow" onclick="newConv()">＋ New chat</div>
+    ${convs || '<div class="hint" style="padding:4px 12px">No conversations yet</div>'}
+    <h3>SETTINGS</h3>
+    <div class="setRow" onclick="alert('Feed topics are managed in the Feed tab — tap the topic chips to choose what Muse writes about.')">📰 Feed preferences</div>
+    <div class="setRow" onclick="shareInvite()">🎟️ Invite a friend</div>
+    <div class="setRow" onclick="alert('Muse runs on its own cloud computer. Scheduled Feed, Ideas and Goal check-ins run in your timezone: Asia/Tokyo.')">🖥️ My cloud computer</div>
+    <div class="setRow" onclick="signOut()">🚪 ${S.user ? 'Sign out' : 'Exit preview'}</div>
+  </div>`;
+}
+function shareInvite(){
+  const code = 'MUSE-' + Math.random().toString(36).slice(2,6).toUpperCase();
+  alert('Your invite code: ' + code + '\nShare it with a friend — they can use it to create their account.');
+}
+function screenHTML(){
+  return `<div class="screenModal" onclick="if(event.target===this){screenOpen=false;renderApp()}">
+    <div class="screenBox">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <b>🖥️ Muse's cloud computer — live</b>
+        <button class="iconBtn" style="color:#fff" onclick="screenOpen=false;renderApp()">✕</button></div>
+      <div class="fakeDesk">$ muse status<br>agent: online · tokyo region<br>tasks today: feed ✓ · goals ✓ · chat ✓<br><br>$ ls ~/workspace<br>apps&nbsp;&nbsp;goals&nbsp;&nbsp;memory&nbsp;&nbsp;reports<br><br>$ uptime<br>up 14 days · all systems normal<span style="animation:none">▊</span></div>
+      <div style="font-size:12.5px;margin-top:10px;color:#9B92B3">This is a live view of the cloud computer Muse works on. In the full version you can watch tasks run here in real time.</div>
+    </div></div>`;
+}
+
+/* ================= Chat ================= */
+function newConv(silent){
+  const c = { id:'c'+Date.now(), title:'New chat', msgs:[{ who:'ai', html:'Hello! I\'m Muse. Ask me anything — I can also **do** things: check your goals, refresh your feed, or work on files on my cloud computer. Try asking me to *delete a file* to see how approvals work.' }] };
+  S.convs.unshift(c); S.curConv = c.id; save();
+  if (!silent){ tab='chat'; drawerOpen=false; renderApp(); }
+}
+function curConv(){ return S.convs.find(c => c.id===S.curConv) || S.convs[0]; }
+
+function renderChat(){
+  const c = curConv(); if (!c) return;
+  const m = document.getElementById('main');
+  m.innerHTML = `<div class="msgs">${c.msgs.map((msg,i) => msgHTML(msg,i)).join('')}</div>
+  <div class="composer"><div class="compIn">
+    <button class="cBtn" title="Attach photo" onclick="document.getElementById('fileIn').click()">📷</button>
+    <input type="file" id="fileIn" accept="image/*" style="display:none" onchange="attachPhoto(this)">
+    <textarea id="chatIn" rows="1" placeholder="Message Muse…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+    <button class="cBtn" title="Voice dictation" onclick="dictate()">🎤</button>
+    <button class="sendBtn" onclick="sendMsg()">➤</button>
+  </div></div>`;
+  window.scrollTo(0, document.body.scrollHeight);
+}
+function msgHTML(msg){
+  if (msg.tool) return `<div class="toolRow" onclick="this.classList.toggle('open')">⚙️ ${esc(msg.tool)}<div class="det">${esc(msg.det || 'Completed successfully.')}</div></div>`;
+  if (msg.appr) return `<div class="appr"><div class="ttl">⚠️ Approval needed</div>${esc(msg.appr)}
+    ${msg.decided ? `<div style="margin-top:8px;font-weight:700;color:${msg.decided==='approved'?'var(--ok)':'var(--bad)'}">${msg.decided==='approved'?'✓ Approved':'✗ Denied'}</div>`
+    : `<div class="apprBtns"><button class="aBtn aOk" onclick="decideAppr(${msg.idx},true)">Approve</button><button class="aBtn aNo" onclick="decideAppr(${msg.idx},false)">Deny</button></div>`}</div>`;
+  return `<div class="msg ${msg.who}">${msg.img ? `<img class="att" src="${msg.img}">` : ''}${md(msg.html)}</div>`;
+}
+function attachPhoto(inp){
+  const f = inp.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => { const c = curConv(); c.msgs.push({ who:'user', html:'(photo)', img:r.result }); save(); renderChat(); aiReply('photo'); };
+  r.readAsDataURL(f);
+}
+function dictate(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR){ alert('Voice dictation is not supported in this browser — on iPhone/iPad it works in the full app.'); return; }
+  const rec = new SR(); rec.lang = 'my-MM'; rec.interimResults = false;
+  rec.onresult = e => { document.getElementById('chatIn').value = e.results[0][0].transcript; };
+  rec.start();
+}
+function sendMsg(prefill){
+  const inp = document.getElementById('chatIn');
+  const text = (prefill || inp.value).trim(); if (!text) return;
+  const c = curConv();
+  c.msgs.push({ who:'user', html:text });
+  if (c.title === 'New chat') c.title = text.slice(0, 28);
+  save(); renderChat();
+  aiReply(text);
+}
+function aiReply(userText){
+  const c = curConv();
+  const low = userText.toLowerCase();
+  // Risky action → approval card flow
+  if (/(delete|remove|erase|ဖျက်)/.test(low) && !/photo/.test(low)){
+    c.msgs.push({ tool:'Checking what would be affected…', det:'Found the item and verified nothing else depends on it. Waiting for your approval before deleting.' });
+    save(); renderChat();
+    setTimeout(() => {
+      const idx = c.msgs.length;
+      c.msgs.push({ appr:'Muse wants to permanently delete the item you mentioned. This cannot be undone.', idx });
+      save(); renderChat();
+    }, 700);
+    return;
+  }
+  let reply;
+  if (low === 'photo') reply = 'Got the photo — I can see it. In the full version I can describe it, read text in it, or save it to your Library.';
+  else if (/goal/.test(low)) reply = 'You have **' + S.goals.length + ' goals**. Open the Goals tab to see progress and check-ins — I check in on them on a schedule, in your timezone.';
+  else if (/feed|news/.test(low)) reply = 'Your Feed refreshes twice a day — a morning and an evening edition, written for your topics: **' + S.feedTopics.join(', ') + '**. Pull the Feed tab to see the latest.';
+  else if (/idea/.test(low)) reply = 'The Ideas tab has fresh suggestions waiting. Tap any idea and we\'ll start working on it right here in chat.';
+  else if (/hello|hi|ဟလို|မင်္ဂလာ/.test(low)) reply = 'Hello! Good to see you. What shall we do today?';
+  else reply = 'Here\'s what I found: I\'ve noted that down and added it to my working memory. In the full version I would now run the tools needed on my cloud computer and show each step above as a live activity row.';
+  // tool activity row first, then a streamed reply
+  c.msgs.push({ tool:'Working on your request…', det:'Read your message, checked memory and goals, then composed the reply below.' });
+  save(); renderChat();
+  setTimeout(() => {
+    const ai = { who:'ai', html:'' };
+    c.msgs.push(ai); save(); renderChat();
+    let i = 0;
+    const timer = setInterval(() => {
+      i += 3; ai.html = reply.slice(0, i);
+      const rows = document.querySelectorAll('.msg.ai');
+      const last = rows[rows.length-1];
+      if (last) last.innerHTML = md(ai.html);
+      window.scrollTo(0, document.body.scrollHeight);
+      if (i >= reply.length){ clearInterval(timer); save(); }
+    }, 18);
+  }, 650);
+}
+function decideAppr(idx, ok){
+  const c = curConv();
+  const msg = c.msgs[idx]; if (!msg) return;
+  msg.decided = ok ? 'approved' : 'denied'; save(); renderChat();
+  if (ok){
+    c.msgs.push({ tool:'Deleting the item…', det:'Deleted. The Library and any linked lists were updated.' });
+    c.msgs.push({ who:'ai', html:'Done — deleted as approved. Anything else?' });
+  } else {
+    c.msgs.push({ who:'ai', html:'Understood — I won\'t delete it. The item is untouched.' });
+  }
+  save(); renderChat();
+}
+
+/* ================= Feed ================= */
+const FEED_POOL = [
+  { topic:'Arsenal', kick:'ARSENAL · PREMIER LEAGUE', title:'Arsenal stay top — what to watch this week', body:'The Gunners remain first in the table. The next fixture is under the lights at the Emirates; kickoff times in your timezone are already on your calendar, and a reminder lands one hour before the match.' },
+  { topic:'JLPT', kick:'JLPT N2 · STUDY', title:'Twelve days to the exam: passage grammar is the gap', body:'Your mock-test results show kanji and reading are strong, while passage grammar (問題9) and collocations are where marks are leaking. Today\'s set leans into exactly those — short, focused, and built from words you already know.' },
+  { topic:'Tokyo life', kick:'TOKYO · DAILY LIFE', title:'Rain over Tokyo this evening — plan the commute', body:'Evening showers are likely around your Shibuya shift. The Mita and Hanzomon lines are running normally; an umbrella is worth it for the walk to Kami-Itabashi.' },
+  { topic:'Tech', kick:'TECH · CLOUD', title:'AWS free tier: the three services worth learning first', body:'EC2, RDS and S3 cover most junior cloud roles in Japan. Your SalonReserve project already maps to EC2 + RDS — deploying it is the fastest way to turn study into a portfolio story.' },
+  { topic:'Arsenal', kick:'ARSENAL · TACTICS', title:'Why the midfield press is working', body:'Arsenal\'s out-of-possession shape has tightened this season: the front two screen passing lanes and force play wide, where the full-backs can jump. It is a big reason the goals-against column looks so healthy.' },
+  { topic:'JLPT', kick:'JLPT N2 · VOCABULARY', title:'Five collocations that keep appearing in N2 papers', body:'時間帯， 期待外れ, 病気がち, 手段, 集団 — these five showed up in recent mock papers. Each one is in today\'s flashcard set with a reading and an example.' },
+  { topic:'Tokyo life', kick:'TOKYO · MONEY', title:'Your bills calendar for the rest of November', body:'One auto-debit is scheduled this week and your MNP number stays valid until December 8. Everything is on track — no action needed today.' },
+  { topic:'Tech', kick:'TECH · CAREERS', title:'What Tokyo IT job posts ask for, in order', body:'JLPT N2, Linux basics, one cloud certificate, and a project you can explain end-to-end. You are closer than you think: two of the four are already in motion.' }
+];
+function feedPosts(){
+  const pool = FEED_POOL.filter(p => S.feedTopics.includes(p.topic));
+  const use = pool.length ? pool : FEED_POOL;
+  const out = [];
+  for (let i=0;i<4;i++) out.push(use[(S.feedSeed + i) % use.length]);
+  return out;
+}
+function renderFeed(){
+  const m = document.getElementById('main');
+  const hour = new Date().getHours();
+  const edition = hour < 12 ? 'Morning edition' : 'Evening edition';
+  m.innerHTML = `
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <div><div style="font-size:19px;font-weight:800">${edition}</div>
+    <div style="font-size:12.5px;color:var(--muted)">${todayStr()} · written for you in Asia/Tokyo</div></div>
+    <button class="mini vio" onclick="S.feedSeed++;save();renderFeed()">↻ Refresh</button>
+  </div>
+  <div class="secT">YOUR TOPICS — TAP TO CHOOSE</div>
+  <div class="chips">${['Arsenal','JLPT','Tokyo life','Tech'].map(tp =>
+    `<button class="chip ${S.feedTopics.includes(tp)?'on':''}" onclick="toggleTopic('${tp}')">${tp}</button>`).join('')}</div>
+  ${feedPosts().map((p,i) => { const id = 'f'+S.feedSeed+'-'+i; return `<div class="card">
+    <div class="kick">${p.kick}</div><h3>${p.title}</h3><p>${p.body}</p>
+    <div class="rowBtns"><button class="mini ${S.feedLikes[id]?'on':''}" onclick="S.feedLikes['${id}']=!S.feedLikes['${id}'];save();renderFeed()">${S.feedLikes[id]?'❤️ Liked':'🤍 Like'}</button>
+    <button class="mini vio" onclick="tab='chat';renderApp();sendMsg('Tell me more about: ${p.title.replace(/'/g,'')}')">Discuss in chat</button></div></div>`; }).join('')}
+  <div class="hint" style="text-align:center">Pull down (or tap Refresh) for a new edition. Editions are scheduled for morning and evening, in your timezone.</div>`;
+}
+function toggleTopic(tp){
+  const i = S.feedTopics.indexOf(tp);
+  if (i >= 0) S.feedTopics.splice(i,1); else S.feedTopics.push(tp);
+  save(); renderFeed();
+}
+
+/* ================= Ideas ================= */
+const IDEA_POOL = [
+  ['⚽','Plan an Arsenal match night','Snacks, stream setup and a pre-match read — all timed to kickoff.'],
+  ['📚','A 20-minute JLPT sprint','One passage-grammar set, timed, with instant answers.'],
+  ['☁️','Deploy SalonReserve to AWS','Walk the EC2 + RDS steps and get a live link for your CV.'],
+  ['💰','November money check','Bills, payday and the phone switch — one page, nothing missed.'],
+  ['🎧','New songs for the listening app','Find official lyric videos for the artists still missing songs.'],
+  ['🧹','MacBook deep-clean plan','A safe, step-by-step cleaning session for the cockroach problem.'],
+  ['📝','Explain my booking project','Practice the interview explanation: problem, stack, AWS plan.'],
+  ['🎂','Plan a day out in Ikebukuro','Shops, food and a movie — built around your Sunday shift.']
+];
+let ideaSeed = 0;
+function renderIdeas(){
+  const m = document.getElementById('main');
+  const picks = [0,1,2,3].map(k => IDEA_POOL[(ideaSeed + k) % IDEA_POOL.length]);
+  m.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between">
+    <div style="font-size:19px;font-weight:800">Ideas for you</div>
+    <button class="mini vio" onclick="ideaSeed+=4;renderIdeas()">↻ Refresh</button></div>
+  <div class="hint" style="margin:6px 0 14px">Tap an idea to start a chat about it.</div>
+  ${picks.map(([ic,ti,de]) => `<div class="card" style="cursor:pointer" onclick="tab='chat';renderApp();sendMsg('${ti.replace(/'/g,'')}')">
+    <div style="font-size:26px">${ic}</div><h3>${ti}</h3><p>${de}</p></div>`).join('')}`;
+}
+
+/* ================= Goals ================= */
+function seedGoals(){
+  S.goals = [
+    { id:'g1', title:'Pass JLPT N2', target:100, unit:'% ready', progress:68, created:'2026-11-11', history:[{d:'2026-11-24', t:'Day 14 set completed — mock test checked: kanji strong, passage grammar is the focus now.'},{d:'2026-11-21', t:'Birthday check-in: study streak kept even on a day off.'}] },
+    { id:'g2', title:'AWS Cloud Practitioner', target:100, unit:'% of course', progress:15, created:'2026-11-15', history:[{d:'2026-11-25', t:'SalonReserve built and compile-verified — ready to deploy on EC2 + RDS.'}] },
+    { id:'g3', title:'Switch to the new phone plan', target:100, unit:'% done', progress:55, created:'2026-11-20', history:[{d:'2026-11-24', t:'MNP number issued (valid to Dec 8). Ahamo order paused at your request — resume any time.'}] }
+  ];
+  save();
+}
+function renderGoals(){
+  const m = document.getElementById('main');
+  if (viewingGoal){
+    const g = S.goals.find(x => x.id===viewingGoal); if (!g){ viewingGoal=null; renderGoals(); return; }
+    const pct = Math.min(100, Math.round(g.progress / g.target * 100));
+    m.innerHTML = `<button class="mini vio" onclick="viewingGoal=null;renderGoals()">← All goals</button>
+    <div class="card" style="margin-top:12px"><h3 style="font-size:19px">${esc(g.title)}</h3>
+      <div class="prog"><div style="width:${pct}%"></div></div>
+      <div class="goalRow"><span>${g.progress} / ${g.target} ${esc(g.unit)}</span><span>since ${g.created}</span></div>
+      <label>Update progress (${esc(g.unit)})</label>
+      <div style="display:flex;gap:8px"><input id="g-prog" type="number" value="${g.progress}" style="flex:1">
+      <button class="mini vio" style="padding:0 18px" onclick="updGoal('${g.id}')">Save</button></div>
+      <label>Check-in note</label><input id="g-note" placeholder="What happened?">
+      <button class="bigBtn" onclick="checkinGoal('${g.id}')">✓ Check in now</button></div>
+    <div class="secT">CHECK-IN HISTORY</div>
+    ${g.history.map(h => `<div class="histItem">${esc(h.t)}<br><small>${h.d}</small></div>`).join('') || '<div class="empty">No check-ins yet</div>'}`;
+    return;
+  }
+  m.innerHTML = S.goals.map(g => { const pct = Math.min(100, Math.round(g.progress / g.target * 100)); return `
+    <div class="card" style="cursor:pointer" onclick="viewingGoal='${g.id}';renderGoals()">
+      <h3>${esc(g.title)}</h3><div class="prog"><div style="width:${pct}%"></div></div>
+      <div class="goalRow"><span>${g.progress} / ${g.target} ${esc(g.unit)}</span><span>${g.history.length} check-ins</span></div></div>`; }).join('')
+    + `<div class="card"><h3>New goal</h3>
+      <label>Goal title</label><input id="ng-title" placeholder="e.g. Save ¥50,000">
+      <div style="display:flex;gap:8px"><div style="flex:1"><label>Target</label><input id="ng-target" type="number" value="100"></div>
+      <div style="flex:1"><label>Unit</label><input id="ng-unit" placeholder="% / ¥ / pages"></div></div>
+      <button class="bigBtn" onclick="addGoal()">＋ Create goal</button></div>
+    <div class="hint" style="text-align:center">Muse checks in on your goals on a schedule and keeps the history here.</div>`;
+}
+function addGoal(){
+  const title = document.getElementById('ng-title').value.trim(); if (!title) return;
+  const target = parseFloat(document.getElementById('ng-target').value) || 100;
+  const unit = document.getElementById('ng-unit').value.trim() || '%';
+  S.goals.unshift({ id:'g'+Date.now(), title, target, unit, progress:0, created:new Date().toISOString().slice(0,10), history:[{ d:new Date().toISOString().slice(0,10), t:'Goal created.' }] });
+  save(); renderGoals();
+}
+function updGoal(id){
+  const g = S.goals.find(x => x.id===id);
+  g.progress = parseFloat(document.getElementById('g-prog').value) || 0;
+  save(); renderGoals();
+}
+function checkinGoal(id){
+  const g = S.goals.find(x => x.id===id);
+  const note = document.getElementById('g-note').value.trim() || 'Checked in.';
+  g.progress = parseFloat(document.getElementById('g-prog').value) || g.progress;
+  g.history.unshift({ d:new Date().toISOString().slice(0,10), t:note });
+  save(); renderGoals();
+}
+
+/* ================= Library ================= */
+const LIB_SEED = [
+  { id:'l1', icon:'🌐', name:'salon-booking.html', type:'html', meta:'Artifact · Web page · today',
+    html:'<h2 style="font-family:sans-serif">SalonReserve</h2><p style="font-family:sans-serif">A booking demo that lives in your Library. HTML files render as real web pages here.</p>' },
+  { id:'l2', icon:'📝', name:'aws-study-notes.md', type:'md', meta:'Artifact · Markdown · yesterday',
+    body:'# AWS Study Notes\n## First three services\n- EC2 — virtual servers\n- RDS — managed MySQL\n- S3 — file storage\nSalonReserve maps to EC2 + RDS. Deploy it, then write the story for interviews.' },
+  { id:'l3', icon:'📊', name:'november-budget.csv', type:'csv', meta:'File from computer · CSV · Nov 24',
+    body:'Item,Amount (¥),Status\nRakuten Mobile (Sep),5107,Paid\nRakuten Mobile (Oct),4711,Auto-debit Nov 27\nTrain pass,13630,Planned' },
+  { id:'l4', icon:'🖼️', name:'macbook-case-photo.png', type:'img', meta:'Media · Image · Nov 22',
+    img:'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="600" height="380"%3E%3Crect width="600" height="380" fill="%23EFEAF7"/%3E%3Crect x="150" y="90" width="300" height="200" rx="16" fill="%236D28D9"/%3E%3Crect x="168" y="108" width="264" height="150" rx="8" fill="%23B79CED"/%3E%3Ctext x="300" y="330" font-family="sans-serif" font-size="19" text-anchor="middle" fill="%23453D57"%3EMacBook Air 13-inch case%3C/text%3E%3C/svg%3E' },
+  { id:'l5', icon:'📄', name:'deploy-checklist.txt', type:'txt', meta:'File from computer · Text · Nov 25',
+    body:'DEPLOY CHECKLIST — SalonReserve on AWS\n[ ] Create RDS MySQL (db.t3.micro)\n[ ] Launch EC2 Ubuntu 24.04 (t3.small)\n[ ] Set DB_URL / DB_PASSWORD / ADMIN_PASSWORD\n[ ] systemd service + nginx\n[ ] Test /api/services' }
+];
+let LIB = [];
+function seedLibrary(){
+  if (!S.libSeeded){ LIB = LIB_SEED.slice(); S.libSeeded = true; save(); }
+  else if (!LIB.length) LIB = LIB_SEED.slice();
+}
+function renderLibrary(){
+  const m = document.getElementById('main');
+  if (viewingLib){
+    const f = LIB.find(x => x.id===viewingLib); if (!f){ viewingLib=null; renderLibrary(); return; }
+    let body = '';
+    if (f.type==='img') body = `<img src="${f.img}" style="width:100%;border-radius:10px">`;
+    else if (f.type==='html') body = `<iframe srcdoc="${f.html.replace(/"/g,'&quot;')}"></iframe>`;
+    else if (f.type==='csv'){
+      const rows = f.body.trim().split('\n').map(r => r.split(','));
+      body = `<div style="overflow-x:auto"><table><tr>${rows[0].map(c=>`<th>${esc(c)}</th>`).join('')}</tr>${rows.slice(1).map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table></div>`;
+    }
+    else if (f.type==='md'){
+      const html = f.body.split('\n').map(l =>
+        l.startsWith('# ') ? `<h1>${esc(l.slice(2))}</h1>` :
+        l.startsWith('## ') ? `<h2>${esc(l.slice(3))}</h2>` :
+        l.startsWith('- ') ? `<li>${esc(l.slice(2))}</li>` : `<p>${esc(l)}</p>`).join('');
+      body = `<div class="md">${html}</div>`;
+    }
+    else body = `<pre>${esc(f.body)}</pre>`;
+    m.innerHTML = `<button class="mini vio" onclick="viewingLib=null;renderLibrary()">← Library</button>
+    <div style="font-size:18px;font-weight:800;margin:12px 0 3px">${f.icon} ${esc(f.name)}</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">${f.meta}</div>
+    <div class="viewer">${body}</div>
+    <button class="ghostBtn" onclick="alert('Share link copied (demo): https://muse.ai/s/${f.id}')">🔗 Share</button>`;
+    return;
+  }
+  m.innerHTML = `<div class="secT" style="margin-top:2px">ARTIFACTS & FILES — SYNCED FROM THE CLOUD COMPUTER</div>
+  ${LIB.map(f => `<div class="libItem" onclick="viewingLib='${f.id}';renderLibrary()"><div class="fi">${f.icon}</div>
+    <div><div class="fn">${esc(f.name)}</div><div class="fm">${f.meta}</div></div></div>`).join('')}
+  <div class="hint" style="text-align:center">Images open as images, Markdown is rendered, HTML runs as a web page, and CSV files become tables.</div>`;
+}
+
+/* ================= Boot ================= */
+if (S.user || S.preview) { if (!S.convs.length) newConv(true); if (!S.goals.length) seedGoals(); renderApp(); }
+else renderWelcome('home');
+</script>
+</body>
+</html>
