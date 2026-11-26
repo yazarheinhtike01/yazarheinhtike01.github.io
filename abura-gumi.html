@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>東京油組総本店ガイド｜油そばメニュー・食べ方・店舗</title>
+<meta name="description" content="東京油組総本店の油そばガイド。メニューと価格、注文シミュレーター、おいしい食べ方、店舗一覧をまとめたファンガイドアプリ。">
+<style>
+  :root{
+    --bg:#14100d; --card:#211a15; --card2:#2a211a; --ink:#f5ead9; --muted:#c9b8a3;
+    --muted:#c9b8a3; --accent:#e03a1e; --accent2:#f2a007; --line:#3a2e24; --ok:#57b368;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif; line-height:1.65; padding-bottom:84px;}
+  header{background:linear-gradient(135deg,#1d130c,#3a1408 55%,#571f0a); padding:26px 18px 20px; text-align:center; border-bottom:3px solid var(--accent);}
+  header .logo{font-size:15px; letter-spacing:.35em; color:var(--accent2); font-weight:700;}
+  header h1{margin:6px 0 2px; font-size:27px; font-weight:900; letter-spacing:.06em;}
+  header p{margin:0; color:var(--muted); font-size:13px;}
+  .wrap{max-width:640px; margin:0 auto; padding:16px 14px 8px;}
+  section{display:none;}
+  section.active{display:block;}
+  h2{font-size:19px; margin:20px 0 10px; padding-left:10px; border-left:5px solid var(--accent);}
+  h2:first-child{margin-top:4px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin:10px 0;}
+  .hero{background:linear-gradient(160deg,#2b1a10,#1d130c); border:1px solid var(--line); border-radius:16px; padding:18px; text-align:center;}
+  .hero .big{font-size:22px; font-weight:900; margin:4px 0;}
+  .hero .price{color:var(--accent2); font-weight:900;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content:center;}
+  .chip{background:var(--card2); border:1px solid var(--line); border-radius:999px; padding:5px 12px; font-size:12.5px; color:var(--muted);}
+  .menu-item{display:flex; justify-content:space-between; align-items:baseline; padding:10px 2px; border-bottom:1px dashed var(--line);}
+  .menu-item:last-child{border-bottom:none;}
+  .menu-item .name{font-weight:700;}
+  .menu-item .desc{display:block; font-weight:400; font-size:12.5px; color:var(--muted);}
+  .menu-item .yen{color:var(--accent2); font-weight:900; white-space:nowrap; margin-left:12px;}
+  .free{color:var(--ok); font-weight:900;}
+  .seg{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;}
+  .seg button{flex:1; min-width:88px; background:var(--card2); color:var(--ink); border:1px solid var(--line); border-radius:10px; padding:10px 6px; font-size:14px; font-weight:700; cursor:pointer;}
+  .seg button.on{background:var(--accent); border-color:var(--accent); color:#fff;}
+  .tops{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;}
+  .tops label{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:9px 10px; font-size:13.5px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; gap:6px;}
+  .tops label.on{border-color:var(--accent2); background:#3a2a12;}
+  .tops input{accent-color:var(--accent); width:17px; height:17px;}
+  .tops .tp{color:var(--accent2); font-weight:700; font-size:12.5px; white-space:nowrap;}
+  .total{background:#0e0b08; border:1px solid var(--accent2); border-radius:12px; padding:12px 16px; margin-top:14px; display:flex; justify-content:space-between; align-items:center;}
+  .total .t{font-size:13px; color:var(--muted);}
+  .total .v{font-size:24px; font-weight:900; color:var(--accent2);}
+  .summary{font-size:13px; color:var(--muted); margin-top:8px; white-space:pre-line;}
+  .step{display:flex; gap:12px; margin:12px 0;}
+  .step .num{flex:0 0 34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; font-weight:900; display:flex; align-items:center; justify-content:center; font-size:16px;}
+  .step .body{flex:1;}
+  .step .body b{display:block; font-size:15.5px;}
+  .step .body span{font-size:13.5px; color:var(--muted);}
+  .search{width:100%; background:var(--card2); border:1px solid var(--line); border-radius:10px; color:var(--ink); padding:11px 13px; font-size:15px;}
+  .shop{padding:11px 2px; border-bottom:1px dashed var(--line);}
+  .shop:last-child{border-bottom:none;}
+  .shop b{font-size:15.5px;}
+  .shop span{display:block; font-size:12.5px; color:var(--muted);}
+  nav{position:fixed; left:0; right:0; bottom:0; background:#0e0b08; border-top:1px solid var(--line); display:flex; z-index:10;}
+  nav button{flex:1; background:none; border:none; color:var(--muted); padding:10px 2px 12px; font-size:12px; font-weight:700; cursor:pointer;}
+  nav button.on{color:var(--accent2);}
+  nav button .ic{display:block; font-size:19px; line-height:1.2;}
+  footer{text-align:center; color:var(--muted); font-size:12px; padding:18px 10px 6px;}
+  .note{font-size:12px; color:var(--muted);}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">TOKYO ABURA-GUMI</div>
+  <h1>東京油組総本店ガイド</h1>
+  <p>油そばのメニュー・食べ方・店舗をまとめたガイドアプリ</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ホーム -->
+  <section id="tab-home" class="active">
+    <div class="hero">
+      <div class="big">スープのない、<span class="price">麺を味わう</span>一杯。</div>
+      <p class="note">老舗製麺所から生まれた油そば専門店。モチモチの自家製麺に秘伝のタレを絡めていただきます。カロリーはラーメンの約3分の2。</p>
+      <div class="chips">
+        <span class="chip">並盛・大盛・W盛 同一価格</span>
+        <span class="chip">油そば ¥880</span>
+        <span class="chip">辛味噌油そば ¥980</span>
+        <span class="chip">刻み玉ねぎ 無料</span>
+      </div>
+    </div>
+
+    <h2>油組の3つのこだわり</h2>
+    <div class="card">
+      <div class="step"><div class="num">1</div><div class="body"><b>自家製麺</b><span>職人の技を極めたモチモチ麺。麺そのものの美味しさが主役です。</span></div></div>
+      <div class="step"><div class="num">2</div><div class="body"><b>秘伝のタレ</b><span>歳月をかけ試行錯誤を重ねた、旨味の高い特製タレ。醤油味と辛味噌味の2種類。</span></div></div>
+      <div class="step"><div class="num">3</div><div class="body"><b>楽しい味変</b><span>ラー油・お酢・刻み玉ねぎに多彩なトッピング。1杯で自分好みに変えられます。</span></div></div>
+    </div>
+
+    <h2>麺の量（すべて同一価格）</h2>
+    <div class="card">
+      <div class="menu-item"><span class="name">並盛り<span class="desc">麺 160g</span></span><span class="yen">同一価格</span></div>
+      <div class="menu-item"><span class="name">大盛り<span class="desc">麺 240g</span></span><span class="yen">同一価格</span></div>
+      <div class="menu-item"><span class="name">W盛り<span class="desc">麺 320g</span></span><span class="yen">同一価格</span></div>
+      <p class="note">※ 食券を渡すときに麺の量を伝えます。迷ったら大盛りがおすすめです。</p>
+    </div>
+  </section>
+
+  <!-- メニュー -->
+  <section id="tab-menu">
+    <h2>メニュー</h2>
+    <div class="card">
+      <div class="menu-item"><span class="name">油そば<span class="desc">香ばしい醤油味・秘伝の特製タレ</span></span><span class="yen">¥880</span></div>
+      <div class="menu-item"><span class="name">辛味噌油そば<span class="desc">ガツンと旨辛・味噌風味</span></span><span class="yen">¥980</span></div>
+    </div>
+
+    <h2>スペシャルセット</h2>
+    <div class="card">
+      <div class="menu-item"><span class="name">スペシャルトッピングA<span class="desc">一番人気！ねぎゴマ＋半熟たまご</span></span><span class="yen">¥180</span></div>
+      <div class="menu-item"><span class="name">スペシャルトッピングB<span class="desc">チャーシュー2枚＋ねぎゴマ＋半熟たまご</span></span><span class="yen">¥340</span></div>
+    </div>
+
+    <h2>トッピング</h2>
+    <div class="card" id="menu-tops"></div>
+
+    <h2>サイド・ドリンク</h2>
+    <div class="card">
+      <div class="menu-item"><span class="name">つまみチャーシュー</span><span class="yen">¥340</span></div>
+      <div class="menu-item"><span class="name">特製水餃子（3個）</span><span class="yen">¥200</span></div>
+      <div class="menu-item"><span class="name">つまみメンマ</span><span class="yen">¥150</span></div>
+      <div class="menu-item"><span class="name">ビール（小瓶）</span><span class="yen">¥380</span></div>
+      <div class="menu-item"><span class="name">黒ウーロン茶</span><span class="yen">¥320</span></div>
+      <div class="menu-item"><span class="name">コーラ</span><span class="yen">¥200</span></div>
+    </div>
+    <p class="note">※ 価格は店舗により異なる場合があります。</p>
+  </section>
+
+  <!-- 注文シミュレーター -->
+  <section id="tab-order">
+    <h2>注文シミュレーター</h2>
+    <div class="card">
+      <b>1. 油そばを選ぶ</b>
+      <div class="seg" id="seg-base">
+        <button data-v="880" data-n="油そば" class="on">油そば ¥880</button>
+        <button data-v="980" data-n="辛味噌油そば">辛味噌 ¥980</button>
+      </div>
+      <b>2. 麺の量（同一価格）</b>
+      <div class="seg" id="seg-size">
+        <button data-n="並盛り(160g)">並盛り</button>
+        <button data-n="大盛り(240g)" class="on">大盛り</button>
+        <button data-n="W盛り(320g)">W盛り</button>
+      </div>
+      <b>3. トッピング</b>
+      <div class="tops" id="order-tops"></div>
+      <div class="total"><span class="t">合計（税込）</span><span class="v" id="total">¥880</span></div>
+      <div class="summary" id="summary"></div>
+    </div>
+    <p class="note">券売機で食券を買う前に、組み合わせと合計を確認できます。</p>
+  </section>
+
+  <!-- 食べ方 -->
+  <section id="tab-how">
+    <h2>おいしい食べ方</h2>
+    <div class="card">
+      <div class="step"><div class="num">1</div><div class="body"><b>熱いうちによく混ぜる</b><span>丼の底のタレと油が麺全体に絡むよう、しっかり混ぜます。これが一番大事です。</span></div></div>
+      <div class="step"><div class="num">2</div><div class="body"><b>ラー油とお酢を回しかける</b><span>卓上のラー油とお酢を、円を描くように1〜2周ずつ。お酢でさっぱり感が増します。</span></div></div>
+      <div class="step"><div class="num">3</div><div class="body"><b>刻み玉ねぎをたっぷり</b><span>卓上の刻み玉ねぎは無料。シャキシャキ感と甘みが加わります。</span></div></div>
+      <div class="step"><div class="num">4</div><div class="body"><b>途中で味変</b><span>柚子こしょう・すりニンニク（無料）や油組スペシャル（¥20）で後半も飽きずに楽しめます。</span></div></div>
+      <div class="step"><div class="num">5</div><div class="body"><b>最後の1本まで</b><span>スープがないので、タレを余すことなく麺と一緒に。麺の美味しさを最後までどうぞ。</span></div></div>
+    </div>
+    <h2>注文の流れ</h2>
+    <div class="card">
+      <div class="step"><div class="num">1</div><div class="body"><b>券売機で食券を購入</b><span>店舗により現金のみの場合があります。</span></div></div>
+      <div class="step"><div class="num">2</div><div class="body"><b>麺の量を伝える</b><span>並盛り・大盛り・W盛りから選びます（同一価格）。</span></div></div>
+      <div class="step"><div class="num">3</div><div class="body"><b>着丼したらすぐ混ぜる</b><span>熱いうちが勝負です。</span></div></div>
+    </div>
+  </section>
+
+  <!-- 店舗 -->
+  <section id="tab-shops">
+    <h2>店舗一覧（東京）</h2>
+    <input class="search" id="shop-search" type="search" placeholder="店舗名・エリアで検索（例：新宿）">
+    <div class="card" id="shop-list"></div>
+    <p class="note">※ 主な店舗のみ掲載しています。営業時間は各店舗の公式情報をご確認ください。</p>
+  </section>
+
+  <footer>
+    東京油組総本店ガイド（非公式ファンガイド）<br>
+    Developed by Yazar Hein Htike · Version 1.0
+  </footer>
+</div>
+
+<nav>
+  <button data-tab="home" class="on"><span class="ic">🏠</span>ホーム</button>
+  <button data-tab="menu"><span class="ic">🍜</span>メニュー</button>
+  <button data-tab="order"><span class="ic">🧮</span>注文計算</button>
+  <button data-tab="how"><span class="ic">🥢</span>食べ方</button>
+  <button data-tab="shops"><span class="ic">📍</span>店舗</button>
+</nav>
+
+<script>
+var TOPS = [
+  {n:"スペシャルトッピングA", d:"ねぎゴマ＋半熟たまご", p:180},
+  {n:"スペシャルトッピングB", d:"チャーシュー2枚＋ねぎゴマ＋半熟たまご", p:340},
+  {n:"チャーシュー", d:"", p:340},
+  {n:"ねぎゴマ", d:"", p:100},
+  {n:"半熟たまご", d:"", p:100},
+  {n:"メンマ", d:"", p:150},
+  {n:"白ねぎ", d:"", p:100},
+  {n:"焼のり", d:"", p:100},
+  {n:"パルメザンチーズ", d:"", p:50},
+  {n:"キューピーマヨネーズ", d:"", p:50},
+  {n:"油組スペシャル", d:"自家製食べるラー油", p:20},
+  {n:"柚子こしょう", d:"", p:0},
+  {n:"すりニンニク", d:"", p:0},
+  {n:"つぶし生ニンニク", d:"", p:0}
+];
+var SHOPS = [
+  {n:"赤坂見附組", a:"東京都港区赤坂", s:"赤坂見附駅"},
+  {n:"市ヶ谷組", a:"東京都千代田区四番町", s:"市ケ谷駅"},
+  {n:"神楽坂組", a:"東京都新宿区神楽坂", s:"飯田橋駅・神楽坂駅"},
+  {n:"新橋組", a:"東京都港区新橋", s:"新橋駅"},
+  {n:"麻布十番組", a:"東京都港区麻布十番", s:"麻布十番駅"},
+  {n:"茗荷谷組", a:"東京都文京区小日向", s:"茗荷谷駅"},
+  {n:"門前仲町組", a:"東京都江東区門前仲町", s:"門前仲町駅"},
+  {n:"池袋組", a:"東京都豊島区池袋", s:"池袋駅"},
+  {n:"渋谷組", a:"東京都渋谷区渋谷", s:"渋谷駅"},
+  {n:"新宿組", a:"東京都新宿区新宿", s:"新宿駅"},
+  {n:"銀座組", a:"東京都中央区銀座", s:"銀座駅"},
+  {n:"上野組", a:"東京都台東区上野", s:"上野駅"},
+  {n:"吉祥寺組", a:"東京都武蔵野市吉祥寺", s:"吉祥寺駅"},
+  {n:"中野組", a:"東京都中野区中野", s:"中野駅"},
+  {n:"品川組", a:"東京都港区品川", s:"品川駅"}
+];
+function yen(v){ return "¥" + v.toLocaleString("ja-JP"); }
+function renderMenuTops(){
+  var html = "";
+  TOPS.forEach(function(t){
+    html += '<div class="menu-item"><span class="name">' + t.n + (t.d ? '<span class="desc">' + t.d + "</span>" : "") + "</span>" +
+      (t.p === 0 ? '<span class="free">無料</span>' : '<span class="yen">' + yen(t.p) + "</span>") + "</div>";
+  });
+  document.getElementById("menu-tops").innerHTML = html;
+}
+function renderOrderTops(){
+  var html = "";
+  TOPS.forEach(function(t, i){
+    html += '<label data-i="' + i + '"><span><input type="checkbox" data-i="' + i + '"> ' + t.n + '</span><span class="tp">' + (t.p === 0 ? "無料" : yen(t.p)) + "</span></label>";
+  });
+  document.getElementById("order-tops").innerHTML = html;
+  var boxes = document.querySelectorAll("#order-tops input");
+  boxes.forEach(function(b){
+    b.addEventListener("change", function(){
+      b.closest("label").classList.toggle("on", b.checked);
+      calc();
+    });
+  });
+}
+var base = {v:880, n:"油そば"}, size = "大盛り(240g)";
+function segWire(id, fn){
+  var btns = document.querySelectorAll("#" + id + " button");
+  btns.forEach(function(b){
+    b.addEventListener("click", function(){
+      btns.forEach(function(x){ x.classList.remove("on"); });
+      b.classList.add("on");
+      fn(b);
+      calc();
+    });
+  });
+}
+function calc(){
+  var total = base.v, chosen = [];
+  document.querySelectorAll("#order-tops input:checked").forEach(function(b){
+    var t = TOPS[Number(b.getAttribute("data-i"))];
+    total += t.p; chosen.push(t.n);
+  });
+  document.getElementById("total").textContent = yen(total);
+  document.getElementById("summary").textContent =
+    "注文内容：" + base.n + "・" + size + (chosen.length ? "\nトッピング：" + chosen.join("、") : "\nトッピング：なし");
+}
+function renderShops(q){
+  var html = "";
+  SHOPS.filter(function(s){ return !q || (s.n + s.a + s.s).indexOf(q) >= 0; }).forEach(function(s){
+    html += '<div class="shop"><b>東京油組総本店 ' + s.n + "</b><span>" + s.a + " ／ 最寄り：" + s.s + "</span></div>";
+  });
+  document.getElementById("shop-list").innerHTML = html || '<div class="shop"><b>見つかりませんでした</b></div>';
+}
+document.querySelectorAll("nav button").forEach(function(b){
+  b.addEventListener("click", function(){
+    document.querySelectorAll("nav button").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    document.querySelectorAll("section").forEach(function(s){ s.classList.remove("active"); });
+    document.getElementById("tab-" + b.getAttribute("data-tab")).classList.add("active");
+    window.scrollTo(0, 0);
+  });
+});
+document.getElementById("shop-search").addEventListener("input", function(e){ renderShops(e.target.value.trim()); });
+segWire("seg-base", function(b){ base = {v:Number(b.getAttribute("data-v")), n:b.getAttribute("data-n")}; });
+segWire("seg-size", function(b){ size = b.getAttribute("data-n"); });
+renderMenuTops(); renderOrderTops(); renderShops(""); calc();
+</script>
+</body>
+</html>
